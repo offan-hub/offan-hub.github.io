@@ -165,6 +165,20 @@
   .keystar.on { color:#e6342b; }
   .inv-table .dt { padding:3px 8px; color:var(--accent-d); border-color:#ddd6fe; }
   .inv-table .dt:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+  /* 类型 / 觉醒 列 */
+  .inv-table select.tp { width:72px; }
+  .inv-table td.aw-cell { white-space:nowrap; font-size:12px; color:var(--c-text-dim); }
+  .inv-table td.aw-cell .aw-sum { font-variant-numeric:tabular-nums; }
+  /* 觉醒设置面板（添加表单 + 详情弹窗共用） */
+  .awaken-panel { margin-top:10px; padding:10px 12px; border:1px solid var(--bd,#e6e8ee); border-radius:10px; background:var(--bg-soft,#f7f8fb); }
+  .awaken-panel > summary { cursor:pointer; font-weight:600; color:var(--c-text); }
+  .awaken-panel .add-fields { margin-top:8px; }
+  .awaken-panel .hint { color:var(--c-text-dim); font-size:12px; }
+  /* 详情弹窗内的可编辑控件 */
+  .dt-edit { display:flex; flex-direction:column; gap:4px; }
+  .dt-edit > label { font-size:12px; color:var(--c-text-dim); }
+  .dt-edit select, .dt-edit input.dt-num { padding:5px 8px; border:1px solid var(--bd,#e6e8ee); border-radius:7px; background:#fff; font-size:13px; }
+  .dt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:8px; }
   /* 详情弹窗 */
   .modal-mask { position:fixed; inset:0; background:rgba(15,19,32,.45); display:none; z-index:100;
     align-items:flex-start; justify-content:center; overflow:auto; padding:36px 16px; }
@@ -261,8 +275,8 @@
       <div class="table-scroll mt">
         <table class="inv-table">
           <thead><tr>
-            <th style="text-align:center">启用</th><th>名称</th><th style="text-align:center">重点</th><th>形状</th><th>组别</th>
-            <th>生命</th><th>防御</th><th>攻击</th><th>加成率%</th><th>加成类型</th><th>加成属性</th><th>数量</th><th style="text-align:center">优先</th><th>操作</th>
+            <th style="text-align:center">启用</th><th>名称</th><th style="text-align:center">重点</th><th>形状</th><th>组别</th><th>类型</th>
+            <th>生命</th><th>防御</th><th>攻击</th><th>加成率%</th><th>加成类型</th><th>加成属性</th><th>觉醒</th><th>数量</th><th style="text-align:center">优先</th><th>操作</th>
           </tr></thead>
           <tbody id="invBody"></tbody>
         </table>
@@ -303,6 +317,7 @@
         <label class="mt">属性与加成（可直接标注全部信息，录入即生效）</label>
         <div class="add-fields">
           <div><label>组别</label><select id="drawGroup"></select></div>
+          <div><label>类型</label><select id="drawType"></select></div>
           <div><label>生命</label><input type="number" id="drawHp" min="0" value="0"></div>
           <div><label>防御</label><input type="number" id="drawDef" min="0" value="0"></div>
           <div><label>攻击</label><input type="number" id="drawAtk" min="0" value="0"></div>
@@ -310,6 +325,19 @@
           <div><label>加成类型</label><select id="drawBType"><option value="none">无加成</option><option value="self">自身受加成</option><option value="buff">给他人加成</option></select></div>
           <div><label>加成属性</label><select id="drawBAttr"><option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option></select></div>
         </div>
+        <details class="awaken-panel">
+          <summary>觉醒设置（默认无，可留空）</summary>
+          <div class="add-fields">
+            <div><label>觉醒等级</label><select id="drawALevel"></select></div>
+            <div><label>一级·加成值%</label><input type="number" id="drawAL1Rate" min="0" value="0"></div>
+            <div><label>一级·加成属性</label><select id="drawAL1Attr"><option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option></select></div>
+            <div><label>三级·加成值%</label><input type="number" id="drawAL3Rate" min="0" value="0"></div>
+            <div><label>三级·加成属性</label><select id="drawAL3Attr"><option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option></select></div>
+            <div><label>三级·作用范围</label><select id="drawAL3Mode"><option value="self">自身</option><option value="adjacent">相邻同系列</option><option value="global">背包同系列除己</option></select></div>
+            <div><label>三级·同系依据</label><select id="drawAL3Series"><option value="group">元素属性</option><option value="type">类型属性</option></select></div>
+          </div>
+          <div class="hint" style="margin-top:6px">一级=自身固有加成（与邻居无关，可叠加在原有自身加成上）；二级无属性增益；三级=对同系列法宝的攻防血加成，作用于自身 / 相邻同系列 / 背包同系列除己。同系依据必须二选一：元素属性（金木水火土雷体）或 类型属性（刀枪剑锤御异乐），两者只取其一。</div>
+        </details>
         <button id="addDraw" class="primary mt" style="width:100%">＋ 收入宝鉴</button>
       </details>
     </div>
@@ -595,16 +623,47 @@
     const N=used.length; const owner=new Array(R*C).fill(-1);
     used.forEach((u,ii)=>{ for(const idx of infos[u.pi].placements[u.pIdx]) owner[idx]=ii; });
     const sameGroup=(a,b)=> !!(a&&b && a.group!=null && b.group!=null && a.group===b.group);
+    const sameType=(a,b)=> !!(a&&b && a.type && b.type && a.type===b.type);
+    const sameSeries=(a,b)=> sameGroup(a,b)||sameType(a,b);
     const adj=[];
     for(let ii=0;ii<N;ii++){ const s=new Set();
       for(const idx of infos[used[ii].pi].placements[used[ii].pIdx]){ const r=(idx/C)|0,c=idx%C;
         for(const [nr,nc] of [[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){ if(nr<0||nr>=R||nc<0||nc>=C) continue; const j=owner[nr*C+nc]; if(j>=0&&j!==ii) s.add(j); } }
       adj.push(s); }
     const totals={hp:0,def:0,atk:0};
-    for(let ii=0;ii<N;ii++){ const m=infos[used[ii].pi].attr; const b={hp:Number(m.hp)||0,def:Number(m.def)||0,atk:Number(m.atk)||0};
-      const selfMult={hp:1,def:1,atk:1}; if(m.bonusType==='self'&&m.bonusAttr){ const rate=(Number(m.bonusRate)||0)/100; let k=0; for(const j of adj[ii]){ if(sameGroup(m,infos[used[j].pi].attr)) k++; } selfMult[m.bonusAttr]=1+rate*k; }
-      const buffMult={hp:1,def:1,atk:1}; for(const j of adj[ii]){ const mj=infos[used[j].pi].attr; if(mj.bonusType==='buff'&&mj.bonusAttr&&sameGroup(mj,m)){ const rate=(Number(mj.bonusRate)||0)/100; buffMult[mj.bonusAttr]+=rate; } }
-      totals.hp+=b.hp*selfMult.hp*buffMult.hp; totals.def+=b.def*selfMult.def*buffMult.def; totals.atk+=b.atk*selfMult.atk*buffMult.atk; }
+    const seriesMult = Array.from({length:N},()=>({hp:1,def:1,atk:1}));
+    const selfMultArr=[], buffMultArr=[];
+    for(let ii=0;ii<N;ii++){
+      const m=infos[used[ii].pi].attr;
+      const selfMult={hp:1,def:1,atk:1};
+      if(m.bonusType==='self'&&m.bonusAttr){ const rate=(Number(m.bonusRate)||0)/100; let k=0; for(const j of adj[ii]){ if(sameGroup(m,infos[used[j].pi].attr)) k++; } selfMult[m.bonusAttr]=1+rate*k; }
+      const buffMult={hp:1,def:1,atk:1};
+      for(const j of adj[ii]){ const mj=infos[used[j].pi].attr; if(mj.bonusType==='buff'&&mj.bonusAttr&&sameGroup(mj,m)){ const rate=(Number(mj.bonusRate)||0)/100; buffMult[mj.bonusAttr]+=rate; } }
+      // 一级觉醒：固有自身乘子（与邻居无关，level>=1 生效，叠在原有 self 之上）
+      if(m.awaken&&m.awaken.level>=1&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; const r=(Number(l1.rate)||0)/100; if(l1.attr) selfMult[l1.attr]*=(1+r); }
+      selfMultArr[ii]=selfMult; buffMultArr[ii]=buffMult;
+    }
+    // 三级觉醒：系列加成（自身 / 相邻同系 / 背包同系除己；同系依据 = 元素属性 或 类型属性，二选一）
+    for(let ii=0;ii<N;ii++){
+      const m=infos[used[ii].pi].attr; if(!m.awaken||m.awaken.level<3) continue;
+      const l3=m.awaken.l3; if(!l3||!l3.rate) continue;
+      const r=(Number(l3.rate)||0)/100; const attr=l3.attr||'atk';
+      const byGroup = (l3.series!=='type'); // 默认按元素属性（group）；series='type' 时按类型属性
+      let targets;
+      if(l3.mode==='self') targets=[ii];
+      else if(l3.mode==='adjacent') targets=[...adj[ii]];
+      else { targets=[]; for(let j=0;j<N;j++) if(j!==ii) targets.push(j); }
+      for(const t of targets){ if(t===ii&&l3.mode!=='self') continue;
+        const mt=infos[used[t].pi].attr;
+        if(l3.mode!=='self'){ const ok = byGroup? sameGroup(m,mt) : sameType(m,mt); if(!ok) continue; }
+        seriesMult[t][attr]*=(1+r);
+      }
+    }
+    for(let ii=0;ii<N;ii++){ const m=infos[used[ii].pi].attr;
+      totals.hp+= (Number(m.hp)||0)*selfMultArr[ii].hp*buffMultArr[ii].hp*seriesMult[ii].hp;
+      totals.def+=(Number(m.def)||0)*selfMultArr[ii].def*buffMultArr[ii].def*seriesMult[ii].def;
+      totals.atk+=(Number(m.atk)||0)*selfMultArr[ii].atk*buffMultArr[ii].atk*seriesMult[ii].atk;
+    }
     return totals;
   }
   function weightedDefault(t,w){ w=w||{hp:34,atk:33,def:33}; return t.hp*(w.hp/100) + t.atk*w.atk + t.def*w.def; }
@@ -666,7 +725,7 @@
     opts=opts||{};
     const R=backpack.rows,C=backpack.cols,total=R*C;
     const blocked=new Uint8Array(total); if(backpack.blocked) for(const i of backpack.blocked) if(i>=0&&i<total) blocked[i]=1;
-    const infos=pieces.map(p=>({ name:p.name, size:normalizeShape(p.cells).length, count:Math.max(1,p.count||1), priority:p.priority?1:0, key:p.key?1:0, placements:enumeratePlacements(R,C,normalizeShape(p.cells),blocked), attr:{ hp:Number(p.hp)||0, def:Number(p.def)||0, atk:Number(p.atk)||0, bonusRate:Number(p.bonusRate)||0, bonusType:p.bonusType||'none', bonusAttr:p.bonusAttr||'hp', group:(p.group!=null?p.group:null) } })).filter(p=>p.placements.length>0);
+    const infos=pieces.map(p=>({ name:p.name, size:normalizeShape(p.cells).length, count:Math.max(1,p.count||1), priority:p.priority?1:0, key:p.key?1:0, placements:enumeratePlacements(R,C,normalizeShape(p.cells),blocked), attr:{ hp:Number(p.hp)||0, def:Number(p.def)||0, atk:Number(p.atk)||0, bonusRate:Number(p.bonusRate)||0, bonusType:p.bonusType||'none', bonusAttr:p.bonusAttr||'hp', group:(p.group!=null?p.group:null), type:(p.type!=null?p.type:null), awaken:(p.awaken||null) } })).filter(p=>p.placements.length>0);
     if(infos.length===0) return [];
     const prioritySet=new Set(infos.filter(p=>p.priority).map(p=>p.name));
     const priorityExists=prioritySet.size>0;
@@ -776,69 +835,69 @@
     {id:'体',name:'体',enabled:true}
   ];
   const DEFAULT_LIBRARY = [
-    {id:'B1',name:'蕴金戒',group:'金',cells:[[0,0]],base:{hp:1135,def:0,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B2',name:'分金刀',group:'金',cells:[[0,0],[0,1]],base:{hp:2070,def:0,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B3',name:'重金短矛',group:'金',cells:[[1,0],[1,1],[0,1]],base:{hp:2555,def:11,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B4',name:'重金破阵矛',group:'金',cells:[[0,0],[1,0],[2,0],[3,0]],base:{hp:3040,def:15,atk:95},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B5',name:'玄金重剑',group:'金',cells:[[0,0],[1,0],[2,0]],base:{hp:3055,def:9,atk:58},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B6',name:'玄金碎甲剑',group:'金',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:3790,def:13,atk:82},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B7',name:'曜金寸刀',group:'金',cells:[[0,0],[1,0],[0,1]],base:{hp:2555,def:0,atk:77},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B8',name:'曜金战身刀',group:'金',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:3340,def:0,atk:104},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
-    {id:'B9',name:'蕴金枪',group:'金',cells:[[0,0],[1,0]],base:{hp:1670,def:0,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B10',name:'枯荣种',group:'木',cells:[[0,0]],base:{hp:2135,def:0,atk:0},bonusRate:50,bonusType:'buff',bonusAttr:'hp',count:1},
-    {id:'B11',name:'老山参',group:'木',cells:[[0,0],[1,0]],base:{hp:2070,def:0,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B12',name:'木灵短剑',group:'木',cells:[[0,0],[1,0],[0,1]],base:{hp:2455,def:13,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B13',name:'木灵大宝剑',group:'木',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:2840,def:19,atk:95},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B14',name:'噬元喷菇',group:'木',cells:[[0,0],[1,0],[0,1]],base:{hp:3805,def:8,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B15',name:'千瘴断魂琴',group:'木',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:3940,def:15,atk:77},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
-    {id:'B16',name:'千瘴短笛',group:'木',cells:[[1,0],[1,1],[0,1]],base:{hp:3005,def:11,atk:57},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B17',name:'噬元大丽花',group:'木',cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:4790,def:12,atk:63},bonusRate:50,bonusType:'self',bonusAttr:'hp',count:1},
-    {id:'B18',name:'木灵匕首',group:'木',cells:[[0,0],[0,1]],base:{hp:1670,def:0,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B19',name:'流水散',group:'水',cells:[[0,0]],base:{hp:1135,def:20,atk:0},bonusRate:100,bonusType:'buff',bonusAttr:'def',count:1},
-    {id:'B20',name:'净魂刃',group:'水',cells:[[0,0],[1,0]],base:{hp:1670,def:13,atk:39},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B21',name:'霜华轻剑',group:'水',cells:[[0,0],[1,0],[2,0]],base:{hp:2805,def:14,atk:58},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B22',name:'霜华千影剑',group:'水',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:3440,def:20,atk:82},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
-    {id:'B23',name:'冰魄护肩',group:'水',cells:[[0,0],[1,0],[0,1]],base:{hp:2955,def:17,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B24',name:'冰魄凝神甲',group:'水',cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:4140,def:22,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B25',name:'急冻瓜锤',group:'水',cells:[[1,0],[1,1],[0,1]],base:{hp:2805,def:20,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B26',name:'急冻流星锤',group:'水',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:3590,def:28,atk:71},bonusRate:100,bonusType:'self',bonusAttr:'def',count:1},
-    {id:'B27',name:'净魂锤',group:'水',cells:[[0,0],[0,1]],base:{hp:1620,def:15,atk:38},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B28',name:'炎脉髓',group:'火',cells:[[0,0]],base:{hp:1135,def:0,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B29',name:'燎魂唢呐',group:'火',cells:[[0,0],[1,0]],base:{hp:2070,def:0,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B30',name:'至阳火鉴',group:'火',cells:[[0,0],[1,0],[0,1]],base:{hp:2655,def:9,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B31',name:'至阳风火轮',group:'火',cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:3140,def:13,atk:95},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
-    {id:'B32',name:'炽影长刀',group:'火',cells:[[0,0],[1,0],[2,0]],base:{hp:2005,def:11,atk:77},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B33',name:'炽影破锋刃',group:'火',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:2790,def:14,atk:101},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B34',name:'拜火金锣',group:'火',cells:[[1,0],[1,1],[0,1]],base:{hp:2105,def:9,atk:77},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B35',name:'拜火焚星笙',group:'火',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:2690,def:13,atk:104},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B36',name:'燎魂刀',group:'火',cells:[[0,0],[0,1]],base:{hp:1920,def:0,atk:47},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B37',name:'玄黄令',group:'土',cells:[[0,0]],base:{hp:1835,def:0,atk:6},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B38',name:'破岩锤',group:'土',cells:[[0,0],[0,1]],base:{hp:3320,def:0,atk:19},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B39',name:'撼地重锤',group:'土',cells:[[0,0],[1,0],[2,0]],base:{hp:3905,def:25,atk:25},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B40',name:'撼地震魄锤',group:'土',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:4740,def:38,atk:38},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B41',name:'坤元大钟',group:'土',cells:[[1,0],[1,1],[0,1]],base:{hp:5155,def:5,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B42',name:'坤元生息铠',group:'土',cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:6490,def:8,atk:33},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B43',name:'崩山短幡',group:'土',cells:[[0,0],[1,0],[0,1]],base:{hp:5005,def:9,atk:19},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B44',name:'崩山裂魂幡',group:'土',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:6090,def:16,atk:33},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B45',name:'破岩护臂',group:'土',cells:[[0,0],[1,0]],base:{hp:3320,def:0,atk:19},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B46',name:'雷灵珠',group:'雷',cells:[[0,0]],base:{hp:1135,def:0,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B47',name:'雷灵幡',group:'雷',cells:[[0,0],[1,0]],base:{hp:1920,def:0,atk:47},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B48',name:'鸣雷长枪',group:'雷',cells:[[0,0],[1,0],[2,0]],base:{hp:2305,def:11,atk:71},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B49',name:'鸣雷诛邪枪',group:'雷',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:2940,def:16,atk:96},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B50',name:'玄阴古筝',group:'雷',cells:[[0,0],[0,1],[0,2]],base:{hp:2755,def:10,atk:63},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B51',name:'玄阴霹雳鼓',group:'雷',cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:3590,def:14,atk:85},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B52',name:'雷元短幡',group:'雷',cells:[[1,0],[1,1],[0,1]],base:{hp:3105,def:9,atk:57},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B53',name:'雷元乌龙旗',group:'雷',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:4140,def:12,atk:76},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B54',name:'鸣雷鼓',group:'雷',cells:[[0,0],[0,1]],base:{hp:2320,def:0,atk:39},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B55',name:'大力丸',group:'体',cells:[[0,0]],base:{hp:1135,def:20,atk:0},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B56',name:'灵兽肉',group:'体',cells:[[0,0],[0,1]],base:{hp:1770,def:12,atk:38},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B57',name:'罡体腰带',group:'体',cells:[[0,0],[0,1],[0,2]],base:{hp:2855,def:14,atk:57},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B58',name:'罡体不破甲',group:'体',cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:3790,def:19,atk:76},bonusRate:60,bonusType:'self',bonusAttr:'hp',count:1},
-    {id:'B59',name:'百炼短锤',group:'体',cells:[[1,0],[1,1],[0,1]],base:{hp:3105,def:22,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B60',name:'百炼成金锤',group:'体',cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:4190,def:29,atk:58},bonusRate:50,bonusType:'self',bonusAttr:'def',count:1},
-    {id:'B61',name:'无相念珠',group:'体',cells:[[0,0],[1,0],[2,0]],base:{hp:2805,def:14,atk:58},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B62',name:'无相渡敌钵',group:'体',cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:3440,def:20,atk:82},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
-    {id:'B63',name:'九宫牌',group:'体',cells:[[0,0],[1,0]],base:{hp:2320,def:11,atk:28},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1}
+    {id:'B1',name:'蕴金戒',group:'金',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:1135,def:0,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B2',name:'分金刀',group:'金',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:2070,def:0,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B3',name:'重金短矛',group:'金',type:'枪',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:2555,def:11,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B4',name:'重金破阵矛',group:'金',type:'枪',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[3,0]],base:{hp:3040,def:15,atk:95},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B5',name:'玄金重剑',group:'金',type:'剑',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0]],base:{hp:3055,def:9,atk:58},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B6',name:'玄金碎甲剑',group:'金',type:'剑',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:3790,def:13,atk:82},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B7',name:'曜金寸刀',group:'金',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1]],base:{hp:2555,def:0,atk:77},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B8',name:'曜金战身刀',group:'金',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:3340,def:0,atk:104},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
+    {id:'B9',name:'蕴金枪',group:'金',type:'枪',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:1670,def:0,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B10',name:'枯荣种',group:'木',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:2135,def:0,atk:0},bonusRate:50,bonusType:'buff',bonusAttr:'hp',count:1},
+    {id:'B11',name:'老山参',group:'木',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:2070,def:0,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B12',name:'木灵短剑',group:'木',type:'剑',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1]],base:{hp:2455,def:13,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B13',name:'木灵大宝剑',group:'木',type:'剑',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:2840,def:19,atk:95},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B14',name:'噬元喷菇',group:'木',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1]],base:{hp:3805,def:8,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B15',name:'千瘴断魂琴',group:'木',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:3940,def:15,atk:77},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
+    {id:'B16',name:'千瘴短笛',group:'木',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:3005,def:11,atk:57},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B17',name:'噬元大丽花',group:'木',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:4790,def:12,atk:63},bonusRate:50,bonusType:'self',bonusAttr:'hp',count:1},
+    {id:'B18',name:'木灵匕首',group:'木',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:1670,def:0,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B19',name:'流水散',group:'水',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:1135,def:20,atk:0},bonusRate:100,bonusType:'buff',bonusAttr:'def',count:1},
+    {id:'B20',name:'净魂刃',group:'水',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:1670,def:13,atk:39},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B21',name:'霜华轻剑',group:'水',type:'剑',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0]],base:{hp:2805,def:14,atk:58},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B22',name:'霜华千影剑',group:'水',type:'剑',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:3440,def:20,atk:82},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
+    {id:'B23',name:'冰魄护肩',group:'水',type:'御',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1]],base:{hp:2955,def:17,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B24',name:'冰魄凝神甲',group:'水',type:'御',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:4140,def:22,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B25',name:'急冻瓜锤',group:'水',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:2805,def:20,atk:52},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B26',name:'急冻流星锤',group:'水',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:3590,def:28,atk:71},bonusRate:100,bonusType:'self',bonusAttr:'def',count:1},
+    {id:'B27',name:'净魂锤',group:'水',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:1620,def:15,atk:38},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B28',name:'炎脉髓',group:'火',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:1135,def:0,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B29',name:'燎魂唢呐',group:'火',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:2070,def:0,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B30',name:'至阳火鉴',group:'火',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1]],base:{hp:2655,def:9,atk:66},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B31',name:'至阳风火轮',group:'火',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:3140,def:13,atk:95},bonusRate:40,bonusType:'self',bonusAttr:'atk',count:1},
+    {id:'B32',name:'炽影长刀',group:'火',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0]],base:{hp:2005,def:11,atk:77},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B33',name:'炽影破锋刃',group:'火',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:2790,def:14,atk:101},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B34',name:'拜火金锣',group:'火',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:2105,def:9,atk:77},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B35',name:'拜火焚星笙',group:'火',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:2690,def:13,atk:104},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B36',name:'燎魂刀',group:'火',type:'刀',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:1920,def:0,atk:47},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B37',name:'玄黄令',group:'土',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:1835,def:0,atk:6},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B38',name:'破岩锤',group:'土',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:3320,def:0,atk:19},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B39',name:'撼地重锤',group:'土',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0]],base:{hp:3905,def:25,atk:25},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B40',name:'撼地震魄锤',group:'土',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:4740,def:38,atk:38},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B41',name:'坤元大钟',group:'土',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:5155,def:5,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B42',name:'坤元生息铠',group:'土',type:'御',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:6490,def:8,atk:33},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B43',name:'崩山短幡',group:'土',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1]],base:{hp:5005,def:9,atk:19},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B44',name:'崩山裂魂幡',group:'土',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:6090,def:16,atk:33},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B45',name:'破岩护臂',group:'土',type:'御',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:3320,def:0,atk:19},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B46',name:'雷灵珠',group:'雷',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:1135,def:0,atk:20},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B47',name:'雷灵幡',group:'雷',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:1920,def:0,atk:47},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B48',name:'鸣雷长枪',group:'雷',type:'枪',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0]],base:{hp:2305,def:11,atk:71},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B49',name:'鸣雷诛邪枪',group:'雷',type:'枪',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:2940,def:16,atk:96},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B50',name:'玄阴古筝',group:'雷',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1],[0,2]],base:{hp:2755,def:10,atk:63},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B51',name:'玄阴霹雳鼓',group:'雷',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:3590,def:14,atk:85},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B52',name:'雷元短幡',group:'雷',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:3105,def:9,atk:57},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B53',name:'雷元乌龙旗',group:'雷',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:4140,def:12,atk:76},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B54',name:'鸣雷鼓',group:'雷',type:'乐',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:2320,def:0,atk:39},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B55',name:'大力丸',group:'体',type:'',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0]],base:{hp:1135,def:20,atk:0},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B56',name:'灵兽肉',group:'体',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1]],base:{hp:1770,def:12,atk:38},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B57',name:'罡体腰带',group:'体',type:'御',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[0,1],[0,2]],base:{hp:2855,def:14,atk:57},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B58',name:'罡体不破甲',group:'体',type:'御',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[0,1],[1,1]],base:{hp:3790,def:19,atk:76},bonusRate:60,bonusType:'self',bonusAttr:'hp',count:1},
+    {id:'B59',name:'百炼短锤',group:'体',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[1,0],[1,1],[0,1]],base:{hp:3105,def:22,atk:44},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B60',name:'百炼成金锤',group:'体',type:'锤',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0],[0,1]],base:{hp:4190,def:29,atk:58},bonusRate:50,bonusType:'self',bonusAttr:'def',count:1},
+    {id:'B61',name:'无相念珠',group:'体',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0],[2,0]],base:{hp:2805,def:14,atk:58},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B62',name:'无相渡敌钵',group:'体',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,1],[1,1],[2,1],[2,0]],base:{hp:3440,def:20,atk:82},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1},
+    {id:'B63',name:'九宫牌',group:'体',type:'异',awaken:{level:0,l1:{rate:0,attr:'atk',mode:'self'},l3:{rate:0,attr:'atk',mode:'global'}},cells:[[0,0],[1,0]],base:{hp:2320,def:11,atk:28},bonusRate:0,bonusType:'none',bonusAttr:'hp',count:1}
   ];
 
   function emptyEff(){
@@ -911,7 +970,7 @@
     DEFAULT_LIBRARY.forEach(t=>{
       if(library.some(x=>x.group===t.group && x.name===t.name)) return;
       const id=uniqueName(t.name);
-      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, key:false, skill:null });
+      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?t.type:'异'), awaken:cloneAwaken(t.awaken), key:false, skill:null });
       sel[id]={include:false,count:0,priority:false};
       added++;
     });
@@ -962,7 +1021,7 @@
     return [...map.values()];
   }
   function gistPayload(){
-    return { version:1, library:library.map(serializeLibItem), groups:groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), deleted:[...deletedNames] };
+    return { version:2, library:library.map(serializeLibItem), groups:groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), deleted:[...deletedNames] };
   }
   // 用合并后的「存储态」重建本地 library/groups，并尽量保留本地已有的勾选(sel)状态
   function rebuildFromMerged(libStored, grpStored){
@@ -977,7 +1036,7 @@
       library.push({ id, name:String(t.name||t.id), cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length),
         base:(t.base&&typeof t.base==='object')?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0}:{hp:0,def:0,atk:0},
         bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp',
-        count:Math.max(0,Number(t.count)||0), group:grpId, key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       if(!sel[id]) sel[id]={ include:!grpOff, count:Math.max(0,Number(t.count)||0), priority:false };
     });
     tid=library.length; gidCounter=groups.length;
@@ -987,12 +1046,12 @@
     const c=cloudCfg();
     try{
       const local=gistPayload();
-      let base={ version:1, library:[], groups:[], deleted:[] };
+      let base={ version:2, library:[], groups:[], deleted:[] };
       if(c.gistId){
         try{
           const g=await gistApi('/gists/'+encodeURIComponent(c.gistId),'GET');
           const f=g.files && g.files[GIST_FILE];
-          if(f&&f.content){ const d=JSON.parse(f.content); if(Array.isArray(d.library)) base={ version:1, library:d.library, groups:d.groups||[], deleted:d.deleted||[] }; }
+          if(f&&f.content){ const d=JSON.parse(f.content); if(Array.isArray(d.library)) base={ version:2, library:d.library, groups:d.groups||[], deleted:d.deleted||[] }; }
         }catch(e){ /* 读不到旧数据则当作空 */ }
       }
       // 合并删除墓碑：本地 + 云端 已删除名称的并集
@@ -1001,7 +1060,7 @@
       const mergedLib=mergeItems(base.library, local.library).filter(t=>!del.has(String(t.id||t.name)));
       const mergedGrp=mergeGroups(base.groups, local.groups);
       deletedNames=del; saveDeleted(del);
-      const content=JSON.stringify({ version:1, library:mergedLib, groups:mergedGrp, deleted:[...del] }, null, 2);
+      const content=JSON.stringify({ version:2, library:mergedLib, groups:mergedGrp, deleted:[...del] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -1040,7 +1099,7 @@
     const c=cloudCfg();
     try{
       const local=gistPayload();
-      const content=JSON.stringify({ version:1, library:local.library, groups:local.groups, deleted:[] }, null, 2);
+      const content=JSON.stringify({ version:2, library:local.library, groups:local.groups, deleted:[] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -1108,6 +1167,8 @@
         else if(/生命/.test(h)) map.hp=ci;
         else if(/防御/.test(h)) map.def=ci;
         else if(/攻击/.test(h)) map.atk=ci;
+        else if(/法宝类型|类型属性/.test(h)) map.type=ci;
+        else if(/觉醒等级|觉醒/.test(h)) map.awLevel=ci;
         else if(/加成率|加成%/.test(h)) map.bonusRate=ci;
         else if(/加成类型|类型/.test(h)) map.bonusType=ci;
         else if(/加成属性|属性/.test(h)) map.bonusAttr=ci;
@@ -1132,18 +1193,22 @@
       const bonusType=BT_MAP[String(map.bonusType!=null?r[map.bonusType]:'').trim()]||'none';
       const bonusAttr=BA_MAP[String(map.bonusAttr!=null?r[map.bonusAttr]:'').trim()]||'hp';
       const keyVal = map.key!=null ? /(是|true|1|√|yes|重点)/i.test(String(r[map.key]||'')) : false;
+      const typeVal = map.type!=null ? String(r[map.type]!=null?r[map.type]:'').trim() : null;   // null=表里没有该列
+      const awLevel = map.awLevel!=null ? (parseInt(r[map.awLevel])||0) : null;
       const existing=library.find(t=>t.name===name);
       if(existing){
         existing.cells=PackCore.normalizeShape(cells);
         existing.group=group;
         existing.base={hp,def,atk};
         existing.bonusRate=bonusRate; existing.bonusType=bonusType; existing.bonusAttr=bonusAttr;
+        if(typeVal!=null) existing.type=typeVal;
+        if(awLevel!=null) existing.awaken=cloneAwaken({level:awLevel});
         existing.key=keyVal; existing.count=Math.max(0,existing.count||0);
         if(sel[existing.id]){ if(!grpEnabled) sel[existing.id].include=false; sel[existing.id].count=Math.max(0,sel[existing.id].count||0); }
         updated++;
       } else {
         const id=uniqueName(name);
-        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk},bonusRate,bonusType,bonusAttr,count:0,group,key:keyVal,skill:null});
+        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
         sel[id]={include:grpEnabled,count:0,priority:false};
         added++;
       }
@@ -1219,7 +1284,7 @@
     if(h.plans&&h.plans.length){ renderPlans(h.plans,h.backpack,h.ms||0); $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合与结果。'; }
     else $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合。';
   }
-  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, key:!!t.key, skill:t.skill||null }; }
+  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?t.type:'异'), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -1240,7 +1305,7 @@
   function renderQuickShapes(){ const box=$('quickShapes'); box.innerHTML=''; Object.keys(SHAPES).forEach(name=>{ const b=document.createElement('button'); b.textContent=name; b.onclick=()=>addToLibrary(name, SHAPES[name].map(c=>c.slice()), 1); box.appendChild(b); }); }
   const DRAW=5; let drawSel=new Set();
   function renderDraw(){ const g=$('drawGrid'); g.style.gridTemplateColumns=`repeat(${DRAW},18px)`; g.innerHTML=''; for(let r=0;r<DRAW;r++) for(let c=0;c<DRAW;c++){ const k=r+','+c; const d=document.createElement('div'); d.className='cell tiny click'+(drawSel.has(k)?' sel':''); d.onclick=()=>{ if(drawSel.has(k)) drawSel.delete(k); else drawSel.add(k); d.classList.toggle('sel'); }; g.appendChild(d); } }
-  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const opts={ group:($('drawGroup').value||'')||null, hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp' }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; };
+  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL3r=Number($('drawAL3Rate').value)||0; const aL3a=$('drawAL3Attr').value||'atk'; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a,mode:'self'}, l3:{rate:aL3r,attr:aL3a,mode:aL3m,series:aL3s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; };
   function uniqueName(name){ let base=(name||'法宝').trim()||'法宝'; let nm=base, k=2; while(library.some(t=>t.name===nm)){ nm=base+' #'+k; k++; } return nm; }
   function addToLibrary(name,cells,count,opts){
     opts=opts||{};
@@ -1252,7 +1317,7 @@
     library.push({id,name:nm,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),
       base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0},
       bonusRate:opts.bonusRate||0,bonusType:opts.bonusType||'none',bonusAttr:opts.bonusAttr||'hp',
-      count:Math.max(0,count||0),group:grp,key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
+      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:'异'),awaken:cloneAwaken(opts.awaken),key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
     sel[id]={include:grpEnabled,count:Math.max(0,count||0),priority:false};
     renderInventory(); saveLibrary();
   }
@@ -1261,7 +1326,7 @@
   function renderInventory(){
     $('libCount').textContent = library.length;
     const body=$('invBody'); body.innerHTML='';
-    if(library.length===0){ body.innerHTML='<tr><td colspan="14" class="empty-note">宝鉴还没有法宝，请展开下方「添加法宝」录入，录入后自动保存到本机。</td></tr>'; updateSummary(); return; }
+    if(library.length===0){ body.innerHTML='<tr><td colspan="16" class="empty-note">宝鉴还没有法宝，请展开下方「添加法宝」录入，录入后自动保存到本机。</td></tr>'; updateSummary(); return; }
     // 按当前筛选（搜索 + 启用状态 + 组别）生成「实际索引」视图
     const view = library.map((t,i)=>i).filter(i=>{
       const t=library[i];
@@ -1288,7 +1353,7 @@
       if(cb!==ca) return cb-ca;
       return (tb.cells.length)-(ta.cells.length);
     });
-    if(view.length===0){ body.innerHTML='<tr><td colspan="14" class="empty-note">当前筛选下没有法宝（可切换上方「全部法宝 / 已启用 / 未启用 / 组别」）。</td></tr>'; updateSummary(); return; }
+    if(view.length===0){ body.innerHTML='<tr><td colspan="16" class="empty-note">当前筛选下没有法宝（可切换上方「全部法宝 / 已启用 / 未启用 / 组别」）。</td></tr>'; updateSummary(); return; }
     const optsB='<option value="none">无加成</option><option value="self">自身受加成</option><option value="buff">给他人加成</option>';
     const optsA='<option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option>';
     view.forEach(actualIndex=>{
@@ -1307,12 +1372,14 @@
         '<td style="text-align:center"><button class="keystar '+(t.key?'on':'')+'" data-i="'+i+'" title="标记/取消「重点法宝」：重点法宝永远排最前，名称与数值标红加粗">'+(t.key?'★':'☆')+'</button></td>'+
         '<td class="shape-td"><div class="mini-wrap" id="mini-'+i+'">'+shapeMini(t.cells,t.color)+'</div><input type="text" class="shapein" value="'+escapeHtml(shapeText(t.cells))+'" data-i="'+i+'" placeholder="0,0 1,0" title="输入坐标对，以空格分隔，如 0,0 1,0 1,1（左上角为 0,0）"></td>'+
         '<td><select class="grp" data-i="'+i+'">'+groupOptions(t.group)+'</select></td>'+
+        '<td><select class="tp" data-i="'+i+'">'+typeOptions(t.type)+'</select></td>'+
         '<td><input type="number" min="0" class="anum hpnum" value="'+((t.base&&t.base.hp)||0)+'" data-i="'+i+'"></td>'+
         '<td><input type="number" min="0" class="anum defnum" value="'+((t.base&&t.base.def)||0)+'" data-i="'+i+'"></td>'+
         '<td><input type="number" min="0" class="anum atknum" value="'+((t.base&&t.base.atk)||0)+'" data-i="'+i+'"></td>'+
         '<td><input type="number" min="0" class="brate" value="'+(t.bonusRate||0)+'" data-i="'+i+'"></td>'+
         '<td><select class="btype" data-i="'+i+'">'+optsB.replace('value="'+bt+'"','value="'+bt+'" selected')+'</select></td>'+
         '<td><select class="battr" data-i="'+i+'" '+bDisabled+'>'+optsA.replace('value="'+ba+'"','value="'+ba+'" selected')+'</select></td>'+
+        '<td class="aw-cell"><span class="aw-sum">'+((t.awaken&&t.awaken.level>0)?t.awaken.level:'—')+'</span></td>'+
         '<td><input type="number" min="0" max="99" class="cnum" value="'+(t.count||0)+'" data-i="'+i+'"></td>'+
         '<td style="text-align:center"><input type="checkbox" class="pk" '+(s.priority?'checked':'')+' data-i="'+i+'"></td>'+
         '<td style="white-space:nowrap"><button class="dt" data-i="'+i+'" title="查看全部信息并录入技能参数">详情</button> <button class="del" data-i="'+i+'">删除</button></td>';
@@ -1333,6 +1400,7 @@
     body.querySelectorAll('.pk').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; sel[library[i].id].priority=e.target.checked; });
     body.querySelectorAll('.keystar').forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const t=library[i]; t.key=!t.key; saveLibrary(); renderInventory(); });
     body.querySelectorAll('.grp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const newG=e.target.value||null; library[i].group=newG; const g=newG?groups.find(x=>x.id===newG):null; if(g && !g.enabled) sel[library[i].id].include=false; renderInventory(); saveLibrary(); });
+    body.querySelectorAll('.tp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; library[i].type=e.target.value; saveLibrary(); });
     body.querySelectorAll('.shapein').forEach(el=>{ const i=+el.dataset.i;
       el.oninput=e=>{ const c=parseShapeInput(e.target.value); if(c){ library[i].cells=c; const mw=document.getElementById('mini-'+i); if(mw) mw.innerHTML=shapeMini(c, library[i].color); } };
       el.onchange=e=>{ const c=parseShapeInput(e.target.value); if(c){ library[i].cells=c; } else { el.value=shapeText(library[i].cells); } updateSummary(); saveLibrary(); };
@@ -1397,6 +1465,8 @@
     });
     renderGroupFilter();
     const dg=$('drawGroup'); if(dg) dg.innerHTML=groupOptions(''); // 同步「添加法宝」的组别下拉
+    const dt=$('drawType'); if(dt) dt.innerHTML=typeOptions('异');
+    const al=$('drawALevel'); if(al) al.innerHTML=levelOptions(0);
   }
   function renderGroupFilter(){
     const sel2=$('groupFilter'); const cur=sel2.value; sel2.innerHTML='<option value="all">全部组别</option><option value="ungrouped">未分组</option>';
@@ -1416,6 +1486,11 @@
     groups.splice(groups.indexOf(g),1); saveLibrary(); renderGroups(); renderInventory();
   }
   function groupOptions(cur){ let h='<option value="">未分组</option>'; groups.forEach(g=>{ h+='<option value="'+escapeHtml(g.id)+'"'+(cur===g.id?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }); return h; }
+  function typeOptions(cur){ const arr=['刀','枪','剑','锤','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; }); return h; }
+  function levelOptions(cur){ let h=''; for(let v=0;v<=3;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; }
+  function awakenSummary(a){ if(!a||a.level===0) return '—'; let s='L'+a.level; if(a.level>=1&&a.l1&&a.l1.rate) s+=' · 自'+(a.l1.attr)+(a.l1.rate); if(a.level>=3&&a.l3&&a.l3.rate){ const m=a.l3.mode==='self'?'自':a.l3.mode==='adjacent'?'邻':'包'; s+=' / 系'+m+(a.l3.attr)+(a.l3.rate); } return s; }
+  function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk',mode:'self'}, l3:{rate:0,attr:'atk',mode:'global',series:'group'} }; }
+  function cloneAwaken(a){ if(!a) return DEFAULT_AWAKEN(); const l1=a.l1||{}, l3=a.l3||{}; return { level:Number(a.level)||0, l1:{ rate:Number(l1.rate)||0, attr:l1.attr||'atk', mode:l1.mode||'self' }, l3:{ rate:Number(l3.rate)||0, attr:l3.attr||'atk', mode:l3.mode||'global', series:l3.series||'group' } }; }
 
   /* ===================== 法宝详情弹窗：只读查看全部信息 ===================== */
   let dtIdx=-1;
@@ -1432,9 +1507,11 @@
     const s=sel[t.id]||{}; const g=t.group?groups.find(x=>x.id===t.group):null;
     const BT={none:'无加成',self:'自身受加成',buff:'给他人加成'}, BA={hp:'生命值',def:'防御力',atk:'攻击力'};
     const nf=n=>Math.round(n||0).toLocaleString('en-US');
-    $('dtMsg').textContent='法宝详情（只读）';
+    const a=t.awaken||DEFAULT_AWAKEN();
+    const optsAttr=(cur)=>{ const arr=[['hp','生命值'],['def','防御力'],['atk','攻击力']]; let h=''; arr.forEach(([v,n])=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+n+'</option>'; }); return h; };
+    $('dtMsg').textContent='法宝详情（可编辑「类型属性」与「觉醒设置」，保存后生效）';
     let h='';
-    /* --- 基本信息（只读展示，编辑在表格里做） --- */
+    /* --- 基本信息（只读展示） --- */
     h+='<div class="sk-sub">基本信息</div><div class="dt-info-grid">'+
       '<div class="dt-info-card"><div class="dt-info-title">名称</div><div class="dt-info-body">'+escapeHtml(t.name)+(t.key?' <span style="color:#e6342b">★重点</span>':'')+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">组别</div><div class="dt-info-body">'+escapeHtml(g?g.name:'未分组')+'</div></div>'+
@@ -1446,11 +1523,29 @@
       '<div class="dt-info-card"><div class="dt-info-title">加成</div><div class="dt-info-body">'+(t.bonusType==='none'?'无':((t.bonusRate||0)+'% · '+BT[t.bonusType]+' · '+BA[t.bonusAttr||'hp']))+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">启用状态</div><div class="dt-info-body">'+(s.include?'已启用':'未启用')+'</div></div>'+
       '</div><div style="margin-top:9px">'+shapeMini(t.cells,t.color)+'</div>';
+    /* --- 类型属性（可编辑） --- */
+    h+='<div class="sk-sub" style="margin-top:14px">类型属性</div>'+
+      '<div class="dt-edit"><label>法宝类型（刀枪剑锤御异乐）</label><select id="dtType">'+typeOptions(t.type)+'</select></div>';
+    /* --- 觉醒设置（可编辑） --- */
+    h+='<div class="sk-sub" style="margin-top:14px">觉醒设置</div>'+
+      '<div class="awaken-panel">'+
+      '<div class="dt-edit"><label>觉醒等级</label><select id="dtALevel">'+levelOptions(a.level)+'</select></div>'+
+      '<div class="dt-grid">'+
+        '<div class="dt-edit"><label>一级·加成值%</label><input type="number" id="dtAL1Rate" min="0" class="dt-num" value="'+((a.l1&&a.l1.rate)||0)+'"></div>'+
+        '<div class="dt-edit"><label>一级·加成属性</label><select id="dtAL1Attr">'+optsAttr(a.l1?a.l1.attr:'atk')+'</select></div>'+
+      '</div>'+
+      '<div class="dt-grid">'+
+        '<div class="dt-edit"><label>三级·加成值%</label><input type="number" id="dtAL3Rate" min="0" class="dt-num" value="'+((a.l3&&a.l3.rate)||0)+'"></div>'+
+        '<div class="dt-edit"><label>三级·加成属性</label><select id="dtAL3Attr">'+optsAttr(a.l3?a.l3.attr:'atk')+'</select></div>'+
+        '<div class="dt-edit"><label>三级·作用范围</label><select id="dtAL3Mode"><option value="self"'+((a.l3&&a.l3.mode==='self')?' selected':'')+'>自身</option><option value="adjacent"'+((a.l3&&a.l3.mode==='adjacent')?' selected':'')+'>相邻同系列</option><option value="global"'+((a.l3&&a.l3.mode==='global')?' selected':'')+'>背包同系列除己</option></select></div>'+
+        '<div class="dt-edit"><label>三级·同系依据</label><select id="dtAL3Series"><option value="group"'+((!a.l3||a.l3.series!=='type')?' selected':'')+'>元素属性</option><option value="type"'+((a.l3&&a.l3.series==='type')?' selected':'')+'>类型属性</option></select></div>'+
+      '</div>'+
+      '</div>';
     $('dtBody').innerHTML=h;
   }
   $('dtX').onclick=closeDetail; $('dtCancel').onclick=closeDetail;
   $('dtMask').onclick=e=>{ if(e.target===$('dtMask')) closeDetail(); };
-  $('dtSave').onclick=closeDetail;
+  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk',mode:'self'}, l3:{rate:Number($('dtAL3Rate').value)||0,attr:$('dtAL3Attr').value||'atk',mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group'} }); saveLibrary(); } closeDetail(); renderInventory(); };
 
 
   /* ---------- 一键生成（多批次 + 跨批全局最优合并） ---------- */
@@ -1458,7 +1553,7 @@
   function sigOfPlan(p){ return p.placements.map(pl=>pl.name+':'+pl.cells.map(c=>c.join(',')).join(';')).sort().join('|'); }
   function buildPieces(){
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
-    return chosen.map(t=>{ const s=sel[t.id]; return { name:t.id, cells:t.cells, count:s.count, priority:s.priority, key:t.key, hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null }; });
+    return chosen.map(t=>{ const s=sel[t.id]; return { name:t.id, cells:t.cells, count:s.count, priority:s.priority, key:t.key, hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:cloneAwaken(t.awaken) }; });
   }
   function doSolve(seed, accumulate){
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
@@ -1523,7 +1618,9 @@
        整体属性 = 所有法宝最终属性的分项求和。 */
   function computeAttributes(plan,libMap,R,C){
     const sameGroup=(a,b)=> !!(a&&b && a.group!=null && b.group!=null && a.group===b.group);
-    const items = plan.placements.map(p=>({ name:p.name, cells:p.cells, m: libMap[p.name] || {hp:0,def:0,atk:0,bonusRate:0,bonusAttr:'hp',bonusType:'none'} }));
+    const sameType=(a,b)=> !!(a&&b && a.type && b.type && a.type===b.type);
+    const sameSeries=(a,b)=> sameGroup(a,b)||sameType(a,b);
+    const items = plan.placements.map(p=>({ name:p.name, cells:p.cells, m: libMap[p.name] || {hp:0,def:0,atk:0,bonusRate:0,bonusAttr:'hp',bonusType:'none',type:null,awaken:null} }));
     const N = items.length;
     const occ = new Array(R*C).fill(-1);
     items.forEach((it,ii)=> it.cells.forEach(([r,c])=>{ occ[r*C+c]=ii; }));
@@ -1538,17 +1635,16 @@
     }
     const finalAttrs = items.map(()=>({hp:0,def:0,atk:0}));
     const totals = {hp:0,def:0,atk:0};
+    const seriesMult = items.map(()=>({hp:1,def:1,atk:1}));
+    const selfMultArr=[], buffMultArr=[];
     for(let ii=0; ii<N; ii++){
       const m = items[ii].m;
-      const b = { hp:Number(m.hp)||0, def:Number(m.def)||0, atk:Number(m.atk)||0 };
-      // 自身受加成：仅统计「同组别」的相邻法宝
       const selfMult = {hp:1,def:1,atk:1};
       if(m.bonusType==='self' && m.bonusAttr){
         const rate=(Number(m.bonusRate)||0)/100;
         let k=0; for(const j of adj[ii]){ if(sameGroup(m, items[j].m)) k++; }
         selfMult[m.bonusAttr] = 1 + rate*k;
       }
-      // 他人加成：仅来自「同组别」且类型为“给他人加成”的相邻法宝
       const buffMult = {hp:1,def:1,atk:1};
       for(const j of adj[ii]){
         const mj = items[j].m;
@@ -1557,9 +1653,31 @@
           buffMult[mj.bonusAttr] += rate;
         }
       }
-      finalAttrs[ii].hp = b.hp*selfMult.hp*buffMult.hp;
-      finalAttrs[ii].def = b.def*selfMult.def*buffMult.def;
-      finalAttrs[ii].atk = b.atk*selfMult.atk*buffMult.atk;
+      // 一级觉醒：固有自身乘子（与邻居无关，level>=1 生效，叠在原有 self 之上）
+      if(m.awaken&&m.awaken.level>=1&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; const r=(Number(l1.rate)||0)/100; if(l1.attr) selfMult[l1.attr]*=(1+r); }
+      selfMultArr[ii]=selfMult; buffMultArr[ii]=buffMult;
+    }
+    // 三级觉醒：系列加成（自身 / 相邻同系 / 背包同系除己；同系依据 = 元素属性 或 类型属性，二选一）
+    for(let ii=0; ii<N; ii++){
+      const m=items[ii].m; if(!m.awaken||m.awaken.level<3) continue;
+      const l3=m.awaken.l3; if(!l3||!l3.rate) continue;
+      const r=(Number(l3.rate)||0)/100; const attr=l3.attr||'atk';
+      const byGroup = (l3.series!=='type'); // 默认按元素属性（group）；series='type' 时按类型属性
+      let targets;
+      if(l3.mode==='self') targets=[ii];
+      else if(l3.mode==='adjacent') targets=[...adj[ii]];
+      else { targets=[]; for(let j=0;j<N;j++) if(j!==ii) targets.push(j); }
+      for(const t of targets){ if(t===ii&&l3.mode!=='self') continue;
+        const mt=items[t].m;
+        if(l3.mode!=='self'){ const ok = byGroup? sameGroup(m,mt) : sameType(m,mt); if(!ok) continue; }
+        seriesMult[t][attr]*=(1+r);
+      }
+    }
+    for(let ii=0; ii<N; ii++){
+      const m = items[ii].m;
+      finalAttrs[ii].hp = (Number(m.hp)||0)*selfMultArr[ii].hp*buffMultArr[ii].hp*seriesMult[ii].hp;
+      finalAttrs[ii].def = (Number(m.def)||0)*selfMultArr[ii].def*buffMultArr[ii].def*seriesMult[ii].def;
+      finalAttrs[ii].atk = (Number(m.atk)||0)*selfMultArr[ii].atk*buffMultArr[ii].atk*seriesMult[ii].atk;
       totals.hp += finalAttrs[ii].hp;
       totals.def += finalAttrs[ii].def;
       totals.atk += finalAttrs[ii].atk;
@@ -1568,7 +1686,7 @@
   }
 
   /* ===================== 配置保存 / 读取 ===================== */
-  function serializeConfig(){ return { library: library.map(t=>{ const s=sel[t.id]||{}; return {id:t.id,name:t.name,cells:t.cells,base:{hp:t.base&&t.base.hp||0,def:t.base&&t.base.def||0,atk:t.base&&t.base.atk||0},bonusRate:t.bonusRate||0,bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',group:t.group||null,count:s.count||0,priority:!!s.priority,include:s.include!==false}; }), backpack:{rows:bagRows(),cols:bagCols(),blocked:[...bagBlocked]} }; }
+  function serializeConfig(){ return { library: library.map(t=>{ const s=sel[t.id]||{}; return {id:t.id,name:t.name,cells:t.cells,base:{hp:t.base&&t.base.hp||0,def:t.base&&t.base.def||0,atk:t.base&&t.base.atk||0},bonusRate:t.bonusRate||0,bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',group:t.group||null,type:(t.type!=null?t.type:''),awaken:cloneAwaken(t.awaken),count:s.count||0,priority:!!s.priority,include:s.include!==false}; }), backpack:{rows:bagRows(),cols:bagCols(),blocked:[...bagBlocked]} }; }
   function saveConfig(){
     const cfg=serializeConfig();
     try{ localStorage.setItem('treasurePackConfig',JSON.stringify(cfg)); }catch(e){}
@@ -1579,7 +1697,7 @@
   function loadConfig(cfg){
     if(!cfg||!Array.isArray(cfg.library)) return false;
     library.length=0; Object.keys(sel).forEach(k=>delete sel[k]); tid=0;
-    cfg.library.forEach(t=>{ tid++; const nm=String(t.name||t.id||('法宝'+tid)); const id=nm; const base=(typeof t.base==='object'&&t.base)?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0}:{hp:Number(t.base)||0,def:0,atk:0}; library.push({id,name:nm,cells:PackCore.normalizeShape(t.cells||[[0,0]]),color:colorOf(library.length),base,bonusRate:Number(t.bonusRate)||0,bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',group:t.group||null,count:Math.max(0,t.count||0)}); sel[id]={include:t.include!==false,count:Math.max(0,t.count||0),priority:!!t.priority}; });
+    cfg.library.forEach(t=>{ tid++; const nm=String(t.name||t.id||('法宝'+tid)); const id=nm; const base=(typeof t.base==='object'&&t.base)?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0}:{hp:Number(t.base)||0,def:0,atk:0}; library.push({id,name:nm,cells:PackCore.normalizeShape(t.cells||[[0,0]]),color:colorOf(library.length),base,bonusRate:Number(t.bonusRate)||0,bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',group:t.group||null,type:(t.type!=null?t.type:''),awaken:cloneAwaken(t.awaken),count:Math.max(0,t.count||0)}); sel[id]={include:t.include!==false,count:Math.max(0,t.count||0),priority:!!t.priority}; });
     if(cfg.backpack){ $('rows').value=cfg.backpack.rows; $('cols').value=cfg.backpack.cols; bagBlocked=new Set((cfg.backpack.blocked||[]).filter(i=>i>=0)); }
     $('preset').value='custom'; renderInventory(); renderBagGrid(); saveLibrary(); return true;
   }
@@ -1646,7 +1764,7 @@
     $('exportResult').disabled = !(plans&&plans.length);
     const R=backpack.rows,C=backpack.cols;
     const colorById={}; const idName={}; const libMap={};
-    library.forEach(t=>{ colorById[t.id]=t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null }; });
+    library.forEach(t=>{ colorById[t.id]=t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:(t.awaken||null) }; });
     const weights=readWeights();
     plans.forEach(p=>{ const a=computeAttributes(p,libMap,R,C); p.totals=a.totals; p.perAttrs=a.per; p.weighted=weightedScore(a.totals,weights); });
     const mode=$('sortMode')?$('sortMode').value:'attr';

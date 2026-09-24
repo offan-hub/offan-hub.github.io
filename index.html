@@ -1486,7 +1486,7 @@
     groups.splice(groups.indexOf(g),1); saveLibrary(); renderGroups(); renderInventory();
   }
   function groupOptions(cur){ let h='<option value="">未分组</option>'; groups.forEach(g=>{ h+='<option value="'+escapeHtml(g.id)+'"'+(cur===g.id?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }); return h; }
-  function typeOptions(cur){ const arr=['刀','枪','剑','锤','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; }); return h; }
+  function typeOptions(cur){ const arr=['','刀','枪','剑','锤','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+((cur||'')===v?' selected':'')+'>'+(v||'无')+'</option>'; }); return h; }
   function levelOptions(cur){ let h=''; for(let v=0;v<=3;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; }
   function awakenSummary(a){ if(!a||a.level===0) return '—'; let s='L'+a.level; if(a.level>=1&&a.l1&&a.l1.rate) s+=' · 自'+(a.l1.attr)+(a.l1.rate); if(a.level>=3&&a.l3&&a.l3.rate){ const m=a.l3.mode==='self'?'自':a.l3.mode==='adjacent'?'邻':'包'; s+=' / 系'+m+(a.l3.attr)+(a.l3.rate); } return s; }
   function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk',mode:'self'}, l3:{rate:0,attr:'atk',mode:'global',series:'group'} }; }

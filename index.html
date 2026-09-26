@@ -993,6 +993,11 @@
   function loadDeleted(){ try{ const a=JSON.parse(localStorage.getItem(DELETED_KEY)||'[]'); return new Set(Array.isArray(a)?a:[]); }catch(e){ return new Set(); } }
   function saveDeleted(s){ try{ localStorage.setItem(DELETED_KEY, JSON.stringify([...s])); }catch(e){} }
   let deletedNames = loadDeleted();
+  // 组别墓碑：被删除的组别名称集合（与法宝墓碑同理，防止云端并集合并把已删组别复活）
+  const DELETED_GRP_KEY='treasurePackGistDeletedGroups';
+  function loadDeletedGroups(){ try{ const a=JSON.parse(localStorage.getItem(DELETED_GRP_KEY)||'[]'); return new Set(Array.isArray(a)?a:[]); }catch(e){ return new Set(); } }
+  function saveDeletedGroups(s){ try{ localStorage.setItem(DELETED_GRP_KEY, JSON.stringify([...s])); }catch(e){} }
+  let deletedGroupNames = loadDeletedGroups();
   async function gistApi(path, method, body){
     const c=cloudCfg(); if(!c||!c.token) throw new Error('未配置 GitHub Token');
     const res=await fetch('https://api.github.com'+path,{
@@ -1021,7 +1026,7 @@
     return [...map.values()];
   }
   function gistPayload(){
-    return { version:2, library:library.map(serializeLibItem), groups:groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), deleted:[...deletedNames] };
+    return { version:2, library:library.map(serializeLibItem), groups:groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), deleted:[...deletedNames], deletedGroups:[...deletedGroupNames] };
   }
   // 用合并后的「存储态」重建本地 library/groups，并尽量保留本地已有的勾选(sel)状态
   function rebuildFromMerged(libStored, grpStored){
@@ -1046,21 +1051,22 @@
     const c=cloudCfg();
     try{
       const local=gistPayload();
-      let base={ version:2, library:[], groups:[], deleted:[] };
+      let base={ version:2, library:[], groups:[], deleted:[], deletedGroups:[] };
       if(c.gistId){
         try{
           const g=await gistApi('/gists/'+encodeURIComponent(c.gistId),'GET');
           const f=g.files && g.files[GIST_FILE];
-          if(f&&f.content){ const d=JSON.parse(f.content); if(Array.isArray(d.library)) base={ version:2, library:d.library, groups:d.groups||[], deleted:d.deleted||[] }; }
+          if(f&&f.content){ const d=JSON.parse(f.content); if(Array.isArray(d.library)) base={ version:2, library:d.library, groups:d.groups||[], deleted:d.deleted||[], deletedGroups:d.deletedGroups||[] }; }
         }catch(e){ /* 读不到旧数据则当作空 */ }
       }
-      // 合并删除墓碑：本地 + 云端 已删除名称的并集
+      // 合并删除墓碑：本地 + 云端 已删除名称的并集（法宝 + 组别）
       const del=new Set([...(base.deleted||[]), ...deletedNames]);
+      const delG=new Set([...(base.deletedGroups||[]), ...deletedGroupNames]);
       // 合并法宝：本地覆盖 Gist 中同名项（不会丢失对方已上传的法宝），再剔除墓碑项
       const mergedLib=mergeItems(base.library, local.library).filter(t=>!del.has(String(t.id||t.name)));
-      const mergedGrp=mergeGroups(base.groups, local.groups);
-      deletedNames=del; saveDeleted(del);
-      const content=JSON.stringify({ version:2, library:mergedLib, groups:mergedGrp, deleted:[...del] }, null, 2);
+      const mergedGrp=mergeGroups(base.groups, local.groups).filter(g=>!delG.has(String(g.id||g.name)));
+      deletedNames=del; saveDeleted(del); deletedGroupNames=delG; saveDeletedGroups(delG);
+      const content=JSON.stringify({ version:2, library:mergedLib, groups:mergedGrp, deleted:[...del], deletedGroups:[...delG] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -1082,12 +1088,13 @@
       const f=g.files && g.files[GIST_FILE];
       if(!f||!f.content){ setCloudStatus('Gist 中暂无数据（可先点“立即推送”上传本地数据）'); return; }
       const data=JSON.parse(f.content);
-      // 合并删除墓碑：本地 + 云端 已删除名称的并集
+      // 合并删除墓碑：本地 + 云端 已删除名称的并集（法宝 + 组别）
       const del=new Set([...(data.deleted||[]), ...deletedNames]);
-      deletedNames=del; saveDeleted(del);
-      // 合并：Gist 覆盖本地同名项，其余并集，再剔除墓碑项
+      const delG=new Set([...(data.deletedGroups||[]), ...deletedGroupNames]);
+      deletedNames=del; saveDeleted(del); deletedGroupNames=delG; saveDeletedGroups(delG);
+      // 合并：Gist 覆盖本地同名项，其余并集，再剔除墓碑项（法宝 + 组别）
       const mergedLib=mergeItems(library.map(serializeLibItem), data.library||[]).filter(t=>!del.has(String(t.id||t.name)));
-      const mergedGrp=mergeGroups(groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), data.groups||[]);
+      const mergedGrp=mergeGroups(groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), data.groups||[]).filter(g=>!delG.has(String(g.id||g.name)));
       if(mergedLib.length===0 && mergedGrp.length===0){ setCloudStatus('Gist 为空（或所法宝均已被删除）'); renderInventory(); renderGroups(); renderQuickShapes(); return; }
       rebuildFromMerged(mergedLib, mergedGrp);
       saveLocalOnly(); renderInventory(); renderGroups(); renderQuickShapes();
@@ -1099,7 +1106,7 @@
     const c=cloudCfg();
     try{
       const local=gistPayload();
-      const content=JSON.stringify({ version:2, library:local.library, groups:local.groups, deleted:[] }, null, 2);
+      const content=JSON.stringify({ version:2, library:local.library, groups:local.groups, deleted:[], deletedGroups:[] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -1452,7 +1459,7 @@
   $('groupFilter').onchange=()=>{ groupFilter=$('groupFilter').value; renderInventory(); };
   $('invSort').onchange=()=>renderInventory();
   $('libSearch').oninput=()=>{ searchTerm=($('libSearch').value||'').trim().toLowerCase(); renderInventory(); };
-  $('newGroup').onclick=()=>{ let nm=$('newGroupName').value.trim()||('组别'+(groups.length+1)); let base=nm,k=2; while(groups.some(g=>g.name===nm)){ nm=base+' #'+k; k++; } groups.push({id:nm,name:nm,enabled:false}); $('newGroupName').value=''; saveLibrary(); renderGroups(); renderInventory(); };
+  $('newGroup').onclick=()=>{ let nm=$('newGroupName').value.trim()||('组别'+(groups.length+1)); let base=nm,k=2; while(groups.some(g=>g.name===nm)){ nm=base+' #'+k; k++; } groups.push({id:nm,name:nm,enabled:false}); if(deletedGroupNames.delete(nm)) saveDeletedGroups(deletedGroupNames); $('newGroupName').value=''; saveLibrary(); renderGroups(); renderInventory(); };
   function renderGroups(){
     const box=$('groupList'); box.innerHTML='';
     if(groups.length===0){ box.innerHTML='<div class="empty-note">暂无组别。新建组别后，在法宝表格的「组别」列把法宝归入；启用组别会默认勾选该组全部法宝（数量 0，需自行填写）。</div>'; }
@@ -1483,7 +1490,10 @@
     if(!confirm('删除组别「'+g.name+'」？组内法宝会变为「未分组」，不会被删除。')) return;
     if(groupFilter===id) groupFilter='all';
     library.forEach(t=>{ if(t.group===id) t.group=null; });
-    groups.splice(groups.indexOf(g),1); saveLibrary(); renderGroups(); renderInventory();
+    // 组别墓碑：记录组名，防止云端并集合并把已删组别复活（同名组全部移除）
+    deletedGroupNames.add(g.name); saveDeletedGroups(deletedGroupNames);
+    for(let i=groups.length-1;i>=0;i--){ if(groups[i].name===g.name){ if(groupFilter===groups[i].id) groupFilter='all'; groups.splice(i,1); } }
+    saveLibrary(); renderGroups(); renderInventory();
   }
   function groupOptions(cur){ let h='<option value="">未分组</option>'; groups.forEach(g=>{ h+='<option value="'+escapeHtml(g.id)+'"'+(cur===g.id?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }); return h; }
   function typeOptions(cur){ const arr=['','刀','枪','剑','锤','幡','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+((cur||'')===v?' selected':'')+'>'+(v||'无')+'</option>'; }); return h; }

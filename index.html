@@ -336,7 +336,7 @@
             <div><label>三级·作用范围</label><select id="drawAL3Mode"><option value="self">自身</option><option value="adjacent">相邻同系列</option><option value="global">背包同系列除己</option></select></div>
             <div><label>三级·同系依据</label><select id="drawAL3Series"><option value="group">元素属性</option><option value="type">类型属性</option></select></div>
           </div>
-          <div class="hint" style="margin-top:6px">一级=自身固有加成（与邻居无关，可叠加在原有自身加成上）；二级无属性增益；三级=对同系列法宝的攻防血加成，作用于自身 / 相邻同系列 / 背包同系列除己。同系依据必须二选一：元素属性（金木水火土雷体）或 类型属性（刀枪剑锤御异乐），两者只取其一。</div>
+          <div class="hint" style="margin-top:6px">一级=自身固有加成（与邻居无关，可叠加在原有自身加成上）；二级无属性增益；三级=对同系列法宝的攻防血加成，作用于自身 / 相邻同系列 / 背包同系列除己。同系依据必须二选一：元素属性（金木水火土雷体）或 类型属性（刀枪剑锤幡御异乐），两者只取其一。</div>
         </details>
         <button id="addDraw" class="primary mt" style="width:100%">＋ 收入宝鉴</button>
       </details>
@@ -1486,7 +1486,7 @@
     groups.splice(groups.indexOf(g),1); saveLibrary(); renderGroups(); renderInventory();
   }
   function groupOptions(cur){ let h='<option value="">未分组</option>'; groups.forEach(g=>{ h+='<option value="'+escapeHtml(g.id)+'"'+(cur===g.id?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }); return h; }
-  function typeOptions(cur){ const arr=['','刀','枪','剑','锤','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+((cur||'')===v?' selected':'')+'>'+(v||'无')+'</option>'; }); return h; }
+  function typeOptions(cur){ const arr=['','刀','枪','剑','锤','幡','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+((cur||'')===v?' selected':'')+'>'+(v||'无')+'</option>'; }); return h; }
   function levelOptions(cur){ let h=''; for(let v=0;v<=3;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; }
   function awakenSummary(a){ if(!a||a.level===0) return '—'; let s='L'+a.level; if(a.level>=1&&a.l1&&a.l1.rate) s+=' · 自'+(a.l1.attr)+(a.l1.rate); if(a.level>=3&&a.l3&&a.l3.rate){ const m=a.l3.mode==='self'?'自':a.l3.mode==='adjacent'?'邻':'包'; s+=' / 系'+m+(a.l3.attr)+(a.l3.rate); } return s; }
   function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk',mode:'self'}, l3:{rate:0,attr:'atk',mode:'global',series:'group'} }; }
@@ -1525,7 +1525,7 @@
       '</div><div style="margin-top:9px">'+shapeMini(t.cells,t.color)+'</div>';
     /* --- 类型属性（可编辑） --- */
     h+='<div class="sk-sub" style="margin-top:14px">类型属性</div>'+
-      '<div class="dt-edit"><label>法宝类型（刀枪剑锤御异乐）</label><select id="dtType">'+typeOptions(t.type)+'</select></div>';
+      '<div class="dt-edit"><label>法宝类型（刀枪剑锤幡御异乐）</label><select id="dtType">'+typeOptions(t.type)+'</select></div>';
     /* --- 觉醒设置（可编辑） --- */
     h+='<div class="sk-sub" style="margin-top:14px">觉醒设置</div>'+
       '<div class="awaken-panel">'+

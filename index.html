@@ -988,7 +988,7 @@
       const g = grpId? groups.find(x=>x.id===grpId):null;
       const inc = !grpId || (g? !!g.enabled : true); // 强关联：分组法宝仅在对应组别已启用时才启用
       const base=(typeof t.base==='object'&&t.base)?{ hp:Number(t.base.hp)||0, def:Number(t.base.def)||0, atk:Number(t.base.atk)||0, dmg:Number(t.base.dmg)||0 }:{ hp:Number(t.base)||0, def:0, atk:0, dmg:0 };
-      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       const sc=Math.max(0,t.count||0);
       sel[id]={include:inc,count:sc,priority:false};
     });
@@ -1004,7 +1004,7 @@
     DEFAULT_LIBRARY.forEach(t=>{
       if(library.some(x=>x.group===t.group && x.name===t.name)) return;
       const id=uniqueName(t.name);
-      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?t.type:'异'), awaken:cloneAwaken(t.awaken), key:false, skill:null });
+      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:false, skill:null });
       sel[id]={include:false,count:0,priority:false};
       added++;
     });
@@ -1327,7 +1327,7 @@
     if(h.plans&&h.plans.length){ renderPlans(h.plans,h.backpack,h.ms||0); $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合与结果。'; }
     else $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合。';
   }
-  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?t.type:'异'), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill||null }; }
+  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }

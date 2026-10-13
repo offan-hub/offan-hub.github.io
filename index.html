@@ -392,10 +392,11 @@
             </div>
             <label class="mt">排序</label>
             <select id="sortMode" style="width:100%">
-              <option value="attr" selected>按属性总分（默认）</option>
+              <option value="attr" selected>按属性总分（默认：饱和率优先）</option>
               <option value="score">按相邻法宝数</option>
               <option value="fill">按填充率</option>
             </select>
+            <div class="hint" style="margin-top:6px">默认规则：饱和度 100%（满填）的方案优先级最高——即使另一套方案饱和度只有 90%，只要它属性总分更高，也仍然排在其后；饱和度相同时才按属性总分排序。</div>
             <label class="mt">属性权重占比（用于「按属性总分」排序，四者合计 100；伤害默认 0 即不计入总分）</label>
             <div class="weights">
               <div><label>生命值</label><input type="number" id="wHp" min="0" max="100" value="34"></div>
@@ -828,7 +829,7 @@
     let pool=[...map.values()];
     const fullAchievable = bestFill===capacity;
     if(fullAchievable){ const full=pool.filter(p=>p.fill===capacity); if(full.length) pool=full; }  // 满填充前提：本批能满填则只留满填方案
-    pool.sort((a,b)=> (b.weighted-a.weighted) || (b.keyContact-a.keyContact) || (b.score-a.score) || (b.fill-a.fill) || (b.used.length-a.used.length));  // 按属性总分（满填优先为第一键）；同分下优先 1 格法宝贴重点法宝更多的组合
+    pool.sort((a,b)=> (b.fill-a.fill) || (b.weighted-a.weighted) || (b.keyContact-a.keyContact) || (b.score-a.score) || (b.used.length-a.used.length));  // 饱和率第一键：100% 满填永远排在 90% 之前；同饱和率下按属性总分，再按 1 格法宝贴重点法宝数
     if(pool.length>poolLimit) pool=pool.slice(0,poolLimit);
     return buildOutput(pool,infos,R,C,blocked,capacity,blockedCount,runs,map.size,bestFill,fullAchievable);
   }
@@ -1837,9 +1838,9 @@
     plans.forEach(p=>{ const a=computeAttributes(p,libMap,R,C); p.totals=a.totals; p.perAttrs=a.per; p.weighted=weightedScore(a.totals,weights); });
     const mode=$('sortMode')?$('sortMode').value:'attr';
     const sorted=plans.slice();
-    if(mode==='score') sorted.sort((a,b)=>b.score-a.score||(b.keyContact-a.keyContact)||b.fill-a.fill);
-    else if(mode==='fill') sorted.sort((a,b)=>b.fill-a.fill||(b.keyContact-a.keyContact)||b.score-a.score);
-    else sorted.sort((a,b)=>b.weighted-a.weighted||(b.keyContact-a.keyContact));  // attr / 默认：按属性总分；同分下优先 1 格法宝贴重点法宝更多
+    if(mode==='score') sorted.sort((a,b)=>b.score-a.score||(b.keyContact-a.keyContact)||b.filled-a.filled);
+    else if(mode==='fill') sorted.sort((a,b)=>b.filled-a.filled||(b.keyContact-a.keyContact)||b.score-a.score);
+    else sorted.sort((a,b)=>(b.filled-a.filled)||(b.weighted-a.weighted)||(b.keyContact-a.keyContact));  // attr / 默认：饱和率第一键（100% 满填优先），同饱和率下按属性总分，再按 1 格法宝贴重点法宝更多
     const hasPrio=library.some(t=>sel[t.id]&&sel[t.id].priority);
     const hasOneCell=library.some(t=>sel[t.id]&&(sel[t.id].count||0)>0&&t.cells.length===1);
     const needN=hasPrio?5:10;
@@ -1849,7 +1850,7 @@
     const bestFill=top0?top0.bestFill:0, cap=top0?top0.capacity:0;
     const scoreNote=(hasPrio&&top0)?' · 最高相邻法宝数 '+top0.score:'';
     let attrNote='';
-    if(top0){ if(mode==='attr') attrNote=' · 最高属性评分 '+Math.round(top0.weighted); else attrNote=' · 顶配 生命'+fmt(top0.totals.hp)+'/防御'+fmt(top0.totals.def)+'/攻击'+fmt(top0.totals.atk)+(top0.totals.dmg?'/伤害'+fmt(top0.totals.dmg):''); }
+    if(top0){ if(mode==='attr') attrNote=' · 首位方案属性评分 '+Math.round(top0.weighted); else attrNote=' · 顶配 生命'+fmt(top0.totals.hp)+'/防御'+fmt(top0.totals.def)+'/攻击'+fmt(top0.totals.atk)+(top0.totals.dmg?'/伤害'+fmt(top0.totals.dmg):''); }
     const fillWarn=(top0&&top0.fullAchievable===false)?'⚠️ 当前法宝组合无法完全填满，已展示最接近填满的方案 · ':'';
     $('statusBox').textContent=fillWarn+'✅ 基础填充 '+(top0?top0.runs:'-')+' 次 · 候选池 '+(plans.length)+' 套（已合并跨批） · 最高填充 '+bestFill+'/'+cap+' 格'+scoreNote+attrNote+' · 耗时 '+ms+'ms'+(sorted.length<needN?' · 不同布局不足 '+needN+' 套':'');
     // 统计块

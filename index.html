@@ -183,6 +183,8 @@
   .aw-badge { flex:0 0 26px; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; background:#faeeda; color:#ba7517; border:1px solid #ef9f27; }
   .aw-card.lv2 .aw-badge { background:#e6f1fb; color:#185fa5; border-color:#85b7eb; }
   .aw-card.lv3 .aw-badge { background:#eeedfe; color:#534ab7; border-color:#afa9ec; }
+  .aw-card.lv4 .aw-badge { background:#e6f6ec; color:#1a7f4b; border-color:#5fb37e; }
+  .aw-card.lv5 .aw-badge { background:#fdecea; color:#c0271f; border-color:#e6342b; }
   .aw-card.locked .aw-badge { background:var(--bg-soft,#f7f8fb); color:var(--c-text-dim,#8a8f9d); border-color:var(--bd,#e6e8ee); }
   .aw-body { flex:1; min-width:0; font-size:12px; line-height:1.65; color:var(--c-text,#23262e); }
   .aw-body .aw-hl { color:#d85a30; font-weight:600; }
@@ -363,8 +365,16 @@
                 <div><label>同系依据</label><select id="drawAL3Series"><option value="group">元素属性</option><option value="type">类型属性</option></select></div>
                 <div><label>作用范围</label><select id="drawAL3Mode"><option value="adjacent">相邻同系列</option><option value="global">背包同系列除己</option></select></div>
               </div></div></div>
+            <div class="aw-card lv4"><span class="aw-badge">4</span><div class="aw-body">本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升
+              <div class="aw-fields"><div><label>提升比例%</label><input type="number" id="drawAL4Rate" min="0" value="0"></div></div></div></div>
+            <div class="aw-card lv5"><span class="aw-badge">5</span><div class="aw-body">对<b class="aw-el">同系</b>法宝的<b class="aw-hl">攻 / 防 / 血</b> 提升
+              <div class="aw-fields">
+                <div><label>提升比例%</label><input type="number" id="drawAL5Rate" min="0" value="0"></div>
+                <div><label>同系依据</label><select id="drawAL5Series"><option value="group">元素属性</option><option value="type">类型属性</option></select></div>
+                <div><label>作用范围</label><select id="drawAL5Mode"><option value="adjacent">相邻同系列</option><option value="global">背包同系列除己</option></select></div>
+              </div></div></div>
           </div>
-          <div class="hint" style="margin-top:6px">逐级叠加：三级觉醒的法宝同时享受一级、二级效果。所有加成一律「加算」——旧加成与一/二/三级觉醒的百分比先相加，再一次性乘到基础值上。同系依据二选一：元素属性（金木水火土雷体）或 类型属性（刀枪剑锤幡御异乐）。</div>
+          <div class="hint" style="margin-top:6px">逐级叠加：五级觉醒的法宝同时享受一至四级效果（四级同二级结构、五级同三级结构，数值各自独立）。所有加成一律「加算」——旧加成与一至五级觉醒的百分比先相加，再一次性乘到基础值上。同系依据二选一：元素属性（金木水火土雷体）或 类型属性（刀枪剑锤幡御异乐）。</div>
         </details>
         <button id="addDraw" class="primary mt" style="width:100%">＋ 收入宝鉴</button>
       </details>
@@ -675,11 +685,17 @@
       if(m.awaken&&m.awaken.level>=1&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; addK(ii,l1.attr,(Number(l1.rate)||0)/100*sameAdj(ii,m)); }
       // 二级觉醒：本法宝攻/防/血各 +rate%（level>=2 生效）
       if(m.awaken&&m.awaken.level>=2&&m.awaken.l2&&m.awaken.l2.rate){ const r=(Number(m.awaken.l2.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
+      // 四级觉醒：与二级同结构（自身攻/防/血），数值独立（level>=4 生效）
+      if(m.awaken&&m.awaken.level>=4&&m.awaken.l4&&m.awaken.l4.rate){ const r=(Number(m.awaken.l4.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
     }
-    // 三级觉醒：对同系目标的攻/防/血各 +rate%（相邻同系 / 背包同系除己；同系依据 = 元素 或 类型，二选一；多宿主累加）
+    // 三/五级觉醒：对同系目标的攻/防/血各 +rate%（相邻同系 / 背包同系除己；同系依据 = 元素 或 类型，二选一；多宿主累加）
+    // L5 与 L3 同结构、数值独立，二者同系依据/作用范围各自配置
     for(let ii=0;ii<N;ii++){
       const m=attrOf(ii); if(!m.awaken||m.awaken.level<3) continue;
-      const l3=m.awaken.l3; if(!l3||!l3.rate) continue;
+      const cfgs=[];
+      if(m.awaken.l3&&m.awaken.l3.rate) cfgs.push(m.awaken.l3);
+      if(m.awaken.level>=5&&m.awaken.l5&&m.awaken.l5.rate) cfgs.push(m.awaken.l5);
+      for(const l3 of cfgs){
       const r=(Number(l3.rate)||0)/100;
       const byGroup = (l3.series!=='type'); // 默认按元素属性（group）；series='type' 时按类型属性
       let targets;
@@ -690,6 +706,7 @@
         const mt=attrOf(t);
         if(l3.mode!=='self'){ const ok = byGroup? sameGroup(m,mt) : sameType(m,mt); if(!ok) continue; }
         addK(t,'hp',r); addK(t,'def',r); addK(t,'atk',r);
+      }
       }
     }
     const totals={hp:0,def:0,atk:0,dmg:0};
@@ -1246,7 +1263,7 @@
         existing.base={hp,def,atk,dmg};
         existing.bonusRate=bonusRate; existing.bonusType=bonusType; existing.bonusAttr=bonusAttr;
         if(typeVal!=null) existing.type=typeVal;
-        if(awLevel!=null) existing.awaken=cloneAwaken({level:awLevel});
+        if(awLevel!=null) existing.awaken=cloneAwaken(Object.assign({}, existing.awaken, {level:awLevel}));  // 仅更新等级，保留已填的 L1~L5 参数
         existing.key=keyVal; existing.count=Math.max(0,existing.count||0);
         if(sel[existing.id]){ if(!grpEnabled) sel[existing.id].include=false; sel[existing.id].count=Math.max(0,sel[existing.id].count||0); }
         updated++;
@@ -1349,7 +1366,7 @@
   function renderQuickShapes(){ const box=$('quickShapes'); box.innerHTML=''; Object.keys(SHAPES).forEach(name=>{ const b=document.createElement('button'); b.textContent=name; b.onclick=()=>addToLibrary(name, SHAPES[name].map(c=>c.slice()), 1); box.appendChild(b); }); }
   const DRAW=5; let drawSel=new Set();
   function renderDraw(){ const g=$('drawGrid'); g.style.gridTemplateColumns=`repeat(${DRAW},18px)`; g.innerHTML=''; for(let r=0;r<DRAW;r++) for(let c=0;c<DRAW;c++){ const k=r+','+c; const d=document.createElement('div'); d.className='cell tiny click'+(drawSel.has(k)?' sel':''); d.onclick=()=>{ if(drawSel.has(k)) drawSel.delete(k); else drawSel.add(k); d.classList.toggle('sel'); }; g.appendChild(d); } }
-  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; };
+  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const aL4r=Number($('drawAL4Rate').value)||0; const aL5r=Number($('drawAL5Rate').value)||0; const aL5m=$('drawAL5Mode').value||'global'; const aL5s=$('drawAL5Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s}, l4:{rate:aL4r}, l5:{rate:aL5r,mode:aL5m,series:aL5s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; $('drawAL4Rate').value=0; $('drawAL5Rate').value=0; $('drawAL5Series').value='group'; };
   function uniqueName(name){ let base=(name||'法宝').trim()||'法宝'; let nm=base, k=2; while(library.some(t=>t.name===nm)){ nm=base+' #'+k; k++; } return nm; }
   function addToLibrary(name,cells,count,opts){
     opts=opts||{};
@@ -1536,9 +1553,9 @@
   }
   function groupOptions(cur){ let h='<option value="">未分组</option>'; groups.forEach(g=>{ h+='<option value="'+escapeHtml(g.id)+'"'+(cur===g.id?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }); return h; }
   function typeOptions(cur){ const arr=['','刀','枪','剑','锤','幡','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+((cur||'')===v?' selected':'')+'>'+(v||'无')+'</option>'; }); return h; }
-  function levelOptions(cur){ let h=''; for(let v=0;v<=3;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; }
-  function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk'}, l2:{rate:0}, l3:{rate:0,mode:'global',series:'group'} }; }
-  function cloneAwaken(a){ if(!a) return DEFAULT_AWAKEN(); const l1=a.l1||{}, l2=a.l2||{}, l3=a.l3||{}; return { level:Number(a.level)||0, l1:{ rate:Number(l1.rate)||0, attr:l1.attr||'atk' }, l2:{ rate:Number(l2.rate)||0 }, l3:{ rate:Number(l3.rate)||0, mode:l3.mode||'global', series:l3.series||'group' } }; }
+  function levelOptions(cur){ let h=''; for(let v=0;v<=5;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; }
+  function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk'}, l2:{rate:0}, l3:{rate:0,mode:'global',series:'group'}, l4:{rate:0}, l5:{rate:0,mode:'global',series:'group'} }; }
+  function cloneAwaken(a){ if(!a) return DEFAULT_AWAKEN(); const l1=a.l1||{}, l2=a.l2||{}, l3=a.l3||{}, l4=a.l4||{}, l5=a.l5||{}; return { level:Math.min(5,Math.max(0,Number(a.level)||0)), l1:{ rate:Number(l1.rate)||0, attr:l1.attr||'atk' }, l2:{ rate:Number(l2.rate)||0 }, l3:{ rate:Number(l3.rate)||0, mode:l3.mode||'global', series:l3.series||'group' }, l4:{ rate:Number(l4.rate)||0 }, l5:{ rate:Number(l5.rate)||0, mode:l5.mode||'global', series:l5.series||'group' } }; }
 
   /* ===================== 法宝详情弹窗：只读查看全部信息 ===================== */
   let dtIdx=-1;
@@ -1607,13 +1624,21 @@
         '<div><label>同系依据</label><select id="dtAL3Series"'+dis(3)+'><option value="group"'+(l3.series!=='type'?' selected':'')+'>元素属性</option><option value="type"'+(l3.series==='type'?' selected':'')+'>类型属性</option></select></div>'+
         '<div><label>作用范围</label><select id="dtAL3Mode"'+dis(3)+'><option value="adjacent"'+(l3.mode==='adjacent'?' selected':'')+'>相邻同系列</option><option value="global"'+(l3.mode!=='adjacent'?' selected':'')+'>背包同系列除己</option></select></div>'+
       '</div></div></div>';
+    h+='<div class="aw-card lv4'+(lv>=4?'':' locked')+'"><span class="aw-badge">4</span><div class="aw-body">'+(lv>=4?'本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
+      '<div class="aw-fields"><div><label>提升比例%</label><input type="number" id="dtAL4Rate" min="0" value="'+(l4.rate||0)+'"'+dis(4)+'></div></div></div></div>';
+    h+='<div class="aw-card lv5'+(lv>=5?'':' locked')+'"><span class="aw-badge">5</span><div class="aw-body">'+(lv>=5?'对<b class="aw-el">同系</b>法宝的<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
+      '<div class="aw-fields">'+
+        '<div><label>提升比例%</label><input type="number" id="dtAL5Rate" min="0" value="'+(l5.rate||0)+'"'+dis(5)+'></div>'+
+        '<div><label>同系依据</label><select id="dtAL5Series"'+dis(5)+'><option value="group"'+(l5.series!=='type'?' selected':'')+'>元素属性</option><option value="type"'+(l5.series==='type'?' selected':'')+'>类型属性</option></select></div>'+
+        '<div><label>作用范围</label><select id="dtAL5Mode"'+dis(5)+'><option value="adjacent"'+(l5.mode==='adjacent'?' selected':'')+'>相邻同系列</option><option value="global"'+(l5.mode!=='adjacent'?' selected':'')+'>背包同系列除己</option></select></div>'+
+      '</div></div></div>';
     h+='</div>';
     $('dtBody').innerHTML=h;
     $('dtALevel').onchange=function(){ captureAwDraft(); dtALv=parseInt(this.value)||0; renderDetail(); };
   }
   $('dtX').onclick=closeDetail; $('dtCancel').onclick=closeDetail;
   $('dtMask').onclick=e=>{ if(e.target===$('dtMask')) closeDetail(); };
-  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk'}, l2:{rate:Number($('dtAL2Rate').value)||0}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group'} }); saveLibrary(); } closeDetail(); renderInventory(); };
+  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk'}, l2:{rate:Number($('dtAL2Rate').value)||0}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group'}, l4:{rate:Number($('dtAL4Rate').value)||0}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group'} }); saveLibrary(); } closeDetail(); renderInventory(); };
 
 
   /* ---------- 一键生成（多批次 + 跨批全局最优合并） ---------- */
@@ -1723,11 +1748,17 @@
       if(m.awaken&&m.awaken.level>=1&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; addK(ii, l1.attr, (Number(l1.rate)||0)/100*sameAdj(ii,m)); }
       // 二级觉醒：本法宝攻/防/血各 +rate%（level>=2 生效）
       if(m.awaken&&m.awaken.level>=2&&m.awaken.l2&&m.awaken.l2.rate){ const r=(Number(m.awaken.l2.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
+      // 四级觉醒：与二级同结构（自身攻/防/血），数值独立（level>=4 生效）
+      if(m.awaken&&m.awaken.level>=4&&m.awaken.l4&&m.awaken.l4.rate){ const r=(Number(m.awaken.l4.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
     }
-    // 三级觉醒：对同系目标的攻/防/血各 +rate%（相邻同系 / 背包同系除己；同系依据 = 元素 或 类型，二选一；多宿主累加）
+    // 三/五级觉醒：对同系目标的攻/防/血各 +rate%（相邻同系 / 背包同系除己；同系依据 = 元素 或 类型，二选一；多宿主累加）
+    // L5 与 L3 同结构、数值独立，二者同系依据/作用范围各自配置
     for(let ii=0; ii<N; ii++){
       const m=items[ii].m; if(!m.awaken||m.awaken.level<3) continue;
-      const l3=m.awaken.l3; if(!l3||!l3.rate) continue;
+      const cfgs=[];
+      if(m.awaken.l3&&m.awaken.l3.rate) cfgs.push(m.awaken.l3);
+      if(m.awaken.level>=5&&m.awaken.l5&&m.awaken.l5.rate) cfgs.push(m.awaken.l5);
+      for(const l3 of cfgs){
       const r=(Number(l3.rate)||0)/100;
       const byGroup = (l3.series!=='type'); // 默认按元素属性（group）；series='type' 时按类型属性
       let targets;
@@ -1738,6 +1769,7 @@
         const mt=items[t].m;
         if(l3.mode!=='self'){ const ok = byGroup? sameGroup(m,mt) : sameType(m,mt); if(!ok) continue; }
         addK(t,'hp',r); addK(t,'def',r); addK(t,'atk',r);
+      }
       }
     }
     for(let ii=0; ii<N; ii++){

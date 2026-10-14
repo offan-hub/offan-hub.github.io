@@ -1566,7 +1566,9 @@
     dtDraft={
       l1:{rate:Number($('dtAL1Rate').value)||0, attr:$('dtAL1Attr')?$('dtAL1Attr').value:'atk'},
       l2:{rate:Number($('dtAL2Rate').value)||20},
-      l3:{rate:Number($('dtAL3Rate').value)||0, series:$('dtAL3Series')?$('dtAL3Series').value:'group', mode:$('dtAL3Mode')?$('dtAL3Mode').value:'global'}
+      l3:{rate:Number($('dtAL3Rate').value)||0, series:$('dtAL3Series')?$('dtAL3Series').value:'group', mode:$('dtAL3Mode')?$('dtAL3Mode').value:'global'},
+      l4:{rate:Number($('dtAL4Rate').value)||0},
+      l5:{rate:Number($('dtAL5Rate').value)||0, series:$('dtAL5Series')?$('dtAL5Series').value:'group', mode:$('dtAL5Mode')?$('dtAL5Mode').value:'global'}
     };
   }
   function openDetail(i){
@@ -1607,6 +1609,8 @@
     const l1=Object.assign({rate:0,attr:'atk'},a.l1||{},(dtDraft&&dtDraft.l1)||{});
     const l2=Object.assign({rate:20},a.l2||{},(dtDraft&&dtDraft.l2)||{});
     const l3=Object.assign({rate:0,mode:'global',series:'group'},a.l3||{},(dtDraft&&dtDraft.l3)||{});
+    const l4=Object.assign({rate:0},a.l4||{},(dtDraft&&dtDraft.l4)||{});
+    const l5=Object.assign({rate:0,mode:'global',series:'group'},a.l5||{},(dtDraft&&dtDraft.l5)||{});
     const dis=(minLevel)=>lv<minLevel?' disabled':'';
     h+='<div class="aw-secline"><span class="line"></span><span class="tag">觉醒效果</span><span class="line"></span></div>';
     h+='<div class="dt-edit" style="margin-top:8px"><label>觉醒等级</label><select id="dtALevel">'+levelOptions(lv)+'</select></div>';

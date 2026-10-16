@@ -211,6 +211,13 @@
   .modal-bd { padding:14px 18px; max-height:68vh; overflow:auto; }
   .modal-ft { padding:11px 18px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-end; align-items:center; }
   .modal .x { border:none; background:none; font-size:20px; line-height:1; color:var(--muted); padding:2px 6px; }
+  .en-stat { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:9px; margin-bottom:12px; }
+  .en-stat .cell { border:1px solid var(--line); border-radius:10px; padding:9px 12px; background:#f8f9fb; }
+  .en-stat .n { font-size:20px; font-weight:700; }
+  .en-stat .t { font-size:11.5px; color:var(--muted); }
+  .en-sec { font-size:13px; font-weight:600; margin:12px 0 5px; }
+  .en-sec.warn { color:#b45309; }
+  .en-list { font-size:12.5px; color:var(--muted); line-height:1.75; max-height:180px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fcfcfe; }
   .kv { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:9px 14px; }
   .kv .k { font-size:11px; color:var(--muted); }
   .kv .v { font-size:13.5px; font-weight:600; }
@@ -274,6 +281,7 @@
         <button id="clearLib" class="ghost">清空宝鉴库</button>
         <button id="importBase" class="ghost">导入基础法宝库</button>
         <button id="importFile" class="ghost">📥 导入法宝库（Excel/CSV）</button>
+        <button id="smartEnrich" class="ghost" title="按法宝名称匹配补全数据，自动补全：类型 / 共鸣值 / 品质 / 五级觉醒参数。只填空白字段，不覆盖已有数据">✨ 智能补全</button>
         <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" style="display:none">
         <span class="cap" style="margin:0 0 0 6px">已入册 <b id="libCount">0</b> 件 · 自动保存到本机，下次打开自动恢复</span>
         <span style="flex:1"></span>
@@ -297,7 +305,7 @@
       <div class="table-scroll mt">
         <table class="inv-table">
           <thead><tr>
-            <th style="text-align:center">启用</th><th>名称</th><th style="text-align:center">重点</th><th>形状</th><th>组别</th><th>类型</th>
+            <th style="text-align:center">启用</th><th>名称</th><th style="text-align:center">重点</th><th>形状</th><th>组别</th><th>类型</th><th>共鸣</th><th>品质</th>
             <th>生命</th><th>防御</th><th>攻击</th><th>伤害</th><th>加成率%</th><th>加成类型</th><th>加成属性</th><th>觉醒</th><th>数量</th><th style="text-align:center">优先</th><th>操作</th>
           </tr></thead>
           <tbody id="invBody"></tbody>
@@ -340,6 +348,8 @@
         <div class="add-fields">
           <div><label>组别</label><select id="drawGroup"></select></div>
           <div><label>类型</label><select id="drawType"></select></div>
+          <div><label>共鸣值</label><input type="number" id="drawReson" min="0" value="0"></div>
+          <div><label>品质(1-5)</label><input type="number" id="drawQuality" min="0" max="5" value="0"></div>
           <div><label>生命</label><input type="number" id="drawHp" min="0" value="0"></div>
           <div><label>防御</label><input type="number" id="drawDef" min="0" value="0"></div>
           <div><label>攻击</label><input type="number" id="drawAtk" min="0" value="0"></div>
@@ -452,6 +462,17 @@
       <span class="cap" id="dtMsg" style="margin:0;flex:1"></span>
       <button id="dtCancel" class="ghost">取消</button>
       <button id="dtSave" class="primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="enMask">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="enTitle">智能补全报告</h3><button class="x" id="enX">×</button></div>
+    <div class="modal-bd" id="enBody"></div>
+    <div class="modal-ft">
+      <span class="cap" id="enMsg" style="margin:0;flex:1"></span>
+      <button id="enOk" class="primary">知道了</button>
     </div>
   </div>
 </div>
@@ -681,20 +702,21 @@
       if(m.bonusType==='self'&&m.bonusAttr){ addK(ii,m.bonusAttr,(Number(m.bonusRate)||0)/100*sameAdj(ii,m)); }
       // 旧「给他人加成」：相邻同元素给予者的加成率各自累加
       for(const j of adj[ii]){ const mj=attrOf(j); if(mj.bonusType==='buff'&&mj.bonusAttr&&sameGroup(mj,m)) addK(ii,mj.bonusAttr,(Number(mj.bonusRate)||0)/100); }
-      // 一级觉醒：每有一件相邻同元素法宝，+rate%（attr 可为 伤害dmg）
-      if(m.awaken&&m.awaken.level>=1&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; addK(ii,l1.attr,(Number(l1.rate)||0)/100*sameAdj(ii,m)); }
-      // 二级觉醒：本法宝攻/防/血各 +rate%（level>=2 生效）
-      if(m.awaken&&m.awaken.level>=2&&m.awaken.l2&&m.awaken.l2.rate){ const r=(Number(m.awaken.l2.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
-      // 四级觉醒：与二级同结构（自身攻/防/血），数值独立（level>=4 生效）
-      if(m.awaken&&m.awaken.level>=4&&m.awaken.l4&&m.awaken.l4.rate){ const r=(Number(m.awaken.l4.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
+      // 一级觉醒：每有一件相邻同元素法宝，+rate%（attr 可为 伤害dmg；lv=该效果在游戏内的出现等级，默认1）
+      if(m.awaken&&m.awaken.level>=(m.awaken.l1&&m.awaken.l1.lv||1)&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; addK(ii,l1.attr,(Number(l1.rate)||0)/100*sameAdj(ii,m)); }
+      // 二级觉醒：本法宝攻/防/血各 +rate%（level>=lv 生效，默认2）
+      if(m.awaken&&m.awaken.level>=(m.awaken.l2&&m.awaken.l2.lv||2)&&m.awaken.l2&&m.awaken.l2.rate){ const r=(Number(m.awaken.l2.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
+      // 四级觉醒：与二级同结构（自身攻/防/血），数值独立（默认4）
+      if(m.awaken&&m.awaken.level>=(m.awaken.l4&&m.awaken.l4.lv||4)&&m.awaken.l4&&m.awaken.l4.rate){ const r=(Number(m.awaken.l4.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
     }
     // 三/五级觉醒：对同系目标的攻/防/血各 +rate%（相邻同系 / 背包同系除己；同系依据 = 元素 或 类型，二选一；多宿主累加）
-    // L5 与 L3 同结构、数值独立，二者同系依据/作用范围各自配置
+    // L5 与 L3 同结构、数值独立，二者同系依据/作用范围/生效等级各自配置
     for(let ii=0;ii<N;ii++){
-      const m=attrOf(ii); if(!m.awaken||m.awaken.level<3) continue;
+      const m=attrOf(ii); if(!m.awaken) continue;
       const cfgs=[];
-      if(m.awaken.l3&&m.awaken.l3.rate) cfgs.push(m.awaken.l3);
-      if(m.awaken.level>=5&&m.awaken.l5&&m.awaken.l5.rate) cfgs.push(m.awaken.l5);
+      if(m.awaken.l3&&m.awaken.l3.rate&&m.awaken.level>=(m.awaken.l3.lv||3)) cfgs.push(m.awaken.l3);
+      if(m.awaken.l5&&m.awaken.l5.rate&&m.awaken.level>=(m.awaken.l5.lv||5)) cfgs.push(m.awaken.l5);
+      if(!cfgs.length) continue;
       for(const l3 of cfgs){
       const r=(Number(l3.rate)||0)/100;
       const byGroup = (l3.series!=='type'); // 默认按元素属性（group）；series='type' 时按类型属性
@@ -1006,7 +1028,7 @@
       const g = grpId? groups.find(x=>x.id===grpId):null;
       const inc = !grpId || (g? !!g.enabled : true); // 强关联：分组法宝仅在对应组别已启用时才启用
       const base=(typeof t.base==='object'&&t.base)?{ hp:Number(t.base.hp)||0, def:Number(t.base.def)||0, atk:Number(t.base.atk)||0, dmg:Number(t.base.dmg)||0 }:{ hp:Number(t.base)||0, def:0, atk:0, dmg:0 };
-      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       const sc=Math.max(0,t.count||0);
       sel[id]={include:inc,count:sc,priority:false};
     });
@@ -1022,7 +1044,7 @@
     DEFAULT_LIBRARY.forEach(t=>{
       if(library.some(x=>x.group===t.group && x.name===t.name)) return;
       const id=uniqueName(t.name);
-      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:false, skill:null });
+      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:false, skill:null });
       sel[id]={include:false,count:0,priority:false};
       added++;
     });
@@ -1093,7 +1115,7 @@
       library.push({ id, name:String(t.name||t.id), cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length),
         base:(t.base&&typeof t.base==='object')?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}:{hp:0,def:0,atk:0,dmg:0},
         bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp',
-        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       if(!sel[id]) sel[id]={ include:!grpOff, count:Math.max(0,Number(t.count)||0), priority:false };
     });
     tid=library.length; gidCounter=groups.length;
@@ -1228,6 +1250,8 @@
         else if(/攻击/.test(h)) map.atk=ci;
         else if(/伤害/.test(h)) map.dmg=ci;
         else if(/法宝类型|类型属性/.test(h)) map.type=ci;
+        else if(/共鸣/.test(h)) map.reson=ci;
+        else if(/品质/.test(h)) map.quality=ci;
         else if(/觉醒等级|觉醒/.test(h)) map.awLevel=ci;
         else if(/加成率|加成%/.test(h)) map.bonusRate=ci;
         else if(/加成类型|类型/.test(h)) map.bonusType=ci;
@@ -1263,13 +1287,15 @@
         existing.base={hp,def,atk,dmg};
         existing.bonusRate=bonusRate; existing.bonusType=bonusType; existing.bonusAttr=bonusAttr;
         if(typeVal!=null) existing.type=typeVal;
+        if(map.reson!=null) existing.reson=Math.max(0,parseInt(r[map.reson])||0);
+        if(map.quality!=null) existing.quality=Math.min(5,Math.max(0,parseInt(r[map.quality])||0));
         if(awLevel!=null) existing.awaken=cloneAwaken(Object.assign({}, existing.awaken, {level:awLevel}));  // 仅更新等级，保留已填的 L1~L5 参数
         existing.key=keyVal; existing.count=Math.max(0,existing.count||0);
         if(sel[existing.id]){ if(!grpEnabled) sel[existing.id].include=false; sel[existing.id].count=Math.max(0,sel[existing.id].count||0); }
         updated++;
       } else {
         const id=uniqueName(name);
-        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk,dmg},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
+        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk,dmg},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),reson:(map.reson!=null?Math.max(0,parseInt(r[map.reson])||0):0),quality:(map.quality!=null?Math.min(5,Math.max(0,parseInt(r[map.quality])||0)):0),awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
         sel[id]={include:grpEnabled,count:0,priority:false};
         added++;
       }
@@ -1345,7 +1371,7 @@
     if(h.plans&&h.plans.length){ renderPlans(h.plans,h.backpack,h.ms||0); $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合与结果。'; }
     else $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合。';
   }
-  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), key:!!t.key, skill:t.skill||null }; }
+  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -1366,7 +1392,7 @@
   function renderQuickShapes(){ const box=$('quickShapes'); box.innerHTML=''; Object.keys(SHAPES).forEach(name=>{ const b=document.createElement('button'); b.textContent=name; b.onclick=()=>addToLibrary(name, SHAPES[name].map(c=>c.slice()), 1); box.appendChild(b); }); }
   const DRAW=5; let drawSel=new Set();
   function renderDraw(){ const g=$('drawGrid'); g.style.gridTemplateColumns=`repeat(${DRAW},18px)`; g.innerHTML=''; for(let r=0;r<DRAW;r++) for(let c=0;c<DRAW;c++){ const k=r+','+c; const d=document.createElement('div'); d.className='cell tiny click'+(drawSel.has(k)?' sel':''); d.onclick=()=>{ if(drawSel.has(k)) drawSel.delete(k); else drawSel.add(k); d.classList.toggle('sel'); }; g.appendChild(d); } }
-  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const aL4r=Number($('drawAL4Rate').value)||0; const aL5r=Number($('drawAL5Rate').value)||0; const aL5m=$('drawAL5Mode').value||'global'; const aL5s=$('drawAL5Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s}, l4:{rate:aL4r}, l5:{rate:aL5r,mode:aL5m,series:aL5s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; $('drawAL4Rate').value=0; $('drawAL5Rate').value=0; $('drawAL5Series').value='group'; };
+  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const aL4r=Number($('drawAL4Rate').value)||0; const aL5r=Number($('drawAL5Rate').value)||0; const aL5m=$('drawAL5Mode').value||'global'; const aL5s=$('drawAL5Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s}, l4:{rate:aL4r}, l5:{rate:aL5r,mode:aL5m,series:aL5s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), reson:Math.max(0,Number($('drawReson').value)||0), quality:Math.min(5,Math.max(0,parseInt($('drawQuality').value)||0)), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawReson').value=0; $('drawQuality').value=0; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; $('drawAL4Rate').value=0; $('drawAL5Rate').value=0; $('drawAL5Series').value='group'; };
   function uniqueName(name){ let base=(name||'法宝').trim()||'法宝'; let nm=base, k=2; while(library.some(t=>t.name===nm)){ nm=base+' #'+k; k++; } return nm; }
   function addToLibrary(name,cells,count,opts){
     opts=opts||{};
@@ -1378,7 +1404,7 @@
     library.push({id,name:nm,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),
       base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0,dmg:opts.dmg||0},
       bonusRate:opts.bonusRate||0,bonusType:opts.bonusType||'none',bonusAttr:opts.bonusAttr||'hp',
-      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),awaken:cloneAwaken(opts.awaken),key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
+      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),awaken:cloneAwaken(opts.awaken),reson:Number(opts.reson)||0,quality:Number(opts.quality)||0,key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
     sel[id]={include:grpEnabled,count:Math.max(0,count||0),priority:false};
     renderInventory(); saveLibrary();
   }
@@ -1387,7 +1413,7 @@
   function renderInventory(){
     $('libCount').textContent = library.length;
     const body=$('invBody'); body.innerHTML='';
-    if(library.length===0){ body.innerHTML='<tr><td colspan="17" class="empty-note">宝鉴还没有法宝，请展开下方「添加法宝」录入，录入后自动保存到本机。</td></tr>'; updateSummary(); return; }
+    if(library.length===0){ body.innerHTML='<tr><td colspan="19" class="empty-note">宝鉴还没有法宝，请展开下方「添加法宝」录入，录入后自动保存到本机。</td></tr>'; updateSummary(); return; }
     // 按当前筛选（搜索 + 启用状态 + 组别）生成「实际索引」视图
     const view = library.map((t,i)=>i).filter(i=>{
       const t=library[i];
@@ -1414,7 +1440,7 @@
       if(cb!==ca) return cb-ca;
       return (tb.cells.length)-(ta.cells.length);
     });
-    if(view.length===0){ body.innerHTML='<tr><td colspan="17" class="empty-note">当前筛选下没有法宝（可切换上方「全部法宝 / 已启用 / 未启用 / 组别」）。</td></tr>'; updateSummary(); return; }
+    if(view.length===0){ body.innerHTML='<tr><td colspan="19" class="empty-note">当前筛选下没有法宝（可切换上方「全部法宝 / 已启用 / 未启用 / 组别」）。</td></tr>'; updateSummary(); return; }
     const optsB='<option value="none">无加成</option><option value="self">自身受加成</option><option value="buff">给他人加成</option>';
     const optsA='<option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option>';
     view.forEach(actualIndex=>{
@@ -1434,6 +1460,8 @@
         '<td class="shape-td"><div class="mini-wrap" id="mini-'+i+'">'+shapeMini(t.cells,t.color)+'</div><input type="text" class="shapein" value="'+escapeHtml(shapeText(t.cells))+'" data-i="'+i+'" placeholder="0,0 1,0" title="输入坐标对，以空格分隔，如 0,0 1,0 1,1（左上角为 0,0）"></td>'+
         '<td><select class="grp" data-i="'+i+'">'+groupOptions(t.group)+'</select></td>'+
         '<td><select class="tp" data-i="'+i+'">'+typeOptions(t.type)+'</select></td>'+
+        '<td><input type="number" min="0" class="resonin" value="'+(t.reson||0)+'" data-i="'+i+'" title="共鸣值（决定基础属性档位）"></td>'+
+        '<td><input type="number" min="0" max="5" class="qualityin" value="'+(t.quality||0)+'" data-i="'+i+'" title="品质 1-5（5=红色）"></td>'+
         '<td><input type="number" min="0" class="anum hpnum" value="'+((t.base&&t.base.hp)||0)+'" data-i="'+i+'"></td>'+
         '<td><input type="number" min="0" class="anum defnum" value="'+((t.base&&t.base.def)||0)+'" data-i="'+i+'"></td>'+
         '<td><input type="number" min="0" class="anum atknum" value="'+((t.base&&t.base.atk)||0)+'" data-i="'+i+'"></td>'+
@@ -1464,6 +1492,8 @@
     body.querySelectorAll('.keystar').forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const t=library[i]; t.key=!t.key; saveLibrary(); renderInventory(); });
     body.querySelectorAll('.grp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const newG=e.target.value||null; library[i].group=newG; const g=newG?groups.find(x=>x.id===newG):null; if(g && !g.enabled) sel[library[i].id].include=false; renderInventory(); saveLibrary(); });
     body.querySelectorAll('.tp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; library[i].type=e.target.value; saveLibrary(); });
+    body.querySelectorAll('.resonin').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; library[i].reson=Math.max(0,Number(e.target.value)||0); saveLibrary(); });
+    body.querySelectorAll('.qualityin').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; library[i].quality=Math.min(5,Math.max(0,parseInt(e.target.value)||0)); saveLibrary(); });
     body.querySelectorAll('.shapein').forEach(el=>{ const i=+el.dataset.i;
       el.oninput=e=>{ const c=parseShapeInput(e.target.value); if(c){ library[i].cells=c; const mw=document.getElementById('mini-'+i); if(mw) mw.innerHTML=shapeMini(c, library[i].color); } };
       el.onchange=e=>{ const c=parseShapeInput(e.target.value); if(c){ library[i].cells=c; } else { el.value=shapeText(library[i].cells); } updateSummary(); saveLibrary(); };
@@ -1479,6 +1509,70 @@
     let extra = cap>=cells ? (' · 还差 <b>'+(cap-cells)+'</b> 格') : (' · <span style="color:var(--warn)">超出 <b>'+(cells-cap)+'</b> 格</span>');
     $('invSummary').innerHTML = '已选 <b>'+included+'</b> 件法宝 · 总格数 <b>'+cells+'</b> / 容量 <b>'+cap+'</b>'+extra;
   }
+
+  /* ---------- 智能补全：按名称匹配补全数据（类型/共鸣/品质/五级觉醒参数）----------
+     规则：只填空白字段，绝不覆盖用户已填数据；
+           共鸣/品质按库内 base 在已知共鸣档位中反查（对不上则按最高档预估并警告）；
+           觉醒参数仅当原参数全空时整体写入（lv=游戏内出现等级），觉醒等级仍由用户在详情里按火焰数自选。 */
+  function awakenIsEmpty(a){ if(!a) return true; return !(Number(a.level)||0) && !(a.l1&&Number(a.l1.rate)) && !(a.l2&&Number(a.l2.rate)) && !(a.l3&&Number(a.l3.rate)) && !(a.l4&&Number(a.l4.rate)) && !(a.l5&&Number(a.l5.rate)); }
+  async function smartEnrich(){
+    const btn=$('smartEnrich'); if(!btn) return;
+    btn.disabled=true; const oldTxt=btn.textContent; btn.textContent='补全中…';
+    let map=null;
+    try{
+      const r=await fetch('enrich-map.json?_='+Date.now(),{cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      map=await r.json();
+    }catch(e){
+      btn.disabled=false; btn.textContent=oldTxt;
+      alert('补全数据加载失败：'+e.message+'\n\n可能原因：\n1. 你正在用 file:// 本地打开页面（浏览器禁止本地 fetch）——请改用线上地址 https://offan-hub.github.io/ ；\n2. enrich-map.json 尚未部署到位——稍等片刻刷新重试。');
+      return;
+    }
+    const byName=(map&&map.byName)||{};
+    const rep={filled:[],full:[],unmatched:[],warn:[]};
+    library.forEach(t=>{
+      const e=byName[t.name];
+      if(!e){ rep.unmatched.push(t.name); return; }
+      let changed=false;
+      if(!t.type && e.type){ t.type=e.type; changed=true; }
+      if(awakenIsEmpty(t.awaken) && e.awaken){ t.awaken=cloneAwaken(e.awaken); changed=true; }
+      if(e.tiers && e.tiers.length){
+        const hasBase=t.base&&((t.base.atk||0)||(t.base.def||0)||(t.base.hp||0));
+        let tier=null;
+        if(hasBase) tier=e.tiers.find(tr=>(tr.base.atk||0)===(t.base.atk||0)&&(tr.base.def||0)===(t.base.def||0)&&(tr.base.hp||0)===(t.base.hp||0));
+        if(tier){ if(!t.reson){t.reson=tier.reson;changed=true;} if(!t.quality){t.quality=tier.quality;changed=true;} }
+        else if(hasBase){ rep.warn.push('「'+t.name+'」基础属性与已知共鸣档位都不匹配，共鸣/品质未填（可能为自定义数值）'); }
+        else { const top=e.tiers[e.tiers.length-1]; if(!t.reson){t.reson=top.reson;changed=true;} if(!t.quality){t.quality=top.quality;changed=true;} rep.warn.push('「'+t.name+'」未填基础属性，共鸣/品质按最高档（'+top.reson+' / Q'+top.quality+'）预估'); }
+      }
+      (e.flags||[]).forEach(f=>rep.warn.push('「'+t.name+'」'+f));
+      (changed?rep.filled:rep.full).push(t.name);
+    });
+    let synced=false;
+    if(rep.filled.length){ saveLibrary(); renderInventory(); if(typeof cloudReady==='function'&&cloudReady()&&typeof pushToCloud==='function'){ pushToCloud(); synced=true; } }
+    btn.disabled=false; btn.textContent=oldTxt;
+    // 邪系组别检测：同系觉醒按组别判断，缺「邪」组会漏算
+    const xieNames=library.filter(t=>{const e=byName[t.name];return e&&e.element==='邪';}).map(t=>t.name);
+    if(xieNames.length && !groups.some(g=>g.id==='邪')) rep.warn.push('库内有 '+xieNames.length+' 件邪系法宝（'+xieNames.slice(0,6).join('、')+(xieNames.length>6?' 等':'')+'），但还没有「邪」组别——同系觉醒按组别判断，建议在「组别管理」添加「邪」组并归入');
+    const meta=map.meta||{};
+    $('enTitle').textContent='智能补全报告';
+    let h='<div class="en-stat">'+
+      '<div class="cell"><div class="n" style="color:#16a34a">'+rep.filled.length+'</div><div class="t">已补全</div></div>'+
+      '<div class="cell"><div class="n">'+rep.full.length+'</div><div class="t">本已完整</div></div>'+
+      '<div class="cell"><div class="n" style="color:#b45309">'+rep.warn.length+'</div><div class="t">需人工关注</div></div>'+
+      '<div class="cell"><div class="n" style="color:var(--muted)">'+rep.unmatched.length+'</div><div class="t">补全数据中没有</div></div>'+
+      '</div>';
+    if(rep.filled.length) h+='<div class="en-sec">✅ 已补全 '+rep.filled.length+' 件</div><div class="en-list">'+rep.filled.map(escapeHtml).join('、')+'</div>';
+    if(rep.warn.length) h+='<div class="en-sec warn">⚠️ 需人工关注 '+rep.warn.length+' 条</div><div class="en-list">'+rep.warn.map(escapeHtml).join('<br>')+'</div>';
+    if(rep.unmatched.length) h+='<div class="en-sec">❌ 补全数据中未收录 '+rep.unmatched.length+' 件</div><div class="en-list">'+rep.unmatched.map(escapeHtml).join('、')+'</div>';
+    h+='<div class="cap" style="margin-top:12px;line-height:1.7">数据来源：'+escapeHtml(meta.source||'竞品资源提取')+' · 提取时间 '+escapeHtml(meta.extractedAt||'?')+' · 资源版本 '+escapeHtml(meta.resourceVersion||'?')+'<br>补全规则：只填空白字段，不覆盖已有数据；共鸣/品质按基础属性反查档位；觉醒参数整体写入（lv=该效果在游戏内的出现等级，异构图红宝的相邻叠加标记 lv=5）；<b>觉醒等级请在详情弹窗按游戏内火焰数自选</b>。</div>';
+    $('enBody').innerHTML=h;
+    $('enMsg').textContent=rep.filled.length?('已补全 '+rep.filled.length+' 件 · 数据已保存本机'+(synced?'并已推送云端':'（云端同步未开启，仅存本机）')):'没有需要补全的字段';
+    $('enMask').classList.add('on');
+  }
+  $('smartEnrich').onclick=smartEnrich;
+  $('enX').onclick=()=>$('enMask').classList.remove('on');
+  $('enOk').onclick=()=>$('enMask').classList.remove('on');
+  $('enMask').onclick=e=>{ if(e.target===$('enMask')) $('enMask').classList.remove('on'); };
 
   /* ---------- 背包空间 ---------- */
   function bagRows(){ return Math.max(1,parseInt($('rows').value)||1); }
@@ -1554,8 +1648,8 @@
   function groupOptions(cur){ let h='<option value="">未分组</option>'; groups.forEach(g=>{ h+='<option value="'+escapeHtml(g.id)+'"'+(cur===g.id?' selected':'')+'>'+escapeHtml(g.name)+'</option>'; }); return h; }
   function typeOptions(cur){ const arr=['','刀','枪','剑','锤','幡','御','异','乐']; let h=''; arr.forEach(v=>{ h+='<option value="'+v+'"'+((cur||'')===v?' selected':'')+'>'+(v||'无')+'</option>'; }); return h; }
   function levelOptions(cur){ let h=''; for(let v=0;v<=5;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; }
-  function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk'}, l2:{rate:0}, l3:{rate:0,mode:'global',series:'group'}, l4:{rate:0}, l5:{rate:0,mode:'global',series:'group'} }; }
-  function cloneAwaken(a){ if(!a) return DEFAULT_AWAKEN(); const l1=a.l1||{}, l2=a.l2||{}, l3=a.l3||{}, l4=a.l4||{}, l5=a.l5||{}; return { level:Math.min(5,Math.max(0,Number(a.level)||0)), l1:{ rate:Number(l1.rate)||0, attr:l1.attr||'atk' }, l2:{ rate:Number(l2.rate)||0 }, l3:{ rate:Number(l3.rate)||0, mode:l3.mode||'global', series:l3.series||'group' }, l4:{ rate:Number(l4.rate)||0 }, l5:{ rate:Number(l5.rate)||0, mode:l5.mode||'global', series:l5.series||'group' } }; }
+  function DEFAULT_AWAKEN(){ return { level:0, l1:{rate:0,attr:'atk',lv:1}, l2:{rate:0,lv:2}, l3:{rate:0,mode:'global',series:'group',lv:3}, l4:{rate:0,lv:4}, l5:{rate:0,mode:'global',series:'group',lv:5} }; }
+  function cloneAwaken(a){ if(!a) return DEFAULT_AWAKEN(); const l1=a.l1||{}, l2=a.l2||{}, l3=a.l3||{}, l4=a.l4||{}, l5=a.l5||{}; return { level:Math.min(5,Math.max(0,Number(a.level)||0)), l1:{ rate:Number(l1.rate)||0, attr:l1.attr||'atk', lv:Math.min(5,Math.max(1,Number(l1.lv)||1)) }, l2:{ rate:Number(l2.rate)||0, lv:Math.min(5,Math.max(1,Number(l2.lv)||2)) }, l3:{ rate:Number(l3.rate)||0, mode:l3.mode||'global', series:l3.series||'group', lv:Math.min(5,Math.max(1,Number(l3.lv)||3)) }, l4:{ rate:Number(l4.rate)||0, lv:Math.min(5,Math.max(1,Number(l4.lv)||4)) }, l5:{ rate:Number(l5.rate)||0, mode:l5.mode||'global', series:l5.series||'group', lv:Math.min(5,Math.max(1,Number(l5.lv)||5)) } }; }
 
   /* ===================== 法宝详情弹窗：只读查看全部信息 ===================== */
   let dtIdx=-1;
@@ -1564,11 +1658,11 @@
   function captureAwDraft(){
     if(!$('dtAL1Rate')) return;
     dtDraft={
-      l1:{rate:Number($('dtAL1Rate').value)||0, attr:$('dtAL1Attr')?$('dtAL1Attr').value:'atk'},
-      l2:{rate:Number($('dtAL2Rate').value)||20},
-      l3:{rate:Number($('dtAL3Rate').value)||0, series:$('dtAL3Series')?$('dtAL3Series').value:'group', mode:$('dtAL3Mode')?$('dtAL3Mode').value:'global'},
-      l4:{rate:Number($('dtAL4Rate').value)||0},
-      l5:{rate:Number($('dtAL5Rate').value)||0, series:$('dtAL5Series')?$('dtAL5Series').value:'group', mode:$('dtAL5Mode')?$('dtAL5Mode').value:'global'}
+      l1:{rate:Number($('dtAL1Rate').value)||0, attr:$('dtAL1Attr')?$('dtAL1Attr').value:'atk', lv:Number($('dtAL1Lv')&&$('dtAL1Lv').value)||1},
+      l2:{rate:Number($('dtAL2Rate').value)||0, lv:Number($('dtAL2Lv')&&$('dtAL2Lv').value)||2},
+      l3:{rate:Number($('dtAL3Rate').value)||0, series:$('dtAL3Series')?$('dtAL3Series').value:'group', mode:$('dtAL3Mode')?$('dtAL3Mode').value:'global', lv:Number($('dtAL3Lv')&&$('dtAL3Lv').value)||3},
+      l4:{rate:Number($('dtAL4Rate').value)||0, lv:Number($('dtAL4Lv')&&$('dtAL4Lv').value)||4},
+      l5:{rate:Number($('dtAL5Rate').value)||0, series:$('dtAL5Series')?$('dtAL5Series').value:'group', mode:$('dtAL5Mode')?$('dtAL5Mode').value:'global', lv:Number($('dtAL5Lv')&&$('dtAL5Lv').value)||5}
     };
   }
   function openDetail(i){
@@ -1602,39 +1696,47 @@
       '</div><div style="margin-top:9px">'+shapeMini(t.cells,t.color)+'</div>';
     /* --- 类型属性（可编辑） --- */
     h+='<div class="sk-sub" style="margin-top:14px">类型属性</div>'+
-      '<div class="dt-edit"><label>法宝类型</label><select id="dtType">'+typeOptions(t.type)+'</select></div>';
+      '<div class="dt-edit"><label>法宝类型</label><select id="dtType">'+typeOptions(t.type)+'</select></div>'+
+      '<div class="dt-edit"><label>共鸣值</label><input type="number" id="dtReson" min="0" value="'+(t.reson||0)+'"></div>'+
+      '<div class="dt-edit"><label>品质(1-5)</label><input type="number" id="dtQuality" min="1" max="5" value="'+(t.quality||0)+'"></div>';
     /* --- 觉醒效果（卡片展示 + 编辑一体） --- */
     const awAttrOpts=(cur)=>{ const arr=[['hp','生命值'],['def','防御力'],['atk','攻击力'],['dmg','伤害']]; let h=''; arr.forEach(([v,n])=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+n+'</option>'; }); return h; };
+    const lvOptions=(cur)=>{ let h=''; for(let v=1;v<=5;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; };
     const lv=(dtALv!=null)?dtALv:(Number(a.level)||0);
-    const l1=Object.assign({rate:0,attr:'atk'},a.l1||{},(dtDraft&&dtDraft.l1)||{});
-    const l2=Object.assign({rate:20},a.l2||{},(dtDraft&&dtDraft.l2)||{});
-    const l3=Object.assign({rate:0,mode:'global',series:'group'},a.l3||{},(dtDraft&&dtDraft.l3)||{});
-    const l4=Object.assign({rate:0},a.l4||{},(dtDraft&&dtDraft.l4)||{});
-    const l5=Object.assign({rate:0,mode:'global',series:'group'},a.l5||{},(dtDraft&&dtDraft.l5)||{});
+    const l1=Object.assign({rate:0,attr:'atk',lv:1},a.l1||{},(dtDraft&&dtDraft.l1)||{});
+    const l2=Object.assign({rate:20,lv:2},a.l2||{},(dtDraft&&dtDraft.l2)||{});
+    const l3=Object.assign({rate:0,mode:'global',series:'group',lv:3},a.l3||{},(dtDraft&&dtDraft.l3)||{});
+    const l4=Object.assign({rate:0,lv:4},a.l4||{},(dtDraft&&dtDraft.l4)||{});
+    const l5=Object.assign({rate:0,mode:'global',series:'group',lv:5},a.l5||{},(dtDraft&&dtDraft.l5)||{});
     const dis=(minLevel)=>lv<minLevel?' disabled':'';
     h+='<div class="aw-secline"><span class="line"></span><span class="tag">觉醒效果</span><span class="line"></span></div>';
     h+='<div class="dt-edit" style="margin-top:8px"><label>觉醒等级</label><select id="dtALevel">'+levelOptions(lv)+'</select></div>';
     h+='<div class="aw-cards">';
-    h+='<div class="aw-card'+(lv>=1?'':' locked')+'"><span class="aw-badge">1</span><div class="aw-body">'+(lv>=1?'每有一件<b class="aw-key">相邻同元素</b>法宝，本法宝获得加成':'<span style="color:var(--c-text-dim)">未开启</span>')+
+    h+='<div class="aw-card'+(lv>=l1.lv?'':' locked')+'"><span class="aw-badge">1</span><div class="aw-body">'+(lv>=l1.lv?'每有一件<b class="aw-key">相邻同元素</b>法宝，本法宝获得加成':'<span style="color:var(--c-text-dim)">未开启</span>')+
       '<div class="aw-fields">'+
-        '<div><label>每件叠加%</label><input type="number" id="dtAL1Rate" min="0" value="'+(l1.rate||0)+'"'+dis(1)+'></div>'+
-        '<div><label>加成属性</label><select id="dtAL1Attr"'+dis(1)+'>'+awAttrOpts(l1.attr||'atk')+'</select></div>'+
+        '<div><label>每件叠加%</label><input type="number" id="dtAL1Rate" min="0" value="'+(l1.rate||0)+'"'+dis(l1.lv)+'></div>'+
+        '<div><label>加成属性</label><select id="dtAL1Attr"'+dis(l1.lv)+'>'+awAttrOpts(l1.attr||'atk')+'</select></div>'+
+        '<div><label>生效等级</label><select id="dtAL1Lv"'+dis(l1.lv)+'>'+lvOptions(l1.lv)+'</select></div>'+
       '</div></div></div>';
-    h+='<div class="aw-card lv2'+(lv>=2?'':' locked')+'"><span class="aw-badge">2</span><div class="aw-body">'+(lv>=2?'本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
-      '<div class="aw-fields"><div><label>提升比例%</label><input type="number" id="dtAL2Rate" min="0" value="'+(l2.rate!=null?l2.rate:20)+'"'+dis(2)+'></div></div></div></div>';
-    h+='<div class="aw-card lv3'+(lv>=3?'':' locked')+'"><span class="aw-badge">3</span><div class="aw-body">'+(lv>=3?'对<b class="aw-el">同系</b>法宝的<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
+    h+='<div class="aw-card lv2'+(lv>=l2.lv?'':' locked')+'"><span class="aw-badge">2</span><div class="aw-body">'+(lv>=l2.lv?'本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
+      '<div class="aw-fields"><div><label>提升比例%</label><input type="number" id="dtAL2Rate" min="0" value="'+(l2.rate!=null?l2.rate:20)+'"'+dis(l2.lv)+'></div>'+
+      '<div><label>生效等级</label><select id="dtAL2Lv"'+dis(l2.lv)+'>'+lvOptions(l2.lv)+'</select></div></div></div></div>';
+    h+='<div class="aw-card lv3'+(lv>=l3.lv?'':' locked')+'"><span class="aw-badge">3</span><div class="aw-body">'+(lv>=l3.lv?'对<b class="aw-el">同系</b>法宝的<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
       '<div class="aw-fields">'+
-        '<div><label>提升比例%</label><input type="number" id="dtAL3Rate" min="0" value="'+(l3.rate||0)+'"'+dis(3)+'></div>'+
-        '<div><label>同系依据</label><select id="dtAL3Series"'+dis(3)+'><option value="group"'+(l3.series!=='type'?' selected':'')+'>元素属性</option><option value="type"'+(l3.series==='type'?' selected':'')+'>类型属性</option></select></div>'+
-        '<div><label>作用范围</label><select id="dtAL3Mode"'+dis(3)+'><option value="adjacent"'+(l3.mode==='adjacent'?' selected':'')+'>相邻同系列</option><option value="global"'+(l3.mode!=='adjacent'?' selected':'')+'>背包同系列除己</option></select></div>'+
+        '<div><label>提升比例%</label><input type="number" id="dtAL3Rate" min="0" value="'+(l3.rate||0)+'"'+dis(l3.lv)+'></div>'+
+        '<div><label>同系依据</label><select id="dtAL3Series"'+dis(l3.lv)+'><option value="group"'+(l3.series!=='type'?' selected':'')+'>元素属性</option><option value="type"'+(l3.series==='type'?' selected':'')+'>类型属性</option></select></div>'+
+        '<div><label>作用范围</label><select id="dtAL3Mode"'+dis(l3.lv)+'><option value="adjacent"'+(l3.mode==='adjacent'?' selected':'')+'>相邻同系列</option><option value="global"'+(l3.mode!=='adjacent'?' selected':'')+'>背包同系列除己</option></select></div>'+
+        '<div><label>生效等级</label><select id="dtAL3Lv"'+dis(l3.lv)+'>'+lvOptions(l3.lv)+'</select></div>'+
       '</div></div></div>';
-    h+='<div class="aw-card lv4'+(lv>=4?'':' locked')+'"><span class="aw-badge">4</span><div class="aw-body">'+(lv>=4?'本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
-      '<div class="aw-fields"><div><label>提升比例%</label><input type="number" id="dtAL4Rate" min="0" value="'+(l4.rate||0)+'"'+dis(4)+'></div></div></div></div>';
-    h+='<div class="aw-card lv5'+(lv>=5?'':' locked')+'"><span class="aw-badge">5</span><div class="aw-body">'+(lv>=5?'对<b class="aw-el">同系</b>法宝的<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
+    h+='<div class="aw-card lv4'+(lv>=l4.lv?'':' locked')+'"><span class="aw-badge">4</span><div class="aw-body">'+(lv>=l4.lv?'本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
+      '<div class="aw-fields"><div><label>提升比例%</label><input type="number" id="dtAL4Rate" min="0" value="'+(l4.rate||0)+'"'+dis(l4.lv)+'></div>'+
+      '<div><label>生效等级</label><select id="dtAL4Lv"'+dis(l4.lv)+'>'+lvOptions(l4.lv)+'</select></div></div></div></div>';
+    h+='<div class="aw-card lv5'+(lv>=l5.lv?'':' locked')+'"><span class="aw-badge">5</span><div class="aw-body">'+(lv>=l5.lv?'对<b class="aw-el">同系</b>法宝的<b class="aw-hl">攻 / 防 / 血</b> 提升':'<span style="color:var(--c-text-dim)">未开启</span>')+
       '<div class="aw-fields">'+
-        '<div><label>提升比例%</label><input type="number" id="dtAL5Rate" min="0" value="'+(l5.rate||0)+'"'+dis(5)+'></div>'+
-        '<div><label>同系依据</label><select id="dtAL5Series"'+dis(5)+'><option value="group"'+(l5.series!=='type'?' selected':'')+'>元素属性</option><option value="type"'+(l5.series==='type'?' selected':'')+'>类型属性</option></select></div>'+
-        '<div><label>作用范围</label><select id="dtAL5Mode"'+dis(5)+'><option value="adjacent"'+(l5.mode==='adjacent'?' selected':'')+'>相邻同系列</option><option value="global"'+(l5.mode!=='adjacent'?' selected':'')+'>背包同系列除己</option></select></div>'+
+        '<div><label>提升比例%</label><input type="number" id="dtAL5Rate" min="0" value="'+(l5.rate||0)+'"'+dis(l5.lv)+'></div>'+
+        '<div><label>同系依据</label><select id="dtAL5Series"'+dis(l5.lv)+'><option value="group"'+(l5.series!=='type'?' selected':'')+'>元素属性</option><option value="type"'+(l5.series==='type'?' selected':'')+'>类型属性</option></select></div>'+
+        '<div><label>作用范围</label><select id="dtAL5Mode"'+dis(l5.lv)+'><option value="adjacent"'+(l5.mode==='adjacent'?' selected':'')+'>相邻同系列</option><option value="global"'+(l5.mode!=='adjacent'?' selected':'')+'>背包同系列除己</option></select></div>'+
+        '<div><label>生效等级</label><select id="dtAL5Lv"'+dis(l5.lv)+'>'+lvOptions(l5.lv)+'</select></div>'+
       '</div></div></div>';
     h+='</div>';
     $('dtBody').innerHTML=h;
@@ -1642,7 +1744,7 @@
   }
   $('dtX').onclick=closeDetail; $('dtCancel').onclick=closeDetail;
   $('dtMask').onclick=e=>{ if(e.target===$('dtMask')) closeDetail(); };
-  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk'}, l2:{rate:Number($('dtAL2Rate').value)||0}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group'}, l4:{rate:Number($('dtAL4Rate').value)||0}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group'} }); saveLibrary(); } closeDetail(); renderInventory(); };
+  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.reson=Math.max(0,Number($('dtReson').value)||0); t.quality=Math.min(5,Math.max(0,Number($('dtQuality').value)||0)); t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk',lv:Number($('dtAL1Lv').value)||1}, l2:{rate:Number($('dtAL2Rate').value)||0,lv:Number($('dtAL2Lv').value)||2}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group',lv:Number($('dtAL3Lv').value)||3}, l4:{rate:Number($('dtAL4Rate').value)||0,lv:Number($('dtAL4Lv').value)||4}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group',lv:Number($('dtAL5Lv').value)||5} }); saveLibrary(); } closeDetail(); renderInventory(); };
 
 
   /* ---------- 一键生成（多批次 + 跨批全局最优合并） ---------- */
@@ -1748,20 +1850,21 @@
         const mj = items[j].m;
         if(mj.bonusType==='buff' && mj.bonusAttr && sameGroup(mj, m)){ addK(ii, mj.bonusAttr, (Number(mj.bonusRate)||0)/100); }
       }
-      // 一级觉醒：每有一件相邻同元素法宝，+rate%（attr 可为 伤害dmg）
-      if(m.awaken&&m.awaken.level>=1&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; addK(ii, l1.attr, (Number(l1.rate)||0)/100*sameAdj(ii,m)); }
-      // 二级觉醒：本法宝攻/防/血各 +rate%（level>=2 生效）
-      if(m.awaken&&m.awaken.level>=2&&m.awaken.l2&&m.awaken.l2.rate){ const r=(Number(m.awaken.l2.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
-      // 四级觉醒：与二级同结构（自身攻/防/血），数值独立（level>=4 生效）
-      if(m.awaken&&m.awaken.level>=4&&m.awaken.l4&&m.awaken.l4.rate){ const r=(Number(m.awaken.l4.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
+      // 一级觉醒：每有一件相邻同元素法宝，+rate%（attr 可为 伤害dmg；lv=该效果在游戏内的出现等级，默认1）
+      if(m.awaken&&m.awaken.level>=(m.awaken.l1&&m.awaken.l1.lv||1)&&m.awaken.l1&&m.awaken.l1.rate){ const l1=m.awaken.l1; addK(ii, l1.attr, (Number(l1.rate)||0)/100*sameAdj(ii,m)); }
+      // 二级觉醒：本法宝攻/防/血各 +rate%（level>=lv 生效，默认2）
+      if(m.awaken&&m.awaken.level>=(m.awaken.l2&&m.awaken.l2.lv||2)&&m.awaken.l2&&m.awaken.l2.rate){ const r=(Number(m.awaken.l2.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
+      // 四级觉醒：与二级同结构（自身攻/防/血），数值独立（默认4）
+      if(m.awaken&&m.awaken.level>=(m.awaken.l4&&m.awaken.l4.lv||4)&&m.awaken.l4&&m.awaken.l4.rate){ const r=(Number(m.awaken.l4.rate)||0)/100; addK(ii,'hp',r); addK(ii,'def',r); addK(ii,'atk',r); }
     }
     // 三/五级觉醒：对同系目标的攻/防/血各 +rate%（相邻同系 / 背包同系除己；同系依据 = 元素 或 类型，二选一；多宿主累加）
-    // L5 与 L3 同结构、数值独立，二者同系依据/作用范围各自配置
+    // L5 与 L3 同结构、数值独立，二者同系依据/作用范围/生效等级各自配置
     for(let ii=0; ii<N; ii++){
-      const m=items[ii].m; if(!m.awaken||m.awaken.level<3) continue;
+      const m=items[ii].m; if(!m.awaken) continue;
       const cfgs=[];
-      if(m.awaken.l3&&m.awaken.l3.rate) cfgs.push(m.awaken.l3);
-      if(m.awaken.level>=5&&m.awaken.l5&&m.awaken.l5.rate) cfgs.push(m.awaken.l5);
+      if(m.awaken.l3&&m.awaken.l3.rate&&m.awaken.level>=(m.awaken.l3.lv||3)) cfgs.push(m.awaken.l3);
+      if(m.awaken.l5&&m.awaken.l5.rate&&m.awaken.level>=(m.awaken.l5.lv||5)) cfgs.push(m.awaken.l5);
+      if(!cfgs.length) continue;
       for(const l3 of cfgs){
       const r=(Number(l3.rate)||0)/100;
       const byGroup = (l3.series!=='type'); // 默认按元素属性（group）；series='type' 时按类型属性

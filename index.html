@@ -211,10 +211,11 @@
   .modal-bd { padding:14px 18px; max-height:68vh; overflow:auto; }
   .modal-ft { padding:11px 18px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-end; align-items:center; }
   .modal .x { border:none; background:none; font-size:20px; line-height:1; color:var(--muted); padding:2px 6px; }
-  .en-stat { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:9px; margin-bottom:12px; }
-  .en-stat .cell { border:1px solid var(--line); border-radius:10px; padding:9px 12px; background:#f8f9fb; }
-  .en-stat .n { font-size:20px; font-weight:700; }
-  .en-stat .t { font-size:11.5px; color:var(--muted); }
+  /* 统计卡片（智能补全报告 / 截图导入共用）——类名必须用 .stc，不能复用背包方格 .cell（width:26px 会把卡片钉成竖排） */
+  .en-stat { display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:9px; margin-bottom:12px; }
+  .en-stat .stc { display:flex; flex-direction:column; justify-content:center; gap:3px; min-height:62px; border:1px solid var(--line); border-radius:10px; padding:9px 12px; background:#f8f9fb; }
+  .en-stat .n { font-size:20px; font-weight:700; line-height:1.1; white-space:nowrap; }
+  .en-stat .t { font-size:11.5px; color:var(--muted); line-height:1.35; }
   .en-sec { font-size:13px; font-weight:600; margin:12px 0 5px; }
   .en-sec.warn { color:#b45309; }
   .en-list { font-size:12.5px; color:var(--muted); line-height:1.75; max-height:180px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#fcfcfe; }
@@ -2465,10 +2466,10 @@ const ShotCore = (function(){
     };
     $('enTitle').textContent='智能补全报告';
     let h='<div class="en-stat">'+
-      '<div class="cell"><div class="n" style="color:#16a34a">'+rep.filled.length+'</div><div class="t">已补全</div></div>'+
-      '<div class="cell"><div class="n">'+rep.full.length+'</div><div class="t">本已完整</div></div>'+
-      '<div class="cell"><div class="n" style="color:#b45309">'+rep.warn.length+'</div><div class="t">需人工关注</div></div>'+
-      '<div class="cell"><div class="n" style="color:var(--muted)">'+rep.unmatched.length+'</div><div class="t">补全数据中没有</div></div>'+
+      '<div class="stc"><div class="n" style="color:#16a34a">'+rep.filled.length+'</div><div class="t">已补全</div></div>'+
+      '<div class="stc"><div class="n">'+rep.full.length+'</div><div class="t">库内已完整</div></div>'+
+      '<div class="stc"><div class="n" style="color:#b45309">'+rep.warn.length+'</div><div class="t">需人工关注</div></div>'+
+      '<div class="stc"><div class="n" style="color:var(--muted)">'+rep.unmatched.length+'</div><div class="t">数据中未收录</div></div>'+
       '</div>';
     if(rep.filled.length) h+='<div class="en-sec">✅ 已补全 '+rep.filled.length+' 件</div><div class="en-list">'+rep.filled.map(escapeHtml).join('、')+'</div>';
     if(rep.warn.length) h+='<div class="en-sec warn">⚠️ 需人工关注 '+rep.warn.length+' 条</div><div class="en-list">'+mergeCnt(rep.warn).map(escapeHtml).join('<br>')+(needXie?'<div style="margin-top:8px"><button id="enFixXie" class="primary">一键创建「邪」组并归入 '+xieItems.length+' 件</button></div>':'')+'</div>';
@@ -2500,9 +2501,9 @@ const ShotCore = (function(){
     shotState.result=null; shotState.rows=[];
     const elCount=library.filter(t=>t.element).length;
     const ready=elCount>=10;
-    $('shotBody').innerHTML='<div class="en-stat"><div class="cell"><div class="n">7×6</div><div class="t">背包网格</div></div>'+
-      '<div class="cell"><div class="n">本地</div><div class="t">图片不上传</div></div>'+
-      '<div class="cell"><div class="n" style="color:'+(ready?'#16a34a':'#b45309')+'">'+elCount+'</div><div class="t">库内已填元素</div></div></div>'+
+    $('shotBody').innerHTML='<div class="en-stat"><div class="stc"><div class="n">7×6</div><div class="t">背包网格</div></div>'+
+      '<div class="stc"><div class="n">本地</div><div class="t">图片不上传</div></div>'+
+      '<div class="stc"><div class="n" style="color:'+(ready?'#16a34a':'#b45309')+'">'+elCount+'</div><div class="t">库内已填元素</div></div></div>'+
       (ready?'':'<div class="en-sec warn">⚠️ 库内只有 '+elCount+' 件法宝填了「元素」，截图识别按元素+形状匹配库内法宝——元素填得越少，能自动匹配的越少。建议先点「✨ 智能补全」批量补全元素/共鸣/品质后再截图导入。</div>')+
       '<div class="en-sec">① 选择截图</div>'+
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
@@ -2586,11 +2587,11 @@ const ShotCore = (function(){
     }));
     const st=result.stats;
     let h='<div class="en-stat">'+
-      '<div class="cell"><div class="n" style="color:#16a34a">'+st.ok+'</div><div class="t">已匹配</div></div>'+
-      '<div class="cell"><div class="n" style="color:#b45309">'+st.ambiguous+'</div><div class="t">多候选待选</div></div>'+
-      '<div class="cell"><div class="n" style="color:#b91c1c">'+st.suspect+'</div><div class="t">待确认</div></div>'+
-      '<div class="cell"><div class="n">'+(st.converged?'√':'×')+'</div><div class="t">网格定位</div></div>'+
-      '<div class="cell"><div class="n">'+ms+'ms</div><div class="t">识别耗时</div></div></div>';
+      '<div class="stc"><div class="n" style="color:#16a34a">'+st.ok+'</div><div class="t">已匹配</div></div>'+
+      '<div class="stc"><div class="n" style="color:#b45309">'+st.ambiguous+'</div><div class="t">多候选待选</div></div>'+
+      '<div class="stc"><div class="n" style="color:#b91c1c">'+st.suspect+'</div><div class="t">待确认</div></div>'+
+      '<div class="stc"><div class="n">'+(st.converged?'√':'×')+'</div><div class="t">网格定位</div></div>'+
+      '<div class="stc"><div class="n">'+ms+'ms</div><div class="t">识别耗时</div></div></div>';
     if(!st.converged) h+='<div class="en-sec warn">⚠️ 网格定位置信度低（仅 '+st.anchors+' 件法宝可用于定位，背包里法宝越多定位越准）——逐格识别结果请逐件核对后再导入</div>';
     h+='<div class="table-scroll mt"><table class="inv-table"><thead><tr>'+
       '<th style="text-align:center">格</th><th>识别信息</th><th>匹配法宝</th><th style="text-align:center">觉醒</th><th style="text-align:center">学签名</th><th>状态</th>'+

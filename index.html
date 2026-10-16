@@ -354,6 +354,7 @@
           <div><label>防御</label><input type="number" id="drawDef" min="0" value="0"></div>
           <div><label>攻击</label><input type="number" id="drawAtk" min="0" value="0"></div>
           <div><label>伤害</label><input type="number" id="drawDmg" min="0" value="0"></div>
+          <div><label>护盾值</label><input type="number" id="drawShield" min="0" value="0"></div>
           <div><label>加成率%</label><input type="number" id="drawBRate" min="0" value="0"></div>
           <div><label>加成类型</label><select id="drawBType"><option value="none">无加成</option><option value="self">自身受加成</option><option value="buff">给他人加成</option></select></div>
           <div><label>加成属性</label><select id="drawBAttr"><option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option></select></div>
@@ -365,7 +366,7 @@
             <div class="aw-card"><span class="aw-badge">1</span><div class="aw-body">每有一件<b class="aw-key">相邻同元素</b>法宝，本法宝获得加成
               <div class="aw-fields">
                 <div><label>每件叠加%</label><input type="number" id="drawAL1Rate" min="0" value="0"></div>
-                <div><label>加成属性</label><select id="drawAL1Attr"><option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option><option value="dmg">伤害</option></select></div>
+                <div><label>加成属性</label><select id="drawAL1Attr"><option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option><option value="dmg">伤害</option><option value="shield">护盾值</option></select></div>
               </div></div></div>
             <div class="aw-card lv2"><span class="aw-badge">2</span><div class="aw-body">本法宝<b class="aw-hl">攻 / 防 / 血</b> 提升
               <div class="aw-fields"><div><label>提升比例%</label><input type="number" id="drawAL2Rate" min="0" value="20"></div></div></div></div>
@@ -731,12 +732,13 @@
       }
       }
     }
-    const totals={hp:0,def:0,atk:0,dmg:0};
+    const totals={hp:0,def:0,atk:0,dmg:0,shield:0};
     for(let ii=0;ii<N;ii++){ const m=attrOf(ii);
       totals.hp+= (Number(m.hp)||0)*(1+bonus[ii].hp);
       totals.def+=(Number(m.def)||0)*(1+bonus[ii].def);
       totals.atk+=(Number(m.atk)||0)*(1+bonus[ii].atk);
       totals.dmg+=(Number(m.dmg)||0)*(1+bonus[ii].dmg);
+      totals.shield+=(Number(m.shield)||0)*(1+(bonus[ii].shield||0));
     }
     return totals;
   }
@@ -1027,7 +1029,7 @@
       const grpId = rawGrp? (grpRemap[String(rawGrp)]||String(rawGrp)) : null;
       const g = grpId? groups.find(x=>x.id===grpId):null;
       const inc = !grpId || (g? !!g.enabled : true); // 强关联：分组法宝仅在对应组别已启用时才启用
-      const base=(typeof t.base==='object'&&t.base)?{ hp:Number(t.base.hp)||0, def:Number(t.base.def)||0, atk:Number(t.base.atk)||0, dmg:Number(t.base.dmg)||0 }:{ hp:Number(t.base)||0, def:0, atk:0, dmg:0 };
+      const base=(typeof t.base==='object'&&t.base)?{ hp:Number(t.base.hp)||0, def:Number(t.base.def)||0, atk:Number(t.base.atk)||0, dmg:Number(t.base.dmg)||0, shield:Number(t.base.shield)||0 }:{ hp:Number(t.base)||0, def:0, atk:0, dmg:0, shield:0 };
       library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       const sc=Math.max(0,t.count||0);
       sel[id]={include:inc,count:sc,priority:false};
@@ -1044,7 +1046,7 @@
     DEFAULT_LIBRARY.forEach(t=>{
       if(library.some(x=>x.group===t.group && x.name===t.name)) return;
       const id=uniqueName(t.name);
-      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:false, skill:null });
+      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:false, skill:null });
       sel[id]={include:false,count:0,priority:false};
       added++;
     });
@@ -1113,7 +1115,7 @@
       const g = grpId?grpMap.get(grpId):null;
       const grpOff = !!(grpId && g && !g.enabled);
       library.push({ id, name:String(t.name||t.id), cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length),
-        base:(t.base&&typeof t.base==='object')?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}:{hp:0,def:0,atk:0,dmg:0},
+        base:(t.base&&typeof t.base==='object')?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}:{hp:0,def:0,atk:0,dmg:0,shield:0},
         bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp',
         count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       if(!sel[id]) sel[id]={ include:!grpOff, count:Math.max(0,Number(t.count)||0), priority:false };
@@ -1249,6 +1251,7 @@
         else if(/防御/.test(h)) map.def=ci;
         else if(/攻击/.test(h)) map.atk=ci;
         else if(/伤害/.test(h)) map.dmg=ci;
+        else if(/护盾/.test(h)) map.shield=ci;
         else if(/法宝类型|类型属性/.test(h)) map.type=ci;
         else if(/共鸣/.test(h)) map.reson=ci;
         else if(/品质/.test(h)) map.quality=ci;
@@ -1274,6 +1277,7 @@
       const cells=parseCells(map.cells!=null?r[map.cells]:'');
       const hp=numOr0(map.hp!=null?r[map.hp]:0), def=numOr0(map.def!=null?r[map.def]:0), atk=numOr0(map.atk!=null?r[map.atk]:0);
       const dmg=map.dmg!=null?numOr0(r[map.dmg]):0;
+      const shield=map.shield!=null?numOr0(r[map.shield]):0;
       const bonusRate=numOr0(map.bonusRate!=null?r[map.bonusRate]:0);
       const bonusType=BT_MAP[String(map.bonusType!=null?r[map.bonusType]:'').trim()]||'none';
       const bonusAttr=BA_MAP[String(map.bonusAttr!=null?r[map.bonusAttr]:'').trim()]||'hp';
@@ -1284,7 +1288,7 @@
       if(existing){
         existing.cells=PackCore.normalizeShape(cells);
         existing.group=group;
-        existing.base={hp,def,atk,dmg};
+        existing.base={hp,def,atk,dmg,shield};
         existing.bonusRate=bonusRate; existing.bonusType=bonusType; existing.bonusAttr=bonusAttr;
         if(typeVal!=null) existing.type=typeVal;
         if(map.reson!=null) existing.reson=Math.max(0,parseInt(r[map.reson])||0);
@@ -1295,7 +1299,7 @@
         updated++;
       } else {
         const id=uniqueName(name);
-        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk,dmg},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),reson:(map.reson!=null?Math.max(0,parseInt(r[map.reson])||0):0),quality:(map.quality!=null?Math.min(5,Math.max(0,parseInt(r[map.quality])||0)):0),awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
+        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk,dmg,shield},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),reson:(map.reson!=null?Math.max(0,parseInt(r[map.reson])||0):0),quality:(map.quality!=null?Math.min(5,Math.max(0,parseInt(r[map.quality])||0)):0),awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
         sel[id]={include:grpEnabled,count:0,priority:false};
         added++;
       }
@@ -1371,7 +1375,7 @@
     if(h.plans&&h.plans.length){ renderPlans(h.plans,h.backpack,h.ms||0); $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合与结果。'; }
     else $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合。';
   }
-  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill||null }; }
+  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0,shield:Number(t.base&&t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -1392,7 +1396,7 @@
   function renderQuickShapes(){ const box=$('quickShapes'); box.innerHTML=''; Object.keys(SHAPES).forEach(name=>{ const b=document.createElement('button'); b.textContent=name; b.onclick=()=>addToLibrary(name, SHAPES[name].map(c=>c.slice()), 1); box.appendChild(b); }); }
   const DRAW=5; let drawSel=new Set();
   function renderDraw(){ const g=$('drawGrid'); g.style.gridTemplateColumns=`repeat(${DRAW},18px)`; g.innerHTML=''; for(let r=0;r<DRAW;r++) for(let c=0;c<DRAW;c++){ const k=r+','+c; const d=document.createElement('div'); d.className='cell tiny click'+(drawSel.has(k)?' sel':''); d.onclick=()=>{ if(drawSel.has(k)) drawSel.delete(k); else drawSel.add(k); d.classList.toggle('sel'); }; g.appendChild(d); } }
-  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const aL4r=Number($('drawAL4Rate').value)||0; const aL5r=Number($('drawAL5Rate').value)||0; const aL5m=$('drawAL5Mode').value||'global'; const aL5s=$('drawAL5Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s}, l4:{rate:aL4r}, l5:{rate:aL5r,mode:aL5m,series:aL5s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), reson:Math.max(0,Number($('drawReson').value)||0), quality:Math.min(5,Math.max(0,parseInt($('drawQuality').value)||0)), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawReson').value=0; $('drawQuality').value=0; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; $('drawAL4Rate').value=0; $('drawAL5Rate').value=0; $('drawAL5Series').value='group'; };
+  $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const aL4r=Number($('drawAL4Rate').value)||0; const aL5r=Number($('drawAL5Rate').value)||0; const aL5m=$('drawAL5Mode').value||'global'; const aL5s=$('drawAL5Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s}, l4:{rate:aL4r}, l5:{rate:aL5r,mode:aL5m,series:aL5s} }; const opts={ group:($('drawGroup').value||'')||null, type:($('drawType').value||''), reson:Math.max(0,Number($('drawReson').value)||0), quality:Math.min(5,Math.max(0,parseInt($('drawQuality').value)||0)), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, shield:Number($('drawShield').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawShield').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawReson').value=0; $('drawQuality').value=0; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; $('drawAL4Rate').value=0; $('drawAL5Rate').value=0; $('drawAL5Series').value='group'; };
   function uniqueName(name){ let base=(name||'法宝').trim()||'法宝'; let nm=base, k=2; while(library.some(t=>t.name===nm)){ nm=base+' #'+k; k++; } return nm; }
   function addToLibrary(name,cells,count,opts){
     opts=opts||{};
@@ -1402,7 +1406,7 @@
     const grpEnabled = !grp || (g? !!g.enabled : true);
     const nm=uniqueName(name); const id=nm;
     library.push({id,name:nm,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),
-      base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0,dmg:opts.dmg||0},
+      base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0,dmg:opts.dmg||0,shield:opts.shield||0},
       bonusRate:opts.bonusRate||0,bonusType:opts.bonusType||'none',bonusAttr:opts.bonusAttr||'hp',
       count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),awaken:cloneAwaken(opts.awaken),reson:Number(opts.reson)||0,quality:Number(opts.quality)||0,key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
     sel[id]={include:grpEnabled,count:Math.max(0,count||0),priority:false};
@@ -1529,7 +1533,7 @@
       return;
     }
     const byName=(map&&map.byName)||{};
-    const rep={filled:[],full:[],unmatched:[],warn:[]};
+    const rep={filled:[],full:[],unmatched:[],warn:[],info:[]};
     library.forEach(t=>{
       const e=byName[t.name];
       if(!e){ rep.unmatched.push(t.name); return; }
@@ -1541,19 +1545,37 @@
         let tier=null;
         if(hasBase) tier=e.tiers.find(tr=>(tr.base.atk||0)===(t.base.atk||0)&&(tr.base.def||0)===(t.base.def||0)&&(tr.base.hp||0)===(t.base.hp||0));
         if(tier){ if(!t.reson){t.reson=tier.reson;changed=true;} if(!t.quality){t.quality=tier.quality;changed=true;} }
-        else if(hasBase){ rep.warn.push('「'+t.name+'」基础属性与已知共鸣档位都不匹配，共鸣/品质未填（可能为自定义数值）'); }
+        else if(hasBase){ const ts=e.tiers.map(tr=>'共鸣'+tr.reson+'/Q'+tr.quality+'（攻'+(tr.base.atk||0)+'/防'+(tr.base.def||0)+'/血'+(tr.base.hp||0)+'）').join('；'); rep.warn.push('「'+t.name+'」基础属性与已知共鸣档位都不匹配，共鸣/品质未填。对方数据：'+ts); }
         else { const top=e.tiers[e.tiers.length-1]; if(!t.reson){t.reson=top.reson;changed=true;} if(!t.quality){t.quality=top.quality;changed=true;} rep.warn.push('「'+t.name+'」未填基础属性，共鸣/品质按最高档（'+top.reson+' / Q'+top.quality+'）预估'); }
       }
-      (e.flags||[]).forEach(f=>rep.warn.push('「'+t.name+'」'+f));
+      (e.flags||[]).forEach(f=>{ const txt='「'+t.name+'」'+f.t; (f.k==='warn'?rep.warn:rep.info).push(txt); });
       (changed?rep.filled:rep.full).push(t.name);
     });
     let synced=false;
     if(rep.filled.length){ saveLibrary(); renderInventory(); if(typeof cloudReady==='function'&&cloudReady()&&typeof pushToCloud==='function'){ pushToCloud(); synced=true; } }
     btn.disabled=false; btn.textContent=oldTxt;
     // 邪系组别检测：同系觉醒按组别判断，缺「邪」组会漏算
-    const xieNames=library.filter(t=>{const e=byName[t.name];return e&&e.element==='邪';}).map(t=>t.name);
-    if(xieNames.length && !groups.some(g=>g.id==='邪')) rep.warn.push('库内有 '+xieNames.length+' 件邪系法宝（'+xieNames.slice(0,6).join('、')+(xieNames.length>6?' 等':'')+'），但还没有「邪」组别——同系觉醒按组别判断，建议在「组别管理」添加「邪」组并归入');
+    const xieItems=library.filter(t=>{const e=byName[t.name];return e&&e.element==='邪'&&!t.group;});
+    let needXie=false;
+    if(xieItems.length && !groups.some(g=>g.id==='邪')){ needXie=true; rep.warn.push('库内有 '+xieItems.length+' 件未分组邪系法宝（'+xieItems.slice(0,6).map(t=>t.name).join('、')+(xieItems.length>6?' 等':'')+'），同系觉醒按组别判断，建议创建「邪」组并归入'); }
     const meta=map.meta||{};
+    const mergeCnt=arr=>{ const m=new Map(); arr.forEach(x=>m.set(x,(m.get(x)||0)+1)); return [...m.entries()].map(([x,n])=>n>1?x+' <b>×'+n+'</b>':x); };
+    const candOf=name=>{
+      const hints=[];
+      // 近似名（编辑距离≤1，识别「明雷长枪/鸣雷长枪」这类一字笔误）
+      let best=null,bd=2;
+      for(const n of Object.keys(byName)){
+        if(Math.abs(n.length-name.length)>1) continue;
+        let d=0; const len=Math.max(n.length,name.length);
+        for(let i=0;i<len;i++){ if(n[i]!==name[i]) d++; if(d>1) break; }
+        if(n.length!==name.length) d++;
+        if(d<bd){ bd=d; best=n; }
+      }
+      if(best) hints.push('与已收录的「'+best+'」仅一字之差，疑似笔误');
+      const t=library.find(x=>x.name===name); const ty=t&&t.type;
+      if(ty){ const same=Object.keys(byName).filter(n=>byName[n].type===ty); if(same.length) hints.push('补全数据中共有 '+same.length+' 件「'+ty+'」类法宝：'+same.slice(0,8).join('、')+(same.length>8?' 等':'')); }
+      return hints.length?' <span style="color:var(--muted)">（'+hints.join('；')+'）</span>':'';
+    };
     $('enTitle').textContent='智能补全报告';
     let h='<div class="en-stat">'+
       '<div class="cell"><div class="n" style="color:#16a34a">'+rep.filled.length+'</div><div class="t">已补全</div></div>'+
@@ -1562,10 +1584,21 @@
       '<div class="cell"><div class="n" style="color:var(--muted)">'+rep.unmatched.length+'</div><div class="t">补全数据中没有</div></div>'+
       '</div>';
     if(rep.filled.length) h+='<div class="en-sec">✅ 已补全 '+rep.filled.length+' 件</div><div class="en-list">'+rep.filled.map(escapeHtml).join('、')+'</div>';
-    if(rep.warn.length) h+='<div class="en-sec warn">⚠️ 需人工关注 '+rep.warn.length+' 条</div><div class="en-list">'+rep.warn.map(escapeHtml).join('<br>')+'</div>';
-    if(rep.unmatched.length) h+='<div class="en-sec">❌ 补全数据中未收录 '+rep.unmatched.length+' 件</div><div class="en-list">'+rep.unmatched.map(escapeHtml).join('、')+'</div>';
+    if(rep.warn.length) h+='<div class="en-sec warn">⚠️ 需人工关注 '+rep.warn.length+' 条</div><div class="en-list">'+mergeCnt(rep.warn).map(escapeHtml).join('<br>')+(needXie?'<div style="margin-top:8px"><button id="enFixXie" class="primary">一键创建「邪」组并归入 '+xieItems.length+' 件</button></div>':'')+'</div>';
+    if(rep.info.length) h+='<div class="en-sec">ℹ️ 已自动处理 '+rep.info.length+' 条（无需操作）</div><div class="en-list" style="max-height:120px">'+mergeCnt(rep.info).map(escapeHtml).join('<br>')+'</div>';
+    if(rep.unmatched.length) h+='<div class="en-sec">❌ 补全数据中未收录 '+rep.unmatched.length+' 件</div><div class="en-list">'+rep.unmatched.map(n=>escapeHtml(n)+candOf(n)).join('<br>')+'</div>';
     h+='<div class="cap" style="margin-top:12px;line-height:1.7">数据来源：'+escapeHtml(meta.source||'竞品资源提取')+' · 提取时间 '+escapeHtml(meta.extractedAt||'?')+' · 资源版本 '+escapeHtml(meta.resourceVersion||'?')+'<br>补全规则：只填空白字段，不覆盖已有数据；共鸣/品质按基础属性反查档位；觉醒参数整体写入（lv=该效果在游戏内的出现等级，异构图红宝的相邻叠加标记 lv=5）；<b>觉醒等级请在详情弹窗按游戏内火焰数自选</b>。</div>';
     $('enBody').innerHTML=h;
+    const fx=$('enFixXie');
+    if(fx) fx.onclick=()=>{
+      let g=groups.find(x=>x.id==='邪');
+      if(!g){ gidCounter++; g={id:'邪',name:'邪',enabled:false}; groups.push(g); }
+      let n=0;
+      library.forEach(t=>{ const e=byName[t.name]; if(e&&e.element==='邪'&&!t.group){ t.group='邪'; if(sel[t.id]) sel[t.id].include=!!g.enabled; n++; } });
+      saveLibrary(); renderInventory(); if(typeof renderGroups==='function') renderGroups();
+      fx.disabled=true; fx.textContent='已创建「邪」组并归入 '+n+' 件';
+      $('enMsg').textContent='已创建「邪」组并归入 '+n+' 件 · 数据已保存本机';
+    };
     $('enMsg').textContent=rep.filled.length?('已补全 '+rep.filled.length+' 件 · 数据已保存本机'+(synced?'并已推送云端':'（云端同步未开启，仅存本机）')):'没有需要补全的字段';
     $('enMask').classList.add('on');
   }
@@ -1691,6 +1724,7 @@
       '<div class="dt-info-card"><div class="dt-info-title">防御</div><div class="dt-info-body">'+nf((t.base&&t.base.def)||0)+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">攻击</div><div class="dt-info-body">'+nf((t.base&&t.base.atk)||0)+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">伤害</div><div class="dt-info-body">'+nf((t.base&&t.base.dmg)||0)+'</div></div>'+
+      '<div class="dt-info-card"><div class="dt-info-title">护盾</div><div class="dt-info-body">'+((t.base&&t.base.shield)?nf(t.base.shield):'-')+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">加成</div><div class="dt-info-body">'+(t.bonusType==='none'?'无':((t.bonusRate||0)+'% · '+BT[t.bonusType]+' · '+BA[t.bonusAttr||'hp']))+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">启用状态</div><div class="dt-info-body">'+(s.include?'已启用':'未启用')+'</div></div>'+
       '</div><div style="margin-top:9px">'+shapeMini(t.cells,t.color)+'</div>';
@@ -1698,9 +1732,10 @@
     h+='<div class="sk-sub" style="margin-top:14px">类型属性</div>'+
       '<div class="dt-edit"><label>法宝类型</label><select id="dtType">'+typeOptions(t.type)+'</select></div>'+
       '<div class="dt-edit"><label>共鸣值</label><input type="number" id="dtReson" min="0" value="'+(t.reson||0)+'"></div>'+
-      '<div class="dt-edit"><label>品质(1-5)</label><input type="number" id="dtQuality" min="1" max="5" value="'+(t.quality||0)+'"></div>';
+      '<div class="dt-edit"><label>品质(1-5)</label><input type="number" id="dtQuality" min="1" max="5" value="'+(t.quality||0)+'"></div>'+
+      '<div class="dt-edit"><label>护盾值</label><input type="number" id="dtShield" min="0" value="'+((t.base&&t.base.shield)||0)+'"></div>';
     /* --- 觉醒效果（卡片展示 + 编辑一体） --- */
-    const awAttrOpts=(cur)=>{ const arr=[['hp','生命值'],['def','防御力'],['atk','攻击力'],['dmg','伤害']]; let h=''; arr.forEach(([v,n])=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+n+'</option>'; }); return h; };
+    const awAttrOpts=(cur)=>{ const arr=[['hp','生命值'],['def','防御力'],['atk','攻击力'],['dmg','伤害'],['shield','护盾值']]; let h=''; arr.forEach(([v,n])=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+n+'</option>'; }); return h; };
     const lvOptions=(cur)=>{ let h=''; for(let v=1;v<=5;v++) h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+v+'</option>'; return h; };
     const lv=(dtALv!=null)?dtALv:(Number(a.level)||0);
     const l1=Object.assign({rate:0,attr:'atk',lv:1},a.l1||{},(dtDraft&&dtDraft.l1)||{});
@@ -1744,7 +1779,7 @@
   }
   $('dtX').onclick=closeDetail; $('dtCancel').onclick=closeDetail;
   $('dtMask').onclick=e=>{ if(e.target===$('dtMask')) closeDetail(); };
-  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.reson=Math.max(0,Number($('dtReson').value)||0); t.quality=Math.min(5,Math.max(0,Number($('dtQuality').value)||0)); t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk',lv:Number($('dtAL1Lv').value)||1}, l2:{rate:Number($('dtAL2Rate').value)||0,lv:Number($('dtAL2Lv').value)||2}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group',lv:Number($('dtAL3Lv').value)||3}, l4:{rate:Number($('dtAL4Rate').value)||0,lv:Number($('dtAL4Lv').value)||4}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group',lv:Number($('dtAL5Lv').value)||5} }); saveLibrary(); } closeDetail(); renderInventory(); };
+  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.type=$('dtType').value||''; t.reson=Math.max(0,Number($('dtReson').value)||0); t.quality=Math.min(5,Math.max(0,Number($('dtQuality').value)||0)); t.base=t.base||{hp:0,def:0,atk:0,dmg:0}; t.base.shield=Math.max(0,Number($('dtShield').value)||0); t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk',lv:Number($('dtAL1Lv').value)||1}, l2:{rate:Number($('dtAL2Rate').value)||0,lv:Number($('dtAL2Lv').value)||2}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group',lv:Number($('dtAL3Lv').value)||3}, l4:{rate:Number($('dtAL4Rate').value)||0,lv:Number($('dtAL4Lv').value)||4}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group',lv:Number($('dtAL5Lv').value)||5} }); saveLibrary(); } closeDetail(); renderInventory(); };
 
 
   /* ---------- 一键生成（多批次 + 跨批全局最优合并） ---------- */
@@ -1752,7 +1787,7 @@
   function sigOfPlan(p){ return p.placements.map(pl=>pl.name+':'+pl.cells.map(c=>c.join(',')).join(';')).sort().join('|'); }
   function buildPieces(){
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
-    return chosen.map(t=>{ const s=sel[t.id]; return { name:t.id, cells:t.cells, count:s.count, priority:s.priority, key:t.key, hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:cloneAwaken(t.awaken) }; });
+    return chosen.map(t=>{ const s=sel[t.id]; return { name:t.id, cells:t.cells, count:s.count, priority:s.priority, key:t.key, hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, shield:t.base&&t.base.shield||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:cloneAwaken(t.awaken) }; });
   }
   function doSolve(seed, accumulate){
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
@@ -1836,8 +1871,8 @@
         }
       }
     }
-    const finalAttrs = items.map(()=>({hp:0,def:0,atk:0,dmg:0}));
-    const totals = {hp:0,def:0,atk:0,dmg:0};
+    const finalAttrs = items.map(()=>({hp:0,def:0,atk:0,dmg:0,shield:0}));
+    const totals = {hp:0,def:0,atk:0,dmg:0,shield:0};
     const bonus = items.map(()=>({hp:0,def:0,atk:0,dmg:0}));   // 各来源百分比累加（0.2 = +20%）
     const addK=(ii,attr,val)=>{ if(!attr||!val) return; bonus[ii][attr]=(bonus[ii][attr]||0)+val; };
     const sameAdj=(ii,m)=>{ let k=0; for(const j of adj[ii]){ if(sameGroup(m, items[j].m)) k++; } return k; };
@@ -1885,12 +1920,14 @@
       finalAttrs[ii].def = (Number(m.def)||0)*(1+bonus[ii].def);
       finalAttrs[ii].atk = (Number(m.atk)||0)*(1+bonus[ii].atk);
       finalAttrs[ii].dmg = (Number(m.dmg)||0)*(1+bonus[ii].dmg);
+      finalAttrs[ii].shield = (Number(m.shield)||0)*(1+(bonus[ii].shield||0));
       totals.hp += finalAttrs[ii].hp;
       totals.def += finalAttrs[ii].def;
       totals.atk += finalAttrs[ii].atk;
       totals.dmg += finalAttrs[ii].dmg;
+      totals.shield += finalAttrs[ii].shield;
     }
-    return { per: items.map((it,ii)=>({id:it.name, hp:finalAttrs[ii].hp, def:finalAttrs[ii].def, atk:finalAttrs[ii].atk, dmg:finalAttrs[ii].dmg})), totals };
+    return { per: items.map((it,ii)=>({id:it.name, hp:finalAttrs[ii].hp, def:finalAttrs[ii].def, atk:finalAttrs[ii].atk, dmg:finalAttrs[ii].dmg, shield:finalAttrs[ii].shield})), totals };
   }
 
   /* ===================== 配置保存 / 读取 ===================== */
@@ -1998,6 +2035,7 @@
       stat('生命值', top0?fmt(top0.totals.hp):'-') +
       stat('防御力', top0?fmt(top0.totals.def):'-') +
       stat('攻击力', top0?fmt(top0.totals.atk):'-') +
+      (top0&&top0.totals.shield?stat('护盾值', fmt(top0.totals.shield)):'') +
       stat('属性评分', (mode==='attr'&&top0)?Math.round(top0.weighted):'-') +
       stat('相邻法宝数', (hasPrio&&top0)?top0.score:'-') +
       stat('1格贴重点', (hasOneCell&&top0)?top0.keyContact:'-') +
@@ -2059,20 +2097,21 @@
     legHtml+='</div>';
     // 分项属性明细（按法宝聚合）
     const perMap={}; const infoMap={};
-    (plan.perAttrs||[]).forEach(pa=>{ if(!perMap[pa.id]) perMap[pa.id]={hp:0,def:0,atk:0,dmg:0}; perMap[pa.id].hp+=pa.hp; perMap[pa.id].def+=pa.def; perMap[pa.id].atk+=pa.atk; perMap[pa.id].dmg+=(pa.dmg||0); });
+    (plan.perAttrs||[]).forEach(pa=>{ if(!perMap[pa.id]) perMap[pa.id]={hp:0,def:0,atk:0,dmg:0,shield:0}; perMap[pa.id].hp+=pa.hp; perMap[pa.id].def+=pa.def; perMap[pa.id].atk+=pa.atk; perMap[pa.id].dmg+=(pa.dmg||0); perMap[pa.id].shield+=(pa.shield||0); });
     library.forEach(t=>{ infoMap[t.id]={bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',bonusRate:t.bonusRate||0}; });
     const showDmg=Object.keys(perMap).some(id=>perMap[id].dmg);
-    let tbl='<table class="pd-table"><thead><tr><th>法宝</th><th>数量</th><th>生命</th><th>防御</th><th>攻击</th>'+(showDmg?'<th>伤害</th>':'')+'<th>加成</th></tr></thead><tbody>';
+    const showShield=Object.keys(perMap).some(id=>perMap[id].shield);
+    let tbl='<table class="pd-table"><thead><tr><th>法宝</th><th>数量</th><th>生命</th><th>防御</th><th>攻击</th>'+(showDmg?'<th>伤害</th>':'')+(showShield?'<th>护盾</th>':'')+'<th>加成</th></tr></thead><tbody>';
     Object.keys(perMap).forEach(id=>{ const p=perMap[id]; const info=infoMap[id]||{}; const bt=info.bonusType; let bonus='—';
-      if(bt==='self') bonus='自身+'+(info.bonusRate||0)+'%'+(info.bonusAttr==='def'?'防御':info.bonusAttr==='atk'?'攻击':'生命')+'(同组)';
-      else if(bt==='buff') bonus='给他+'+(info.bonusRate||0)+'%'+(info.bonusAttr==='def'?'防御':info.bonusAttr==='atk'?'攻击':'生命')+'(同组)';
-      const cnt=usedOf[id]||0; tbl+='<tr><td>'+escapeHtml(idName[id]||id)+'</td><td>'+cnt+'</td><td>'+fmt(p.hp)+'</td><td>'+fmt(p.def)+'</td><td>'+fmt(p.atk)+'</td>'+(showDmg?'<td>'+fmt(p.dmg)+'</td>':'')+'<td>'+bonus+'</td></tr>'; });
-    const t=plan.totals||{hp:0,def:0,atk:0,dmg:0};
-    tbl+='<tr class="pd-total"><td>合计</td><td></td><td>'+fmt(t.hp)+'</td><td>'+fmt(t.def)+'</td><td>'+fmt(t.atk)+'</td>'+(showDmg?'<td>'+fmt(t.dmg||0)+'</td>':'')+'<td></td></tr>';
+      if(bt==='self') bonus='自身+'+(info.bonusRate||0)+'%'+(info.bonusAttr==='def'?'防御':info.bonusAttr==='atk'?'攻击':info.bonusAttr==='shield'?'护盾':'生命')+'(同组)';
+      else if(bt==='buff') bonus='给他+'+(info.bonusRate||0)+'%'+(info.bonusAttr==='def'?'防御':info.bonusAttr==='atk'?'攻击':info.bonusAttr==='shield'?'护盾':'生命')+'(同组)';
+      const cnt=usedOf[id]||0; tbl+='<tr><td>'+escapeHtml(idName[id]||id)+'</td><td>'+cnt+'</td><td>'+fmt(p.hp)+'</td><td>'+fmt(p.def)+'</td><td>'+fmt(p.atk)+'</td>'+(showDmg?'<td>'+fmt(p.dmg)+'</td>':'')+(showShield?'<td>'+fmt(p.shield)+'</td>':'')+'<td>'+bonus+'</td></tr>'; });
+    const t=plan.totals||{hp:0,def:0,atk:0,dmg:0,shield:0};
+    tbl+='<tr class="pd-total"><td>合计</td><td></td><td>'+fmt(t.hp)+'</td><td>'+fmt(t.def)+'</td><td>'+fmt(t.atk)+'</td>'+(showDmg?'<td>'+fmt(t.dmg||0)+'</td>':'')+(showShield?'<td>'+fmt(t.shield||0)+'</td>':'')+'<td></td></tr>';
     tbl+='</tbody></table>';
     const text=buildPlanText(plan,R,C,1,idName);
     const hasOneCell = library.some(t=>sel[t.id] && (sel[t.id].count||0)>0 && t.cells.length===1);
-    box.innerHTML='<h4>方案详情 · 生命 '+fmt(t.hp)+' / 防御 '+fmt(t.def)+' / 攻击 '+fmt(t.atk)+(t.dmg?' / 伤害 '+fmt(t.dmg):'')+(hasPrio?' · 相邻法宝 '+plan.score:'')+(hasOneCell?' · 1格贴重点 '+plan.keyContact:'')+'</h4>'+gridHtml+legHtml+tbl;
+    box.innerHTML='<h4>方案详情 · 生命 '+fmt(t.hp)+' / 防御 '+fmt(t.def)+' / 攻击 '+fmt(t.atk)+(t.dmg?' / 伤害 '+fmt(t.dmg):'')+(t.shield?' / 护盾 '+fmt(t.shield):'')+(hasPrio?' · 相邻法宝 '+plan.score:'')+(hasOneCell?' · 1格贴重点 '+plan.keyContact:'')+'</h4>'+gridHtml+legHtml+tbl;
     const btn=document.createElement('button'); btn.className='ghost pd-copy'; btn.textContent='复制方案文本';
     btn.onclick=(e)=>{ e.stopPropagation(); if(navigator.clipboard) navigator.clipboard.writeText(text); };
     box.appendChild(btn);
@@ -2089,7 +2128,7 @@
     sorted.forEach((p,i)=>{ const coords=p.cells.map(([r,c])=>'('+(r+1)+','+(c+1)+')').join(' '); txt+=(i+1)+'. '+(idName[p.name]||p.name)+' @锚点('+(p.anchor[0]+1)+','+(p.anchor[1]+1)+') 占 '+coords+'\n'; });
     const totals=plan.totals||{hp:0,def:0,atk:0,dmg:0};
     txt+='————————————————————\n';
-    txt+='属性合计（含邻接加成）：生命 '+fmt(totals.hp)+' · 防御 '+fmt(totals.def)+' · 攻击 '+fmt(totals.atk)+(totals.dmg?' · 伤害 '+fmt(totals.dmg):'')+'\n';
+    txt+='属性合计（含邻接加成）：生命 '+fmt(totals.hp)+' · 防御 '+fmt(totals.def)+' · 攻击 '+fmt(totals.atk)+(totals.dmg?' · 伤害 '+fmt(totals.dmg):'')+(totals.shield?' · 护盾 '+fmt(totals.shield):'')+'\n';
     const perMap={}; (plan.perAttrs||[]).forEach(pa=>{ perMap[pa.id]=perMap[pa.id]||{hp:0,def:0,atk:0}; perMap[pa.id].hp+=pa.hp; perMap[pa.id].def+=pa.def; perMap[pa.id].atk+=pa.atk; });
     Object.keys(perMap).forEach(id=>{ txt+='  '+(idName[id]||id)+'：生命 '+fmt(perMap[id].hp)+' · 防御 '+fmt(perMap[id].def)+' · 攻击 '+fmt(perMap[id].atk)+'\n'; });
     if(plan.weighted!=null) txt+='属性评分（加权）：'+Math.round(plan.weighted)+'\n';

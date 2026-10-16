@@ -1,0 +1,6651 @@
+{
+ "meta": {
+  "source": "hekunwang/laozu-solver 内置资源（游戏配置提取）",
+  "extractedAt": "2026-10-13",
+  "resourceVersion": "2609291708 正式配置 + 2610092018 四五觉预适配",
+  "generatedAt": "2026-10-16T11:59:03.558Z",
+  "note": "普通法宝同名多档（共鸣/品质/基础属性），应用时按库内 base 精确匹配档位；红宝每件唯一；awaken 每槽带 lv=游戏内出现等级"
+ },
+ "byName": {
+  "灵肘": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "灵羽": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "手镯": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "护腕": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "浮尘": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "砍刀": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "蕴金戒": {
+   "element": "金",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "atk": 6,
+      "hp": 113
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "atk": 9,
+      "hp": 285
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "atk": 13,
+      "hp": 585
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "atk": 20,
+      "hp": 1135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "分金刀": {
+   "element": "金",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 12,
+      "hp": 225
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 19,
+      "hp": 520
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 28,
+      "hp": 1070
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 44,
+      "hp": 2070
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "重金短矛": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 18,
+      "def": 3,
+      "hp": 188
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 28,
+      "def": 4,
+      "hp": 605
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 42,
+      "def": 7,
+      "hp": 1255
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 66,
+      "def": 11,
+      "hp": 2555
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "重金破阵矛": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 25,
+      "def": 4,
+      "hp": 200
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 40,
+      "def": 6,
+      "hp": 640
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 60,
+      "def": 10,
+      "hp": 1440
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 95,
+      "def": 15,
+      "hp": 3040
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "玄金重剑": {
+   "element": "金",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 16,
+      "def": 2,
+      "hp": 338
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 25,
+      "def": 4,
+      "hp": 755
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 37,
+      "def": 6,
+      "hp": 1555
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 58,
+      "def": 9,
+      "hp": 3055
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "玄金碎甲剑": {
+   "element": "金",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 22,
+      "def": 3,
+      "hp": 400
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 35,
+      "def": 5,
+      "hp": 940
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 52,
+      "def": 8,
+      "hp": 1940
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 82,
+      "def": 13,
+      "hp": 3790
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "曜金寸刀": {
+   "element": "金",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 21,
+      "hp": 188
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 33,
+      "hp": 555
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 49,
+      "hp": 1255
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 77,
+      "hp": 2555
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "曜金战身刀": {
+   "element": "金",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 28,
+      "hp": 250
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 44,
+      "hp": 740
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 66,
+      "hp": 1640
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 104,
+      "hp": 3340
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "蕴金枪": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 14,
+      "hp": 125
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 22,
+      "hp": 370
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 33,
+      "hp": 820
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 52,
+      "hp": 1670
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "枯荣种": {
+   "element": "木",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "hp": 412
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "hp": 735
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "hp": 1235
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "hp": 2135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "老山参": {
+   "element": "木",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 12,
+      "hp": 225
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 19,
+      "hp": 520
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 28,
+      "hp": 1070
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 44,
+      "hp": 2070
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "木灵短剑": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 18,
+      "def": 3,
+      "hp": 188
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 28,
+      "def": 5,
+      "hp": 555
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 42,
+      "def": 8,
+      "hp": 1205
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 66,
+      "def": 13,
+      "hp": 2455
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "木灵大宝剑": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 25,
+      "def": 5,
+      "hp": 150
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 40,
+      "def": 8,
+      "hp": 540
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 60,
+      "def": 12,
+      "hp": 1340
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 95,
+      "def": 19,
+      "hp": 2840
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "噬元喷菇": {
+   "element": "木",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 12,
+      "def": 2,
+      "hp": 538
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 19,
+      "def": 3,
+      "hp": 1105
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 28,
+      "def": 5,
+      "hp": 2055
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 44,
+      "def": 8,
+      "hp": 3805
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "千瘴断魂琴": {
+   "element": "木",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 21,
+      "def": 4,
+      "hp": 400
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 33,
+      "def": 6,
+      "hp": 990
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 49,
+      "def": 9,
+      "hp": 2040
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 77,
+      "def": 15,
+      "hp": 3940
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "千瘴短笛": {
+   "element": "木",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 15,
+      "def": 3,
+      "hp": 338
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 24,
+      "def": 4,
+      "hp": 805
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 36,
+      "def": 7,
+      "hp": 1555
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 57,
+      "def": 11,
+      "hp": 3005
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "噬元大丽花": {
+   "element": "木",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 17,
+      "def": 3,
+      "hp": 650
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 27,
+      "def": 5,
+      "hp": 1340
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 40,
+      "def": 8,
+      "hp": 2540
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 63,
+      "def": 12,
+      "hp": 4790
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "木灵匕首": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 14,
+      "hp": 125
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 22,
+      "hp": 370
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 33,
+      "hp": 820
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 52,
+      "hp": 1670
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "流水散": {
+   "element": "水",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "def": 5,
+      "hp": 163
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "def": 8,
+      "hp": 335
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "def": 12,
+      "hp": 635
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "def": 20,
+      "hp": 1135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "净魂刃": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 11,
+      "def": 3,
+      "hp": 125
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 17,
+      "def": 5,
+      "hp": 370
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 25,
+      "def": 8,
+      "hp": 820
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 39,
+      "def": 13,
+      "hp": 1670
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "霜华轻剑": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 16,
+      "def": 4,
+      "hp": 238
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 25,
+      "def": 6,
+      "hp": 655
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 37,
+      "def": 9,
+      "hp": 1405
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 58,
+      "def": 14,
+      "hp": 2805
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "霜华千影剑": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 22,
+      "def": 5,
+      "hp": 300
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 35,
+      "def": 8,
+      "hp": 790
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 52,
+      "def": 13,
+      "hp": 1690
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 82,
+      "def": 20,
+      "hp": 3440
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "冰魄护肩": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 14,
+      "def": 4,
+      "hp": 338
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 22,
+      "def": 7,
+      "hp": 755
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 33,
+      "def": 11,
+      "hp": 1505
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 52,
+      "def": 17,
+      "hp": 2955
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "冰魄凝神甲": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 18,
+      "def": 6,
+      "hp": 450
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 28,
+      "def": 9,
+      "hp": 1090
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 42,
+      "def": 14,
+      "hp": 2140
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 66,
+      "def": 22,
+      "hp": 4140
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "急冻瓜锤": {
+   "element": "水",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 14,
+      "def": 5,
+      "hp": 288
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 22,
+      "def": 8,
+      "hp": 705
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 33,
+      "def": 13,
+      "hp": 1405
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 52,
+      "def": 20,
+      "hp": 2805
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "急冻流星锤": {
+   "element": "水",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 19,
+      "def": 7,
+      "hp": 350
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 30,
+      "def": 12,
+      "hp": 840
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 45,
+      "def": 18,
+      "hp": 1790
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 71,
+      "def": 28,
+      "hp": 3590
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "净魂锤": {
+   "element": "水",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 10,
+      "def": 4,
+      "hp": 125
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 16,
+      "def": 6,
+      "hp": 370
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 24,
+      "def": 9,
+      "hp": 820
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 38,
+      "def": 15,
+      "hp": 1620
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "炎脉髓": {
+   "element": "火",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "atk": 6,
+      "hp": 113
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "atk": 9,
+      "hp": 285
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "atk": 13,
+      "hp": 585
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "atk": 20,
+      "hp": 1135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "燎魂唢呐": {
+   "element": "火",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 12,
+      "hp": 225
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 19,
+      "hp": 520
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 28,
+      "hp": 1070
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 44,
+      "hp": 2070
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "至阳火鉴": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 18,
+      "def": 2,
+      "hp": 238
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 28,
+      "def": 4,
+      "hp": 605
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 42,
+      "def": 6,
+      "hp": 1305
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 66,
+      "def": 9,
+      "hp": 2655
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "至阳风火轮": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 25,
+      "def": 3,
+      "hp": 250
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 40,
+      "def": 5,
+      "hp": 690
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 60,
+      "def": 8,
+      "hp": 1540
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 95,
+      "def": 13,
+      "hp": 3140
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "炽影长刀": {
+   "element": "火",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 21,
+      "def": 3,
+      "hp": 38
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 33,
+      "def": 4,
+      "hp": 355
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 49,
+      "def": 7,
+      "hp": 905
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 77,
+      "def": 11,
+      "hp": 2005
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "炽影破锋刃": {
+   "element": "火",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 27,
+      "def": 3,
+      "hp": 150
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 43,
+      "def": 6,
+      "hp": 490
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 64,
+      "def": 9,
+      "hp": 1290
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 101,
+      "def": 14,
+      "hp": 2790
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "拜火金锣": {
+   "element": "火",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 21,
+      "def": 2,
+      "hp": 88
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 33,
+      "def": 4,
+      "hp": 355
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 49,
+      "def": 6,
+      "hp": 955
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 77,
+      "def": 9,
+      "hp": 2105
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "拜火焚星笙": {
+   "element": "火",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 28,
+      "def": 3,
+      "hp": 100
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 44,
+      "def": 5,
+      "hp": 490
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 66,
+      "def": 8,
+      "hp": 1240
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 104,
+      "def": 13,
+      "hp": 2690
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "燎魂刀": {
+   "element": "火",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 13,
+      "hp": 175
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 20,
+      "hp": 470
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 30,
+      "hp": 970
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 47,
+      "hp": 1920
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "玄黄令": {
+   "element": "土",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "atk": 2,
+      "hp": 313
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "atk": 3,
+      "hp": 585
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "atk": 4,
+      "hp": 1035
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "atk": 6,
+      "hp": 1835
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "破岩锤": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 5,
+      "hp": 575
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 8,
+      "hp": 1070
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 12,
+      "hp": 1870
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 19,
+      "hp": 3320
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "撼地重锤": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 7,
+      "def": 7,
+      "hp": 538
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 11,
+      "def": 11,
+      "hp": 1105
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 16,
+      "def": 16,
+      "hp": 2105
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 25,
+      "def": 25,
+      "hp": 3905
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "撼地震魄锤": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 10,
+      "def": 10,
+      "hp": 650
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 16,
+      "def": 16,
+      "hp": 1340
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 24,
+      "def": 24,
+      "hp": 2540
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 38,
+      "def": 38,
+      "hp": 4740
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "坤元大钟": {
+   "element": "土",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 6,
+      "def": 1,
+      "hp": 888
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 9,
+      "def": 2,
+      "hp": 1655
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 13,
+      "def": 3,
+      "hp": 2905
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 20,
+      "def": 5,
+      "hp": 5155
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "坤元生息铠": {
+   "element": "土",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 9,
+      "def": 2,
+      "hp": 1100
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 14,
+      "def": 3,
+      "hp": 2090
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 21,
+      "def": 5,
+      "hp": 3640
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 33,
+      "def": 8,
+      "hp": 6490
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "崩山短幡": {
+   "element": "土",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 5,
+      "def": 2,
+      "hp": 888
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 8,
+      "def": 4,
+      "hp": 1605
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 12,
+      "def": 6,
+      "hp": 2805
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 19,
+      "def": 9,
+      "hp": 5005
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "崩山裂魂幡": {
+   "element": "土",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 8,
+      "def": 4,
+      "hp": 1050
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 14,
+      "def": 7,
+      "hp": 1890
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 21,
+      "def": 10,
+      "hp": 3390
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 33,
+      "def": 16,
+      "hp": 6090
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "破岩护臂": {
+   "element": "土",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 5,
+      "hp": 575
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 8,
+      "hp": 1070
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 12,
+      "hp": 1870
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 19,
+      "hp": 3320
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "雷灵珠": {
+   "element": "雷",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "atk": 6,
+      "hp": 113
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "atk": 9,
+      "hp": 285
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "atk": 13,
+      "hp": 585
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "atk": 20,
+      "hp": 1135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "雷灵幡": {
+   "element": "雷",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 13,
+      "hp": 175
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 20,
+      "hp": 470
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 30,
+      "hp": 970
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 47,
+      "hp": 1920
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "鸣雷长枪": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 19,
+      "def": 3,
+      "hp": 138
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 30,
+      "def": 5,
+      "hp": 455
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 45,
+      "def": 7,
+      "hp": 1105
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 71,
+      "def": 11,
+      "hp": 2305
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "鸣雷诛邪枪": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 26,
+      "def": 4,
+      "hp": 150
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 41,
+      "def": 6,
+      "hp": 590
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 61,
+      "def": 10,
+      "hp": 1390
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 96,
+      "def": 16,
+      "hp": 2940
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "玄阴古筝": {
+   "element": "雷",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 17,
+      "def": 2,
+      "hp": 288
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 27,
+      "def": 4,
+      "hp": 655
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 40,
+      "def": 6,
+      "hp": 1405
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 63,
+      "def": 10,
+      "hp": 2755
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "玄阴霹雳鼓": {
+   "element": "雷",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 23,
+      "def": 3,
+      "hp": 350
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 36,
+      "def": 6,
+      "hp": 840
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 54,
+      "def": 9,
+      "hp": 1790
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 85,
+      "def": 14,
+      "hp": 3590
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "雷元短幡": {
+   "element": "雷",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 15,
+      "def": 2,
+      "hp": 388
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 24,
+      "def": 4,
+      "hp": 805
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 36,
+      "def": 6,
+      "hp": 1605
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 57,
+      "def": 9,
+      "hp": 3105
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "雷元乌龙旗": {
+   "element": "雷",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 20,
+      "def": 3,
+      "hp": 500
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 32,
+      "def": 5,
+      "hp": 1090
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 48,
+      "def": 8,
+      "hp": 2140
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 76,
+      "def": 12,
+      "hp": 4140
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "鸣雷鼓": {
+   "element": "雷",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 11,
+      "hp": 275
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 17,
+      "hp": 620
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 25,
+      "hp": 1220
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 39,
+      "hp": 2320
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "邪源珠": {
+   "element": "邪",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "atk": 6,
+      "hp": 113
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "atk": 9,
+      "hp": 285
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "atk": 13,
+      "hp": 585
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "atk": 20,
+      "hp": 1135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "玄阴枪": {
+   "element": "邪",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 13,
+      "hp": 175
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 20,
+      "hp": 470
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 30,
+      "hp": 970
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 47,
+      "hp": 1920
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "血灵短矛": {
+   "element": "邪",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 20,
+      "def": 2,
+      "hp": 138
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 32,
+      "def": 3,
+      "hp": 455
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 48,
+      "def": 4,
+      "hp": 1105
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 76,
+      "def": 7,
+      "hp": 2255
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "血灵钻魂枪": {
+   "element": "邪",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 27,
+      "def": 2,
+      "hp": 200
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 43,
+      "def": 4,
+      "hp": 590
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 64,
+      "def": 6,
+      "hp": 1440
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 101,
+      "def": 10,
+      "hp": 2990
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "欢愉短匕": {
+   "element": "邪",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 22,
+      "def": 2,
+      "hp": 38
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 35,
+      "def": 3,
+      "hp": 305
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 52,
+      "def": 5,
+      "hp": 855
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 82,
+      "def": 8,
+      "hp": 1905
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "欢愉蚀骨刃": {
+   "element": "邪",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 29,
+      "def": 2,
+      "hp": 100
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 46,
+      "def": 4,
+      "hp": 440
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 69,
+      "def": 6,
+      "hp": 1190
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 109,
+      "def": 10,
+      "hp": 2590
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "炼魂小幡": {
+   "element": "邪",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 19,
+      "def": 1,
+      "hp": 238
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 30,
+      "def": 3,
+      "hp": 555
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 45,
+      "def": 4,
+      "hp": 1255
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 71,
+      "def": 7,
+      "hp": 2505
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "炼魂万千幡": {
+   "element": "邪",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 26,
+      "def": 2,
+      "hp": 250
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 41,
+      "def": 4,
+      "hp": 690
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 61,
+      "def": 6,
+      "hp": 1590
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 96,
+      "def": 9,
+      "hp": 3290
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "玄阴旗": {
+   "element": "邪",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 14,
+      "hp": 125
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 22,
+      "hp": 370
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 33,
+      "hp": 820
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 52,
+      "hp": 1670
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "大力丸": {
+   "element": "体",
+   "type": "",
+   "tiers": [
+    {
+     "reson": 2,
+     "quality": 1,
+     "base": {
+      "def": 5,
+      "hp": 163
+     }
+    },
+    {
+     "reson": 4,
+     "quality": 2,
+     "base": {
+      "def": 8,
+      "hp": 335
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 3,
+     "base": {
+      "def": 12,
+      "hp": 635
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 4,
+     "base": {
+      "def": 20,
+      "hp": 1135
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）",
+    "1格基础件（无形态类型）"
+   ]
+  },
+  "灵兽肉": {
+   "element": "体",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 10,
+      "def": 3,
+      "hp": 175
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 16,
+      "def": 5,
+      "hp": 420
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 24,
+      "def": 8,
+      "hp": 870
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 38,
+      "def": 12,
+      "hp": 1770
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "罡体腰带": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 15,
+      "def": 3,
+      "hp": 338
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 24,
+      "def": 6,
+      "hp": 705
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 36,
+      "def": 9,
+      "hp": 1455
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 57,
+      "def": 14,
+      "hp": 2855
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "罡体不破甲": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 20,
+      "def": 5,
+      "hp": 400
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 32,
+      "def": 8,
+      "hp": 940
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 48,
+      "def": 12,
+      "hp": 1940
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 76,
+      "def": 19,
+      "hp": 3790
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "百炼短锤": {
+   "element": "体",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 12,
+      "def": 6,
+      "hp": 338
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 19,
+      "def": 9,
+      "hp": 805
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 28,
+      "def": 14,
+      "hp": 1605
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 44,
+      "def": 22,
+      "hp": 3105
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "百炼成金锤": {
+   "element": "体",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 16,
+      "def": 8,
+      "hp": 450
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 25,
+      "def": 12,
+      "hp": 1090
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 37,
+      "def": 18,
+      "hp": 2190
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 58,
+      "def": 29,
+      "hp": 4190
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "无相念珠": {
+   "element": "体",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 4,
+     "quality": 1,
+     "base": {
+      "atk": 16,
+      "def": 4,
+      "hp": 238
+     }
+    },
+    {
+     "reson": 8,
+     "quality": 2,
+     "base": {
+      "atk": 25,
+      "def": 6,
+      "hp": 655
+     }
+    },
+    {
+     "reson": 16,
+     "quality": 3,
+     "base": {
+      "atk": 37,
+      "def": 9,
+      "hp": 1405
+     }
+    },
+    {
+     "reson": 32,
+     "quality": 4,
+     "base": {
+      "atk": 58,
+      "def": 14,
+      "hp": 2805
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "无相渡敌钵": {
+   "element": "体",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 5,
+     "quality": 1,
+     "base": {
+      "atk": 22,
+      "def": 5,
+      "hp": 300
+     }
+    },
+    {
+     "reson": 10,
+     "quality": 2,
+     "base": {
+      "atk": 35,
+      "def": 8,
+      "hp": 790
+     }
+    },
+    {
+     "reson": 20,
+     "quality": 3,
+     "base": {
+      "atk": 52,
+      "def": 13,
+      "hp": 1690
+     }
+    },
+    {
+     "reson": 40,
+     "quality": 4,
+     "base": {
+      "atk": 82,
+      "def": 20,
+      "hp": 3440
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "九宫牌": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 3,
+     "quality": 1,
+     "base": {
+      "atk": 8,
+      "def": 3,
+      "hp": 275
+     }
+    },
+    {
+     "reson": 6,
+     "quality": 2,
+     "base": {
+      "atk": 12,
+      "def": 4,
+      "hp": 670
+     }
+    },
+    {
+     "reson": 12,
+     "quality": 3,
+     "base": {
+      "atk": 18,
+      "def": 7,
+      "hp": 1220
+     }
+    },
+    {
+     "reson": 24,
+     "quality": 4,
+     "base": {
+      "atk": 28,
+      "def": 11,
+      "hp": 2320
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "金辉裂穹": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 93,
+      "def": 15,
+      "hp": 5200
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "魁拔"
+  },
+  "三尖两刃": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 135,
+      "def": 22,
+      "hp": 5400
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "杨戬"
+  },
+  "残虹断影": {
+   "element": "金",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 82,
+      "def": 13,
+      "hp": 5850
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "夜游仙"
+  },
+  "龙渊七星": {
+   "element": "金",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 116,
+      "def": 19,
+      "hp": 6500
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "酒剑仙"
+  },
+  "朔气飞星": {
+   "element": "金",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 109,
+      "hp": 5150
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "邓婵玉"
+  },
+  "金锋无影": {
+   "element": "金",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 147,
+      "hp": 5900
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "白虎"
+  },
+  "金翎荡云": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 79,
+      "def": 13,
+      "hp": 3350
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "大鹏"
+  },
+  "亢金贯甲": {
+   "element": "金",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 70,
+      "def": 11,
+      "hp": 3900
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "亢金龙"
+  },
+  "蕴剑葫芦": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 93,
+      "def": 18,
+      "hp": 5050
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "刑天"
+  },
+  "青阳唤春": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 135,
+      "def": 27,
+      "hp": 5150
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "句芒"
+  },
+  "掌天奇韵": {
+   "element": "木",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 62,
+      "def": 12,
+      "hp": 6900
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "hp",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "瓶灵"
+  },
+  "五毒俱全": {
+   "element": "木",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 109,
+      "def": 21,
+      "hp": 6750
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "蛊神"
+  },
+  "灵泽衔瑞": {
+   "element": "木",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 81,
+      "def": 16,
+      "hp": 5750
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "七色鹿"
+  },
+  "通幽震魄": {
+   "element": "木",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 89,
+      "def": 17,
+      "hp": 7950
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "灵山巫祖"
+  },
+  "唤生吴钩": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 79,
+      "def": 15,
+      "hp": 3250
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 120,
+     "attr": "hp",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "木吒"
+  },
+  "引仙破道": {
+   "element": "木",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 68,
+      "def": 13,
+      "hp": 3900
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "韩湘子"
+  },
+  "凌波惊鸿": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 82,
+      "def": 20,
+      "hp": 5500
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "洛神"
+  },
+  "月华清影": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 116,
+      "def": 29,
+      "hp": 6000
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "嫦娥"
+  },
+  "玄水护心": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 73,
+      "def": 24,
+      "hp": 5750
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "shield",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [
+    "L1属性「护盾值」(shield) 引擎暂不支持，导入后按 atk 占位需人工修正"
+   ],
+   "elder": "玄女"
+  },
+  "封神奇卷": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 93,
+      "def": 31,
+      "hp": 7050
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "姜子牙"
+  },
+  "沧溟凝冰": {
+   "element": "水",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 73,
+      "def": 29,
+      "hp": 5500
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 75,
+     "attr": "def",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "龙女"
+  },
+  "玄冥坠星": {
+   "element": "水",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 100,
+      "def": 40,
+      "hp": 6250
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "玄冥"
+  },
+  "断流绝响": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 70,
+      "def": 17,
+      "hp": 3600
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "谛听"
+  },
+  "逆流河珠": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 62,
+      "def": 20,
+      "hp": 3850
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 120,
+     "attr": "hp",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "冰夷"
+  },
+  "燧火传薪": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 93,
+      "def": 13,
+      "hp": 5300
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "燧人氏"
+  },
+  "燃欲燎魂": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 135,
+      "def": 19,
+      "hp": 5550
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "妲己"
+  },
+  "日巡灼恶": {
+   "element": "火",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 109,
+      "def": 15,
+      "hp": 4400
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "日游仙"
+  },
+  "烈阳灼心": {
+   "element": "火",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 143,
+      "def": 20,
+      "hp": 5100
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "朱雀"
+  },
+  "祭火律令": {
+   "element": "火",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 109,
+      "def": 13,
+      "hp": 4500
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "焰中仙"
+  },
+  "南明离炎": {
+   "element": "火",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 147,
+      "def": 18,
+      "hp": 5000
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "祝融"
+  },
+  "炎驹驰天": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 112,
+      "def": 16,
+      "hp": 1550
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "赤烟驹"
+  },
+  "赤霄斩浪": {
+   "element": "火",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 93,
+      "def": 13,
+      "hp": 2650
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "天照"
+  },
+  "灵獐啸岩": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 35,
+      "def": 35,
+      "hp": 7100
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 75,
+     "attr": "def",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "柳土獐"
+  },
+  "十方大山": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 54,
+      "def": 54,
+      "hp": 7850
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 100,
+     "attr": "def",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "土地"
+  },
+  "遁地奇行": {
+   "element": "土",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 28,
+      "def": 7,
+      "hp": 8850
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "土行孙"
+  },
+  "五色炼天": {
+   "element": "土",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 46,
+      "def": 11,
+      "hp": 10400
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "女娲"
+  },
+  "逐日镇岳": {
+   "element": "土",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 27,
+      "def": 13,
+      "hp": 8600
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "夸父"
+  },
+  "泰山压顶": {
+   "element": "土",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 46,
+      "def": 23,
+      "hp": 9800
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "泰山府君"
+  },
+  "萱花裂地": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 18,
+      "def": 18,
+      "hp": 6150
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 200,
+     "attr": "def",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "山鬼"
+  },
+  "石钟灵佑": {
+   "element": "土",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 24,
+      "def": 6,
+      "hp": 6450
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 200,
+     "attr": "def",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "石敢当"
+  },
+  "惊雷兽吼": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 100,
+      "def": 16,
+      "hp": 4800
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "雷兽"
+  },
+  "阳雷裂空": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 136,
+      "def": 22,
+      "hp": 5350
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "申公豹"
+  },
+  "截雷断运": {
+   "element": "雷",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 89,
+      "def": 14,
+      "hp": 5450
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "碧霄"
+  },
+  "阴雷回响": {
+   "element": "雷",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 120,
+      "def": 20,
+      "hp": 6250
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "电母"
+  },
+  "九霄镇魔": {
+   "element": "雷",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 81,
+      "def": 13,
+      "hp": 5900
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "hp",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "李天王"
+  },
+  "五雷号令": {
+   "element": "雷",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6950
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "shield",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [
+    "L1属性「护盾值」(shield) 引擎暂不支持，导入后按 atk 占位需人工修正"
+   ],
+   "elder": "雷声天尊"
+  },
+  "神谕裁罪": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 85,
+      "def": 14,
+      "hp": 3000
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "辛环"
+  },
+  "妙音止戈": {
+   "element": "雷",
+   "type": "乐",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 76,
+      "def": 12,
+      "hp": 3550
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "妙音天"
+  },
+  "煞魔血叉": {
+   "element": "邪",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 108,
+      "def": 10,
+      "hp": 4700
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "夜叉"
+  },
+  "凶神戮世": {
+   "element": "邪",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 143,
+      "def": 14,
+      "hp": 5400
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "罗喉"
+  },
+  "剖心夺爱": {
+   "element": "邪",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 116,
+      "def": 11,
+      "hp": 4250
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "画皮"
+  },
+  "合欢极乐": {
+   "element": "邪",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 154,
+      "def": 15,
+      "hp": 4800
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "羲和与望舒"
+  },
+  "勾魂索命": {
+   "element": "邪",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 100,
+      "def": 10,
+      "hp": 5100
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "白无常"
+  },
+  "酆都帝律": {
+   "element": "邪",
+   "type": "幡",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 136,
+      "def": 13,
+      "hp": 5800
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "北阴"
+  },
+  "恶鬼喋血": {
+   "element": "邪",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 91,
+      "def": 9,
+      "hp": 2950
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "罗刹"
+  },
+  "花妖魅匕": {
+   "element": "邪",
+   "type": "刀",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 99,
+      "def": 9,
+      "hp": 2550
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "桃妖"
+  },
+  "天骄伟冠": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 81,
+      "def": 20,
+      "hp": 5550
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "hp",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "姬发"
+  },
+  "真武神镯": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 108,
+      "def": 27,
+      "hp": 6500
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "玄武"
+  },
+  "丑将破阵": {
+   "element": "体",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 62,
+      "def": 31,
+      "hp": 5950
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 75,
+     "attr": "def",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "无艳"
+  },
+  "巨灵擎天": {
+   "element": "体",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 82,
+      "def": 41,
+      "hp": 7100
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "巨灵"
+  },
+  "酒祖酿厄": {
+   "element": "体",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 82,
+      "def": 20,
+      "hp": 5500
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "hp",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "杜康"
+  },
+  "佛门宝杵": {
+   "element": "体",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 116,
+      "def": 29,
+      "hp": 6000
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 60,
+     "attr": "hp",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "金刚手"
+  },
+  "叱咤玉革": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 68,
+      "def": 17,
+      "hp": 3700
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 120,
+     "attr": "hp",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "哈将"
+  },
+  "叱咤玉锤": {
+   "element": "体",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 32,
+     "quality": 5,
+     "base": {
+      "atk": 53,
+      "def": 26,
+      "hp": 4000
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 200,
+     "attr": "def",
+     "lv": 5
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 1
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 3
+    },
+    "l3": {
+     "rate": 30,
+     "mode": "self",
+     "lv": 3
+    }
+   },
+   "flags": [
+    "异构图：相邻叠加效果在游戏 L5，已按语义归位到工具 l1 并标记 lv=5（需引擎 lv 门槛支持，否则等级未满时会提前生效）",
+    "游戏文本为累计口径（提升至50%），数值取本級增量 30%"
+   ],
+   "elder": "哼将"
+  },
+  "默认格子": {
+   "element": "雷",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 1,
+     "base": {
+      "atk": 108,
+      "def": 18,
+      "hp": 6640
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": []
+  },
+  "北斗天罡枪": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 98,
+      "def": 14,
+      "hp": 5000
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "斗姆元君"
+  },
+  "如意金箍棒": {
+   "element": "金",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 140,
+      "def": 20,
+      "hp": 5250
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "孙悟空"
+  },
+  "青枝栖日": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 103,
+      "def": 14,
+      "hp": 4750
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "若木"
+  },
+  "太昊司春": {
+   "element": "木",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 148,
+      "def": 21,
+      "hp": 4800
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "青帝"
+  },
+  "晴水华盖": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 77,
+      "def": 11,
+      "hp": 6200
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "shield",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [
+    "L1属性「护盾值」(shield) 引擎暂不支持，导入后按 atk 占位需人工修正"
+   ],
+   "elder": "鲲"
+  },
+  "弱水涓扇": {
+   "element": "水",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 122,
+      "def": 17,
+      "hp": 6300
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 40,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "共工"
+  },
+  "冰魄华盖": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 90,
+      "def": 18,
+      "hp": 5200
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [],
+   "elder": "鲲·剑"
+  },
+  "万载玄冰": {
+   "element": "水",
+   "type": "剑",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 128,
+      "def": 25,
+      "hp": 5600
+     }
+    }
+   ],
+   "awaken": null,
+   "flags": [],
+   "elder": "共工·剑"
+  },
+  "食为天鼎": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 93,
+      "def": 13,
+      "hp": 5300
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "灶神"
+  },
+  "乾坤浑天": {
+   "element": "火",
+   "type": "异",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 135,
+      "def": 19,
+      "hp": 5550
+     }
+    }
+   ],
+   "awaken": {
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "哪吒"
+  },
+  "九州定海": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 42,
+      "def": 42,
+      "hp": 6400
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 75,
+     "attr": "def",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "大禹"
+  },
+  "庚辰龙脉": {
+   "element": "土",
+   "type": "锤",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 64,
+      "def": 64,
+      "hp": 6850
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "后土"
+  },
+  "免罪阳雷": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 105,
+      "def": 15,
+      "hp": 4600
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "atk",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "王灵官"
+  },
+  "纠罚神雷": {
+   "element": "雷",
+   "type": "枪",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 143,
+      "def": 20,
+      "hp": 5100
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "dmg",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "玉枢雷"
+  },
+  "鸣玉无极": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 56,
+     "quality": 5,
+     "base": {
+      "atk": 89,
+      "def": 14,
+      "hp": 5450
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 30,
+     "attr": "hp",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 8,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "adjacent",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [],
+   "elder": "武罗"
+  },
+  "无相无我": {
+   "element": "体",
+   "type": "御",
+   "tiers": [
+    {
+     "reson": 64,
+     "quality": 5,
+     "base": {
+      "atk": 118,
+      "def": 19,
+      "hp": 6400
+     }
+    }
+   ],
+   "awaken": {
+    "l1": {
+     "rate": 10,
+     "attr": "shield",
+     "lv": 1
+    },
+    "l2": {
+     "rate": 20,
+     "lv": 2
+    },
+    "l4": {
+     "rate": 30,
+     "lv": 4
+    },
+    "l3": {
+     "rate": 15,
+     "mode": "global",
+     "series": "type",
+     "lv": 3
+    },
+    "l5": {
+     "rate": 15,
+     "mode": "global",
+     "series": "group",
+     "lv": 5
+    }
+   },
+   "flags": [
+    "L1属性「护盾值」(shield) 引擎暂不支持，导入后按 atk 占位需人工修正"
+   ],
+   "elder": "执夷山主"
+  }
+ }
+}

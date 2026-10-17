@@ -967,6 +967,13 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -1918,7 +1925,11 @@ const ShotCore = (function(){
     // 锚点 = 元素徽章格（元素置信）
     const anchorById = new Map();
     for (const c of detected) if (!c.elementWeak) anchorById.set(cellId(c.row, c.col), c);
-    const anchorIds = [...anchorById.keys()];
+    // 圈选修正钉住区（人工指定身份的区域）：不参与锚点/切分，整块直接采用指定法宝
+    const pinned = (opts.pinned || []).filter(p => p && Array.isArray(p.ids) && p.ids.length && p.eq);
+    const pinnedIds = new Set();
+    for (const p of pinned) for (const id of p.ids) pinnedIds.add(id);
+    const anchorIds = [...anchorById.keys()].filter(id => !pinnedIds.has(id));
     // 金圆共鸣盘格（形状右下角）——实拍标定不可靠（高光/艺术误检多），仅记录不参与切分
     const discIds = [];
     if (anchorIds.length) {
@@ -1954,8 +1965,10 @@ const ShotCore = (function(){
     }
     const shapes = [...new Map(pool.map(x => [shapeKey(x.eq.cells), x.eq.cells])).values()]
       .filter(cells => cells && cells.length);
-    // 精确覆盖切分（占格切不成时，逐步丢掉置信最低的占格重试）
-    let occ = om.occ, solve = null, dropped = [], attempt = 0, trace = null;
+    // 精确覆盖切分（占格切不成时，逐步丢掉置信最低的占格重试）；钉住格视为已覆盖
+    let occ = om.occ.slice();
+    for (const p of pinned) for (const id of p.ids) occ[id] = 0;
+    let solve = null, dropped = [], attempt = 0, trace = null;
     for (; attempt < 10; attempt++) {
       const r = solveTiling(occ, anchorIds, [], shapes, TH.tileNodeLimit, om.stats);
       trace = { nodes: r.nodes, sols: r.sols, truncated: r.truncated };
@@ -2027,10 +2040,23 @@ const ShotCore = (function(){
       pieces.push({ ...base, status: 'ambiguous', equip: null,
         candidates: (sameQ.length ? sameQ : uniq).slice(0, 8).map(x => x.eq), reason: null });
     }
+    // 钉住件：人工身份直接采用；与求解件按锚点位置统一排序（编号稳定）
+    for (const p of pinned) {
+      const ids = [...p.ids].sort((a, b) => a - b);
+      const aid = ids[0];
+      const cell = anchorById.get(aid);
+      const st = om.stats[aid] || {};
+      pieces.push({ row: Math.floor(aid / CFG.COLS), col: aid % CFG.COLS,
+        element: cell ? cell.element : null, elementScore: cell ? cell.elementScore : null,
+        form: null, signature: cell ? cell.sig : null, awaken: cell ? cell.awaken : null,
+        quality: st.quality || 0, qualityDistance: st.qd, candidates: [],
+        cells: ids, status: 'ok', equip: p.eq, reason: null, pinned: true });
+    }
+    pieces.sort((a, b) => (a.row * CFG.COLS + a.col) - (b.row * CFG.COLS + b.col));
     const stats = { anchors: fit.anchors || 0, converged: !!fit.converged,
       gridLowConfidence: (fit.anchors || 0) < 3,
       occupied: (() => { let n = 0; for (let i = 0; i < N; i++) if (om.occ[i]) n++; return n; })(),
-      tiles: solve.regions.length, dropped: dropped.length, discs: discIds.length, tile: trace,
+      tiles: solve.regions.length + pinned.length, dropped: dropped.length, discs: discIds.length, tile: trace,
       ok: pieces.filter(p => p.status === 'ok').length,
       ambiguous: pieces.filter(p => p.status === 'ambiguous').length,
       suspect: pieces.filter(p => p.status === 'suspect').length };
@@ -2786,7 +2812,7 @@ const ShotCore = (function(){
 
   /* ---------- 截图导入（ShotCore 本地识别） ---------- */
   const shotState={ result:null, rows:[], src:null, w:0, h:0, view:'bag', hover:-1,
-    mark:false, marks:new Set(), ms:0, imageData:null };
+    mark:false, marks:new Set(), ms:0, imageData:null, fixes:[] };
   let SHOT_CATALOG=null, SHOT_ENRICH=null;
   // 云端目录（375 件法宝的元素/形状/共鸣/品质）+ 补全数据（按名字给库内法宝补元素）
   async function shotEnsureData(){
@@ -2878,7 +2904,7 @@ const ShotCore = (function(){
   }
   function shotOpen(){
     shotState.result=null; shotState.rows=[]; shotState.src=null; shotState.hover=-1;
-    shotState.mark=false; shotState.marks.clear(); shotState.ms=0; shotState.imageData=null;
+    shotState.mark=false; shotState.marks.clear(); shotState.ms=0; shotState.imageData=null; shotState.fixes=[];
     shotEnsureData();
     const elCount=library.filter(t=>t.element).length;
     const ready=elCount>=10;
@@ -2940,6 +2966,7 @@ const ShotCore = (function(){
     try{ imageData=ctx.getImageData(0,0,w,h); }
     catch(e){ $('shotMsg').textContent='无法读取图片像素（跨域图片会被浏览器拦截）'; return; }
     const t0=Date.now();
+    shotState.fixes=[]; // 换新图，人工修正记录清空
     let result;
     try{
       result=ShotCore.recognize(imageData, library, { catalog:SHOT_CATALOG||[], enrich:SHOT_ENRICH||{} });
@@ -2974,6 +3001,12 @@ const ShotCore = (function(){
     return h;
   }
   function shapeKey(cells){ return (cells||[]).map(c=>c[0]+','+c[1]).sort().join(' '); }
+  // 觉醒默认值：当前版本仅 Q5 法宝可觉醒——匹配到非 Q5 直接默认 0；
+  // Q5 的火焰自动识别不可靠，留「?」由人工选；未匹配到法宝的行也留「?」
+  function shotAwDefault(p){
+    if(p.equip) return Number(p.equip.quality)===5 ? '' : '0';
+    return '';
+  }
   // 重建行数据；按锚点 (row,col) 保留用户已做的选择（圈选修正重渲染时不丢）
   function shotRebuildRows(){
     const old={};
@@ -2982,7 +3015,7 @@ const ShotCore = (function(){
       const o=old[p.row+','+p.col];
       if(o){ o.piece=p; return o; }
       return { piece:p, pick:p.status==='ok'&&p.equip?p.equip.id:'',
-        aw:(p.awaken&&p.awaken.awakenStatus==='recognized')?p.awaken.awakenLevel:'', learn:true, newName:'' };
+        aw:shotAwDefault(p), learn:true, newName:'' };
     });
   }
   function shotRenderResult(result, ms){
@@ -3030,7 +3063,7 @@ const ShotCore = (function(){
         '<td>'+info+'</td>'+
         '<td><select class="shot-pick" data-i="'+i+'" style="width:100%">'+shotLibOptions(p, r.pick)+'</select>'+
         (r.pick==='__new__'?'<input type="text" class="shot-newname" data-i="'+i+'" placeholder="新法宝名称" value="'+escapeHtml(r.newName)+'" style="width:100%;margin-top:3px">':'')+'</td>'+
-        '<td style="text-align:center"><select class="shot-aw" data-i="'+i+'"'+(awUncertain?' style="color:#b45309" title="火焰数字没读准，请按游戏内实际等级选择"':'')+'>'+
+        '<td style="text-align:center"><select class="shot-aw" data-i="'+i+'" title="仅 Q5 法宝可觉醒：非 Q5 默认 0；Q5 自动识别不可靠请按游戏内实际等级选择">'+
         '<option value=""'+(r.aw===''?' selected':'')+'>?</option>'+awOpts+'</select></td>'+
         '<td style="text-align:center"><input type="checkbox" class="shot-learn" data-i="'+i+'"'+(r.learn?' checked':'')+' title="把当格签名写入该法宝，之后同款法宝可自动识别"></td>'+
         '<td class="'+cls+'">'+status+'</td></tr>';
@@ -3168,15 +3201,28 @@ const ShotCore = (function(){
     const cl=$('shotFixClear');
     if(cl) cl.onclick=()=>{ shotState.marks.clear(); shotDrawOverlay(); shotRenderFixPanel(); };
   }
-  function shotApplyFix(fc,x){
-    const res=shotState.result; if(!res||!x) return;
+  // 库内法宝缺 element/reson/quality 时用补全数据垫齐（钉住件显示与目录件一致）
+  function shotEnrichEq(t){
+    const e=(SHOT_ENRICH||{})[String(t.name||'').trim()];
+    const out=Object.assign({},t);
+    if(e){
+      if(!out.element) out.element=e.element||'';
+      if(!out.type) out.type=e.type||'';
+      const tiers=e.tiers||[];
+      if(tiers.length){
+        const top=tiers.reduce((a,b)=>((b.reson||0)>(a.reson||0)?b:a));
+        if(!out.reson) out.reson=top.reson||0;
+        if(!out.quality) out.quality=top.quality||0;
+      }
+    }
+    return out;
+  }
+  // 兜底：重识别失败时本地拼接（不走钉住重排）
+  function shotSpliceFix(res,fc,x,ids){
     const C=7;
-    const ids=[...shotState.marks].sort((a,b)=>a-b);
-    if(!ids.length) return;
     const np={ row:fc.ar, col:fc.ac, element:fc.element, elementScore:fc.elScore,
       form:(x.t.type||null), signature:fc.sig, awaken:fc.awaken,
-      quality:fc.q, status:'ok', equip:x.t, candidates:[], cells:ids, reason:null };
-    // 删除与选区重叠的旧件（识别错的整件移除），新件插到原位置，编号尽量不跳动
+      quality:fc.q, status:'ok', equip:shotEnrichEq(x.t), candidates:[], cells:ids, reason:null };
     const oldPieces=res.pieces;
     let insertAt=oldPieces.length;
     const kept=[];
@@ -3194,9 +3240,35 @@ const ShotCore = (function(){
     shotRenderResult(res, shotState.ms);
     $('shotMsg').textContent='已按圈选区域修正为「'+(x.t.name||'')+'」，请继续核对其他件。';
   }
+  function shotApplyFix(fc,x){
+    const res=shotState.result; if(!res||!x) return;
+    const ids=[...shotState.marks].sort((a,b)=>a-b);
+    if(!ids.length) return;
+    shotState.fixes.push({ ids, eq:shotEnrichEq(x.t) });
+    $('shotMsg').textContent='已记录修正「'+(x.t.name||'')+'」，正在按修正结果重新识别整图…';
+    setTimeout(()=>{
+      try{
+        const t0=Date.now();
+        const r2=ShotCore.recognize(shotState.imageData, library,
+          { catalog:SHOT_CATALOG||[], enrich:SHOT_ENRICH||{}, pinned:shotState.fixes });
+        shotState.result=r2; shotState.marks.clear();
+        shotRenderResult(r2, Date.now()-t0);
+        $('shotMsg').textContent='已按圈选区域修正为「'+(x.t.name||'')+'」，并据此重新识别整图（累计人工修正 '+shotState.fixes.length+' 件）。';
+      }catch(err){ shotSpliceFix(res, fc, x, ids); }
+    },30);
+  }
   function shotBindRows(){
     $('shotBody').querySelectorAll('.shot-pick').forEach(el=>el.onchange=e=>{
-      const i=+e.target.dataset.i; shotState.rows[i].pick=e.target.value;
+      const i=+e.target.dataset.i; const row=shotState.rows[i]; row.pick=e.target.value;
+      // 换选法宝后按其品质重置觉醒默认（仅 Q5 可觉醒：非 Q5 → 0，Q5 → 手选）
+      let eq=(row.piece&&row.piece.equip&&row.piece.equip.id===e.target.value)?row.piece.equip:null;
+      if(!eq) eq=library.find(t=>t.id===e.target.value)||null;
+      if(!eq&&String(e.target.value).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(e.target.value))||null;
+      if(eq||e.target.value==='__new__'){
+        row.aw=(eq&&Number(eq.quality)===5)?'':'0';
+        const tr=e.target.closest('tr'), sel=tr&&tr.querySelector('.shot-aw');
+        if(sel) sel.value=row.aw;
+      }
       if(e.target.value==='__new__'){ shotRenderResult(shotState.result, 0); }
       else shotRefreshImportBtn();
     });

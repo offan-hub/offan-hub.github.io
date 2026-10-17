@@ -974,6 +974,27 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -1824,7 +1845,14 @@ const ShotCore = (function(){
     return out.sort((a, b) => a - b);
   }
   /* 精确覆盖：把占格切成若干块，每块 = 一件法宝（形状取自库/目录），且恰含一个锚点 */
-  function solveTiling(occ, anchors, discs, shapes, limit, stats) {
+  /**
+   * 精确覆盖切分（几何枚举）：把占格切成 N 块互不重叠、完整覆盖、每块恰含一个锚点的区域。
+   * 返回前 maxSols 个解（按切分分排序取最优 best）。切分分只看几何（锚点首格/面积/底色一致），
+   * 身份匹配置信度由调用方事后裁决（recognize 里的联合挑选 + 局部重切修复）——
+   * 「大件吞掉相邻件格子、把 2×2 切成 1×1」这类切分分打平的错误，靠局部重切用身份分纠正。
+   */
+  function solveTiling(occ, anchors, discs, shapes, limit, stats, maxSols) {
+    maxSols = maxSols || 120;
     const N = CFG.ROWS * CFG.COLS;
     const aSet = new Set(anchors), dSet = new Set(discs || []);
     const norms = [];
@@ -1848,20 +1876,27 @@ const ShotCore = (function(){
     for (let k = 0; k < N; k++) at[k].sort((x, y) =>
       ((y.ga.length === 1 && y.ga[0] === y.first) ? 0 : 1) - ((x.ga.length === 1 && x.ga[0] === x.first) ? 0 : 1)
       || y.ids.length - x.ids.length);
-    const used = new Uint8Array(N), cur = [];
+    const used = new Uint8Array(N), cur = [], ancUsed = new Uint8Array(N);
+    const solList = [];
     let nodes = 0, sols = 0, best = null;
+    let freeCnt = 0;
+    for (let i = 0; i < N; i++) if (occ[i]) freeCnt++;
     const scoreOf = rgs => {
       let s = 0;
       for (const p of rgs) {
         if (p.ga.length === 1) s += (p.ga[0] === p.first ? 2 : 0.5);
         if (dSet.size) { if (p.gd.length === 1) { s += 2; if (p.gd[0] === p.last) s += 2; } }
         s += p.ids.length * 0.05; // 同等条件下略偏好大件（避免全切成 1×1）
-        // 同一件法宝的底色应一致：块内各格底色与锚点格底色接近则加分
+        // 同一件法宝的底色应一致：块内各格底色与锚点格底色接近则加分；
+        // 明显不一致（跨品质=跨法宝，如大件吞了相邻件的格子）则按距离惩罚
         if (stats && p.ga.length === 1) {
           const ab = stats[p.ga[0]] && stats[p.ga[0]].bg;
           if (ab) for (const id of p.ids) {
             const sb = stats[id] && stats[id].bg;
-            if (sb && colorDist(sb, ab) <= 14) s += 0.35;
+            if (!sb) continue;
+            const dd = colorDist(sb, ab);
+            if (dd <= 14) s += 0.35;
+            else s -= Math.min(1.5, (dd - 14) / 40);
           }
         }
       }
@@ -1869,6 +1904,29 @@ const ShotCore = (function(){
     };
     function rec() {
       if (++nodes > limit) return true;
+      // 可行性快查：剩余空格的每个连通块必须含至少一个未覆盖锚点，
+      // 否则该块永远无法被「必含锚点的块」覆盖——立即剪掉（防悬空格死路穷举）
+      const remA = aSet.size - cur.length;
+      if (freeCnt) {
+        const comp = new Uint8Array(N);
+        let feasible = true;
+        for (let i = 0; i < N && feasible; i++) {
+          if (!occ[i] || used[i] || comp[i]) continue;
+          const q = [i]; comp[i] = 1;
+          let hasAnchor = false;
+          for (let qi = 0; qi < q.length; qi++) {
+            const u = q[qi];
+            if (aSet.has(u) && !ancUsed[u]) hasAnchor = true;
+            const ur = Math.floor(u / CFG.COLS), uc = u % CFG.COLS;
+            if (uc + 1 < CFG.COLS) { const v = u + 1; if (occ[v] && !used[v] && !comp[v]) { comp[v] = 1; q.push(v); } }
+            if (uc > 0) { const v = u - 1; if (occ[v] && !used[v] && !comp[v]) { comp[v] = 1; q.push(v); } }
+            if (ur + 1 < CFG.ROWS) { const v = u + CFG.COLS; if (occ[v] && !used[v] && !comp[v]) { comp[v] = 1; q.push(v); } }
+            if (ur > 0) { const v = u - CFG.COLS; if (occ[v] && !used[v] && !comp[v]) { comp[v] = 1; q.push(v); } }
+          }
+          if (!hasAnchor) feasible = false;
+        }
+        if (!feasible) return false;
+      } else if (remA > 0) return false;
       let k = -1;
       for (let i = 0; i < N; i++) if (occ[i] && !used[i]) { k = i; break; }
       if (k < 0) {
@@ -1877,8 +1935,10 @@ const ShotCore = (function(){
         if (!ok) return false;
         sols++;
         const s = scoreOf(cur);
-        if (!best || s > best.score) best = { score: s, regions: cur.map(p => ({ ids: p.ids.slice(), shape: p.shape, anchor: p.ga.length ? p.ga[0] : p.ids[0] })) };
-        return sols >= 120;
+        const regions = cur.map(p => ({ ids: p.ids.slice(), shape: p.shape, anchor: p.ga.length ? p.ga[0] : p.ids[0] }));
+        solList.push({ score: s, regions });
+        if (!best || s > best.score) best = { score: s, regions };
+        return sols >= maxSols;
       }
       for (const p of at[k]) {
         if (p.ga.length !== 1) continue;
@@ -1887,16 +1947,20 @@ const ShotCore = (function(){
         for (const id of p.ids) if (used[id]) { free = false; break; }
         if (!free) continue;
         for (const id of p.ids) used[id] = 1;
+        ancUsed[p.ga[0]] = 1;
+        freeCnt -= p.ids.length;
         cur.push(p);
         const stop = rec();
         cur.pop();
+        ancUsed[p.ga[0]] = 0;
         for (const id of p.ids) used[id] = 0;
+        freeCnt += p.ids.length;
         if (stop) return true;
       }
       return false;
     }
     rec();
-    return { best, nodes, sols, truncated: nodes > limit };
+    return { best, solutions: solList, nodes, sols, truncated: nodes > limit };
   }
 
   // 形状的「数字格」：右下角格（共鸣数字所在格）——最大行，再取该行最大列（与原版 Xr 一致）
@@ -1963,16 +2027,37 @@ const ShotCore = (function(){
       if (libNames.has(String(c.name || '').trim())) continue;
       pool.push({ eq: Object.assign({ sig: [], type: c.type || '', element: c.element || '' }, c), src: 'cat' });
     }
+    for (const x of pool) x.sk = shapeKey(x.eq.cells);
     const shapes = [...new Map(pool.map(x => [shapeKey(x.eq.cells), x.eq.cells])).values()]
       .filter(cells => cells && cells.length);
     // 精确覆盖切分（占格切不成时，逐步丢掉置信最低的占格重试）；钉住格视为已覆盖
     let occ = om.occ.slice();
     for (const p of pinned) for (const id of p.ids) occ[id] = 0;
-    let solve = null, dropped = [], attempt = 0, trace = null;
+    // 身份分：形状+元素+品质底色 → 候选池里最优候选的吻合度（带缓存）。
+    // 融入切分搜索做 B&B 剪枝——「大件吞掉相邻件格子、把 2×2 切成 1×1」这类
+    // 切分分打平的错误解，会因为品质底色对不上候选而联合分大幅落后被淘汰。
+    const idCache = new Map();
+    const identityScore = (sk, el, st) => {
+      if (!el || !sk) return 0;
+      const key = sk + '|' + el + '|' + (st.quality || 0);
+      if (idCache.has(key)) return idCache.get(key);
+      let bestS = 0;
+      for (const x of pool) {
+        if (x.sk !== sk || (x.eq.element || '') !== el) continue;
+        let s = 0;
+        if (st.quality && x.eq.quality === st.quality) s += 4;
+        if (st.bg && x.eq.quality) s += Math.max(0, 2 - colorDist(st.bg, CFG.palette['q' + x.eq.quality]) / 20);
+        if (x.src === 'lib') s += 0.6;
+        if (s > bestS) bestS = s;
+      }
+      idCache.set(key, bestS);
+      return bestS;
+    };
+    let solve = null, dropped = [], attempt = 0, trace = null, jointInfo = null, solAll = [];
     for (; attempt < 10; attempt++) {
       const r = solveTiling(occ, anchorIds, [], shapes, TH.tileNodeLimit, om.stats);
       trace = { nodes: r.nodes, sols: r.sols, truncated: r.truncated };
-      if (r.best) { solve = r.best; break; }
+      if (r.best) { solve = r.best; solAll = r.solutions && r.solutions.length ? r.solutions : [r.best]; break; }
       let worst = -1, wv = Infinity;
       for (let i = 0; i < N; i++) {
         if (!occ[i] || anchorById.has(i)) continue;
@@ -1982,6 +2067,84 @@ const ShotCore = (function(){
       }
       if (worst < 0) break;
       occ = occ.slice(); occ[worst] = 0; dropped.push(worst);
+    }
+    // 单块联合分 = 切分分（锚点首格 + 面积 + 底色一致） + 身份分（形状+元素+品质 ↔ 候选池）
+    const regionJoint = rg => {
+      const st = om.stats[rg.anchor] || {};
+      let s = (rg.anchor === rg.ids[0] ? 2 : 0.5) + rg.ids.length * 0.05;
+      const ab = st.bg;
+      if (ab) for (const id of rg.ids) {
+        const sb = om.stats[id] && om.stats[id].bg;
+        if (!sb) continue;
+        const dd = colorDist(sb, ab);
+        if (dd <= 14) s += 0.35;
+        else s -= Math.min(1.5, (dd - 14) / 40);
+      }
+      const cell = anchorById.get(rg.anchor);
+      // 元素徽章永远在法宝的左上格（首格）：锚点不在首格的块视为可疑，身份分大幅打折
+      if (cell) s += identityScore(shapeKey(rg.shape), cell.element, st) * (rg.anchor === rg.ids[0] ? 1 : 0.3);
+      return s;
+    };
+    const jointOf = regions => regions.reduce((acc, rg) => acc + regionJoint(rg), 0);
+    // 联合裁决：切分分打平的解非常多（≈ 2×件数 + 0.4×格数），用身份分挑：
+    // 错误切法（如大件吞掉 2×2 的格子）会让某块品质底色对不上候选法宝，联合分立刻落后。
+    if (solve && solAll.length > 1) {
+      let bj = jointOf(solve.regions), bs = solve;
+      for (const sol of solAll) {
+        const j = jointOf(sol.regions);
+        if (j > bj + 1e-9) { bj = j; bs = sol; }
+      }
+      solve = bs;
+    }
+    // 局部重切：对每块与其相邻块的并集做精确重切（子问题只有十几格，穷举瞬间完成），
+    // 联合分严格更高才替换，迭代到不动点。专治「大件吞掉相邻件格子、2×2 被切成 1×1」型错误。
+    let repairs = 0;
+    if (solve) {
+      const C = CFG.COLS;
+      for (let pass = 0; pass < 6; pass++) {
+        let changed = false;
+        const regs = solve.regions;
+        for (let i = 0; i < regs.length; i++) {
+          const rg = regs[i];
+          if (!rg) continue;
+          const owner = new Map();
+          regs.forEach((x, xi) => { if (x) x.ids.forEach(id => owner.set(id, xi)); });
+          const invol = new Set([i]);
+          for (const id of rg.ids) {
+            const r0 = Math.floor(id / C), c0 = id % C;
+            for (const [rr, cc] of [[r0 - 1, c0], [r0 + 1, c0], [r0, c0 - 1], [r0, c0 + 1]]) {
+              if (rr < 0 || cc < 0 || rr >= CFG.ROWS || cc >= CFG.COLS) continue;
+              const j = owner.get(rr * C + cc);
+              if (j !== undefined && j !== i) invol.add(j);
+            }
+          }
+          if (invol.size < 2) continue;
+          const S = new Set();
+          invol.forEach(j => regs[j].ids.forEach(id => S.add(id)));
+          const A = [...invol].map(j => regs[j].anchor);
+          const occS = new Array(N).fill(0);
+          for (const id of S) occS[id] = 1;
+          const r2 = solveTiling(occS, A, [], shapes, 200000, om.stats, 5000);
+          if (!r2.best) continue;
+          const curJ = [...invol].reduce((acc, j) => acc + regionJoint(regs[j]), 0);
+          let bestJ2 = -Infinity, bestSol = null;
+          for (const sol of r2.solutions) {
+            const j = sol.regions.reduce((acc, x) => acc + regionJoint(x), 0);
+            if (j > bestJ2 + 1e-9) { bestJ2 = j; bestSol = sol; }
+          }
+          if (bestSol && bestJ2 > curJ + 1e-6) {
+            const nr = regs.filter((x, xi) => !invol.has(xi));
+            nr.push(...bestSol.regions);
+            solve = { score: solve.score, regions: nr };
+            repairs++; changed = true;
+            break; // owner 映射已失效，重启 pass
+          }
+        }
+        if (!changed) break;
+      }
+      jointInfo = { sols: trace.sols, nodes: trace.nodes, truncated: trace.truncated, repairs,
+        win: solve.regions.map(rg => rg.ids),
+        jr: solve.regions.map(rg => ({ ids: rg.ids, j: +regionJoint(rg).toFixed(2) })) };
     }
     // 切分失败 → 退化为「每件 1×1」的贪心（仍按元素+品质给候选）
     if (!solve) {
@@ -2014,11 +2177,17 @@ const ShotCore = (function(){
         quality: st.quality || 0, qualityDistance: st.qd, candidates: [], cells: rg.ids };
       const suspect = reason => ({ ...base, status: 'suspect', equip: null, reason });
       if (!cell) { pieces.push(suspect('元素徽章置信度不足')); continue; }
-      // 同元素+同形状：库内法宝优先（用户自己的库更可能是截图里的那件），
-      // 库里没有才用云端目录兜底
+      // 同元素+同形状候选：先按品质底色过滤（底色品质是硬信号），再库内优先——
+      // 库内品质对不上的让位给目录里品质对的（如 Q5 底色的 2×2 推荐目录 Q5 而不是库内 Q4）
       const byShape = pool.filter(x => shapeKey(x.eq.cells) === sk && (x.eq.element || '') === cell.element);
-      const libHit = byShape.filter(x => x.src === 'lib');
-      let cands = libHit.length ? libHit : byShape;
+      let cands = byShape;
+      if (st.quality) {
+        const qm = byShape.filter(x => x.eq.quality === st.quality);
+        if (qm.length) {
+          const libQm = qm.filter(x => x.src === 'lib');
+          cands = libQm.length ? libQm : qm;
+        }
+      }
       if (!cands.length) cands = pool.filter(x => (x.eq.element || '') === cell.element);
       if (!cands.length) { pieces.push(suspect('库与云端目录中都没有「' + cell.element + '」系法宝')); continue; }
       // 排序：品质底色吻合 > 库内优先 > 共鸣档位大者
@@ -2061,7 +2230,7 @@ const ShotCore = (function(){
       ambiguous: pieces.filter(p => p.status === 'ambiguous').length,
       suspect: pieces.filter(p => p.status === 'suspect').length };
     return { grid, occupancy: om.occ, cellStats: om.stats, cells: detected, pieces, stats,
-      debug: { anchors: anchorIds, discs: discIds, occArr: Array.from(om.occ), dropped } };
+      debug: { anchors: anchorIds, discs: discIds, occArr: Array.from(om.occ), dropped, joint: jointInfo } };
   }
 
   const api = { recognize, fitLattice, recognizeCells, recognizeAwaken, bestCorr, decodeTemplate,

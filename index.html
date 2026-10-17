@@ -454,8 +454,13 @@
                 <label>连续批次（1–12，多批合并取全局最优）</label>
                 <input type="number" id="batches" min="1" max="12" value="3" style="width:100%">
               </div>
+              <div style="flex:1;min-width:0">
+                <label>候选池总数（0=按批次）</label>
+                <input type="number" id="poolTarget" min="0" max="20000" step="100" value="0" style="width:100%" title="填 >0 时（如 2000）：自动连续跨批合并，直到候选池（去重后）≥ 该数量，再输出全局最优；此时忽略上方连续批次">
+              </div>
               <button id="reshuffle" class="ghost" title="基于新随机种子继续搜索，并合并进跨批全局最优">🔄 换一批</button>
             </div>
+            <div class="hint" style="margin-top:6px">候选池总数：填 2000 即自动跨批合并，直到候选池凑满 2000 套（布局去重）后直接输出该池的全局最优解；填 0 则按上方「连续批次」执行。</div>
             <label class="mt">排序</label>
             <select id="sortMode" style="width:100%">
               <option value="attr" selected>按属性总分（默认：饱和率优先）</option>
@@ -3850,23 +3855,44 @@ const ShotCore = (function(){
     renderPlans(poolGlobal, lastBackpack, ms);
     if(lastRecord && poolGlobal.length){ const sb=$('statusBox'); if(sb) sb.textContent='🏆 刷新纪录（跨批全局最优属性评分 '+Math.round(lastBestW)+'） · '+sb.textContent; }
   }
+  let solvingPool=false, lastPoolTarget=0;
+  function readPoolTarget(){ const el=$('poolTarget'); return el?Math.max(0,parseInt(el.value)||0):0; }
   function runBatches(){
-    const N=Math.max(1,Math.min(12, parseInt($('batches').value)||3));
+    if(solvingPool) return;
     const enabledCount=library.filter(t=>sel[t.id]&&sel[t.id].include).length;
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
     if(chosen.length===0){ $('statusBox').textContent= enabledCount>0 ? '⚠️ 已启用 '+enabledCount+' 件法宝，但数量均为 0；请至少为一件填写数量（>0）后再生成。' : '⚠️ 请先在「组别管理」勾选组别以启用法宝，并填写数量（>0）。'; return; }
+    const target=readPoolTarget(); lastPoolTarget=target;
+    const N=target>0?Infinity:Math.max(1,Math.min(12, parseInt($('batches').value)||3));
     batchSeedBase=(Date.now()&0x7fffffff);
-    $('statusBox').textContent='⏳ 生成中…（'+N+' 批次合并）';
+    solvingPool=true;
     $('solve').disabled=true; if($('reshuffle')) $('reshuffle').disabled=true;
-    setTimeout(()=>{
-      const t0=performance.now(); lastRecord=false;
-      let fullAch=null, back=null;
-      for(let b=0;b<N;b++){ const r=doSolve((batchSeedBase ^ (b*0x9E3779B1))>>>0, b===0?false:true); if(r.empty) break; if(r.fullAchievable!=null) fullAch=r.fullAchievable; back=r.backpack; if(r.record) lastRecord=true; }
-      const ms=(performance.now()-t0).toFixed(0);
-      $('solve').disabled=false; if($('reshuffle')) $('reshuffle').disabled=false;
+    poolGlobal=[]; sigGlobal=new Set(); lastBestW=0; lastRecord=false;
+    let b=0, back=null, stall=0; const t0=performance.now();
+    const prog=()=>{ $('statusBox').textContent='⏳ 生成中… 已跑 '+b+' 批 · 候选池 '+poolGlobal.length+(target>0?(' / 目标 '+target):(' / '+N+' 批')); };
+    prog();
+    function finish(){
+      solvingPool=false; $('solve').disabled=false; if($('reshuffle')) $('reshuffle').disabled=false;
       if(back) lastBackpack=back;
+      const ms=(performance.now()-t0).toFixed(0);
       renderMerged(ms);
-    },30);
+      if(target>0){ const sb=$('statusBox'); if(sb) sb.textContent+=' · 候选池目标 '+target+(poolGlobal.length>=target?' ✓ 已达成':'（已收敛：连续多批无新增布局）'); }
+    }
+    function step(){
+      const before=poolGlobal.length;
+      const r=doSolve((batchSeedBase ^ (b*0x9E3779B1))>>>0, b>0);
+      if(r.empty){ finish(); return; }
+      if(r.backpack) back=r.backpack;
+      if(r.record) lastRecord=true;
+      b++;
+      stall = (poolGlobal.length-before)>0 ? 0 : stall+1;
+      if(target>0){
+        if(poolGlobal.length>=target || stall>=15 || b>=120){ finish(); return; }
+      } else if(b>=N){ finish(); return; }
+      prog();
+      setTimeout(step,0);
+    }
+    setTimeout(step,10);
   }
   $('solve').onclick=runBatches;
   if($('reshuffle')) $('reshuffle').onclick=()=>{
@@ -4085,7 +4111,7 @@ const ShotCore = (function(){
       stat('已用格子', top0?top0.filled+'/'+top0.capacity:'-') +
       stat('已放物品', top0?top0.placements.length:'-') +
       stat('搜索耗时', ms+'ms') +
-      stat('候选池', plans.length+'（跨批合并）');
+      stat('候选池', plans.length+(typeof lastPoolTarget==='number'&&lastPoolTarget>0?' / 目标 '+lastPoolTarget:'')+'（跨批合并）');
     const wrap=$('plans'); wrap.innerHTML='';
     if(sorted.length===0){ wrap.innerHTML='<div class="empty-note">未找到可行方案，请减少法宝数量或扩大背包。</div>'; renderPlanDetail(null); return; }
     function selectPlan(i){

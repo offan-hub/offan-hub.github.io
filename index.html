@@ -235,11 +235,13 @@
   .dt-info-card .dt-info-title { font-size:11px; color:var(--muted); margin-bottom:2px; }
   .dt-info-card .dt-info-body { font-size:13.5px; font-weight:600; word-break:break-all; }
   /* 截图识别结果：原图辅助线 + 编号（类名全新，避免复用 .cell 等既有样式） */
-  .shot-wrap { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
-  .shot-left { flex:0 0 auto; }
-  .shot-right { flex:1 1 420px; min-width:340px; }
+  .shot-wrap { display:flex; gap:14px; align-items:flex-start; flex-wrap:nowrap; }
+  .shot-left { flex:0 0 auto; min-width:0; }
+  .shot-right { flex:1 1 0; min-width:0; }
+  @media (max-width:960px){ .shot-wrap { flex-wrap:wrap; } .shot-right { flex:1 1 100%; } }
   .shot-cvbox { border:1px solid var(--line); border-radius:10px; background:#11131a; padding:6px; line-height:0; }
   .shot-cvbox canvas { border-radius:6px; display:block; max-width:100%; }
+  .shot-cvbox.marking canvas { cursor:crosshair; }
   .shot-vbtns { display:flex; gap:6px; margin-top:7px; }
   .shot-vbtn { font-size:11.5px; padding:3px 9px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--muted); cursor:pointer; }
   .shot-vbtn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -497,7 +499,7 @@
 </div>
 
 <div class="modal-mask" id="shotMask">
-  <div class="modal" style="max-width:1140px">
+  <div class="modal" style="width:min(96vw,1240px);max-width:none">
     <div class="modal-hd"><h3>📷 截图导入</h3><button class="x" id="shotX">×</button></div>
     <div class="modal-bd" id="shotBody"></div>
     <div class="modal-ft">
@@ -2783,7 +2785,8 @@ const ShotCore = (function(){
   $('enMask').onclick=e=>{ if(e.target===$('enMask')) $('enMask').classList.remove('on'); };
 
   /* ---------- 截图导入（ShotCore 本地识别） ---------- */
-  const shotState={ result:null, rows:[], src:null, w:0, h:0, view:'bag', hover:-1 };
+  const shotState={ result:null, rows:[], src:null, w:0, h:0, view:'bag', hover:-1,
+    mark:false, marks:new Set(), ms:0, imageData:null };
   let SHOT_CATALOG=null, SHOT_ENRICH=null;
   // 云端目录（375 件法宝的元素/形状/共鸣/品质）+ 补全数据（按名字给库内法宝补元素）
   async function shotEnsureData(){
@@ -2812,10 +2815,11 @@ const ShotCore = (function(){
       vx=Math.max(0, g.ox-5); vy=Math.max(0, g.oy-5);
       vw=Math.min(st.w-vx, C*g.pw+10); vh=Math.min(st.h-vy, R*g.ph+10);
     }
-    const MAXW=(st.view==='bag')?450:250, MAXH=380;
+    const MAXW=(st.view==='bag')?420:250, MAXH=380;
     const s=Math.min(MAXW/vw, MAXH/vh);
     const dw=Math.max(60,Math.round(vw*s)), dh=Math.max(60,Math.round(vh*s));
     cv.width=dw; cv.height=dh; cv.style.width=dw+'px'; cv.style.height=dh+'px';
+    st._vp={ vx, vy, s };
     const ctx=cv.getContext('2d');
     ctx.drawImage(st.src, vx,vy,vw,vh, 0,0,dw,dh);
     const X=function(x){ return (x-vx)*s; }, Y=function(y){ return (y-vy)*s; };
@@ -2830,6 +2834,14 @@ const ShotCore = (function(){
       ctx.fillStyle='rgba(0,0,0,.30)';
       ctx.fillRect(gx(c)+1, gy(r)+1, gx(c+1)-gx(c)-2, gy(r+1)-gy(r)-2);
     }
+    // 圈选修正：绿格覆盖（画在未占格淡叉之上、分割轮廓之下）
+    if(st.marks&&st.marks.size){ st.marks.forEach(function(id){
+      const r=Math.floor(id/C), c=id%C;
+      ctx.fillStyle='rgba(34,197,94,.45)';
+      ctx.fillRect(gx(c)+1, gy(r)+1, gx(c+1)-gx(c)-2, gy(r+1)-gy(r)-2);
+      ctx.strokeStyle='#16a34a'; ctx.lineWidth=2;
+      ctx.strokeRect(gx(c)+1.5, gy(r)+1.5, gx(c+1)-gx(c)-3, gy(r+1)-gy(r)-3);
+    }); }
     // 每件法宝：轮廓 + 编号
     const COLORS={ ok:'#22c55e', ambiguous:'#f59e0b', suspect:'#ef4444' };
     res.pieces.forEach(function(p,i){
@@ -2866,6 +2878,7 @@ const ShotCore = (function(){
   }
   function shotOpen(){
     shotState.result=null; shotState.rows=[]; shotState.src=null; shotState.hover=-1;
+    shotState.mark=false; shotState.marks.clear(); shotState.ms=0; shotState.imageData=null;
     shotEnsureData();
     const elCount=library.filter(t=>t.element).length;
     const ready=elCount>=10;
@@ -2931,7 +2944,7 @@ const ShotCore = (function(){
     try{
       result=ShotCore.recognize(imageData, library, { catalog:SHOT_CATALOG||[], enrich:SHOT_ENRICH||{} });
     }catch(err){ $('shotMsg').textContent='识别失败：'+err.message; return; }
-    shotState.result=result; shotState.src=cv; shotState.w=w; shotState.h=h;
+    shotState.result=result; shotState.src=cv; shotState.w=w; shotState.h=h; shotState.imageData=imageData;
     shotRenderResult(result, Date.now()-t0);
   }
   function shotLibOptions(cell, curId){
@@ -2961,16 +2974,21 @@ const ShotCore = (function(){
     return h;
   }
   function shapeKey(cells){ return (cells||[]).map(c=>c[0]+','+c[1]).sort().join(' '); }
+  // 重建行数据；按锚点 (row,col) 保留用户已做的选择（圈选修正重渲染时不丢）
+  function shotRebuildRows(){
+    const old={};
+    shotState.rows.forEach(r=>{ if(r.piece) old[r.piece.row+','+r.piece.col]=r; });
+    shotState.rows=shotState.result.pieces.map(p=>{
+      const o=old[p.row+','+p.col];
+      if(o){ o.piece=p; return o; }
+      return { piece:p, pick:p.status==='ok'&&p.equip?p.equip.id:'',
+        aw:(p.awaken&&p.awaken.awakenStatus==='recognized')?p.awaken.awakenLevel:'', learn:true, newName:'' };
+    });
+  }
   function shotRenderResult(result, ms){
     const rows=result.pieces;
-    shotState.rows=rows.map(p=>({
-      piece:p,
-      // 预选：ok → 直接命中；其余留空待人工
-      pick: p.status==='ok'&&p.equip ? p.equip.id : '',
-      aw: (p.awaken&&p.awaken.awakenStatus==='recognized') ? p.awaken.awakenLevel : '',
-      learn: true,
-      newName:'',
-    }));
+    shotState.ms=ms||shotState.ms||0;
+    shotRebuildRows();
     const st=result.stats;
     let h='<div class="en-stat">'+
       '<div class="stc"><div class="n" style="color:#16a34a">'+st.ok+'</div><div class="t">已匹配</div></div>'+
@@ -2986,7 +3004,9 @@ const ShotCore = (function(){
       '<div class="shot-vbtns">'+
       '<button type="button" class="shot-vbtn'+(shotState.view==='bag'?' on':'')+'" id="shotViewBag">识别区域</button>'+
       '<button type="button" class="shot-vbtn'+(shotState.view==='full'?' on':'')+'" id="shotViewAll">整张原图</button>'+
+      '<button type="button" class="shot-vbtn'+(shotState.mark?' on':'')+'" id="shotMarkBtn" title="识别错的法宝？在图上涂抹绿格圈出它的真实区域，程序按元素+形状+品质重判">✏️ 圈选修正</button>'+
       '</div>'+
+      '<div id="shotFixBox"></div>'+
       '<div class="shot-lgd">原图上的辅助线 = 识别出的背包网格与法宝分割，蓝底数字 <b>①②③…</b> = 右侧表格的「#」编号，鼠标划过表格行可高亮对应法宝。'+
       '<br><i style="background:#22c55e"></i>已匹配　<i style="background:#f59e0b"></i>多候选　<i style="background:#ef4444"></i>待确认　<i style="background:#000"></i>空格/锁定'+
       '</div></div>'+
@@ -3024,6 +3044,11 @@ const ShotCore = (function(){
     const vb=$('shotViewBag'), va=$('shotViewAll');
     if(vb) vb.onclick=()=>{ shotState.view='bag'; vb.classList.add('on'); if(va) va.classList.remove('on'); shotDrawOverlay(); };
     if(va) va.onclick=()=>{ shotState.view='full'; va.classList.add('on'); if(vb) vb.classList.remove('on'); shotDrawOverlay(); };
+    const mb=$('shotMarkBtn'), cvbox=$('shotCanvas')&&$('shotCanvas').parentElement;
+    if(mb) mb.onclick=()=>{ shotState.mark=!shotState.mark; shotState.marks.clear(); shotRenderResult(shotState.result, 0); };
+    if(cvbox) cvbox.classList[shotState.mark?'add':'remove']('marking');
+    shotBindCanvas();
+    shotRenderFixPanel();
     // 表格行 ↔ 图上高亮
     $('shotBody').querySelectorAll('.shot-tr').forEach(tr=>{
       tr.onmouseenter=()=>{ shotState.hover=+tr.dataset.i; tr.classList.add('hot'); shotDrawOverlay(); };
@@ -3033,6 +3058,141 @@ const ShotCore = (function(){
     $('shotDo').textContent='导入选中';
     shotBindRows();
     shotRefreshImportBtn();
+  }
+  /* ---------- 圈选修正：人工涂绿格 → 按元素+形状+品质重判 ---------- */
+  function shotBindCanvas(){
+    const cv=$('shotCanvas'); if(!cv||!shotState.mark) return;
+    let painting=false, erase=false;
+    const cellAt=e=>{
+      const res=shotState.result, vp=shotState._vp; if(!res||!vp) return null;
+      const rect=cv.getBoundingClientRect(); if(!rect.width||!rect.height) return null;
+      const x=(e.clientX-rect.left)*(cv.width/rect.width), y=(e.clientY-rect.top)*(cv.height/rect.height);
+      const g=res.grid;
+      const ix=x/vp.s+vp.vx, iy=y/vp.s+vp.vy;
+      const c=Math.floor((ix-g.ox)/g.pw), r=Math.floor((iy-g.oy)/g.ph);
+      if(r<0||c<0||r>=6||c>=7) return null;
+      return r*7+c;
+    };
+    cv.addEventListener('pointerdown',e=>{
+      const id=cellAt(e); if(id==null) return;
+      e.preventDefault();
+      painting=true; erase=shotState.marks.has(id);
+      if(erase) shotState.marks.delete(id); else shotState.marks.add(id);
+      try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+      shotDrawOverlay(); shotRenderFixPanel();
+    });
+    cv.addEventListener('pointermove',e=>{
+      if(!painting) return;
+      const id=cellAt(e); if(id==null) return;
+      if(erase) shotState.marks.delete(id); else shotState.marks.add(id);
+      shotDrawOverlay(); shotRenderFixPanel();
+    });
+    const win=(typeof window!=='undefined')?window:null;
+    if(win) win.addEventListener('pointerup',()=>{ painting=false; });
+  }
+  // 兜底：锚点格没被引擎当成徽章时，直接对该格做元素模板匹配
+  function shotDetectElementAt(res,row,col){
+    try{
+      const id=shotState.imageData; if(!id) return null;
+      const bm={ w:id.width, h:id.height, px:(x,y)=>{ const i=(y*id.width+x)*4; return [id.data[i],id.data[i+1],id.data[i+2]]; } };
+      const T=ShotCore.CFG.templates.element, box=ShotCore.CFG.geometry.elementBox;
+      let best=null;
+      for(const k in T){ const s=ShotCore.bestCorr(bm,res.grid,row,col,box,ShotCore.decodeTemplate(T[k]));
+        if(!best||s>best.score) best={ key:k, score:s }; }
+      return best;
+    }catch(e){ return null; }
+  }
+  function shotFixCandidates(){
+    const res=shotState.result; if(!res) return null;
+    const marks=[...shotState.marks].sort((a,b)=>a-b);
+    if(!marks.length) return null;
+    const C=7;
+    const cellById=new Map((res.cells||[]).map(c=>[c.row*C+c.col,c]));
+    // 锚点 = 形状首个实格（元素徽章所在）：行优先最小者
+    const aid=marks[0], ar=Math.floor(aid/C), ac=aid%C;
+    const cell=cellById.get(aid)||null;
+    let element=cell?cell.element:null, elScore=cell?cell.elementScore:0, elWeak=cell?cell.elementWeak:true;
+    if(!element){ const d=shotDetectElementAt(res,ar,ac); if(d){ element=d.key; elScore=d.score; elWeak=d.score<0.4; } }
+    const stt=(res.cellStats||[])[aid]||{};
+    const q=stt.quality||0;
+    const sk=ShotCore.shapeKey(marks.map(id=>[Math.floor(id/C),id%C]));
+    // 候选池：库内（缺元素用补全数据垫） + 云端目录（库里没有同名时）
+    const enrich=SHOT_ENRICH||{};
+    const pool=[];
+    library.forEach(t=>{
+      let el=t.element||'';
+      if(!el){ const e=enrich[String(t.name||'').trim()]; if(e) el=e.element||''; }
+      pool.push({ t, el, src:'lib' });
+    });
+    (SHOT_CATALOG||[]).forEach(c=>{
+      if(library.some(t=>t.name===c.name)) return;
+      pool.push({ t:c, el:c.element||'', src:'cat' });
+    });
+    const sameShape=pool.filter(x=>x.el&&x.el===element&&ShotCore.shapeKey(x.t.cells)===sk);
+    const sameEl=pool.filter(x=>x.el&&x.el===element&&ShotCore.shapeKey(x.t.cells)!==sk);
+    let list, note;
+    if(sameShape.length){ list=sameShape; note=null; }
+    else if(sameEl.length){ list=sameEl; note='没有同形状的「'+element+'」系法宝，下面列出同元素候选'; }
+    else { list=pool.filter(x=>ShotCore.shapeKey(x.t.cells)===sk); note='没有「'+(element||'?')+'」系候选，下面列出同形状候选'; }
+    // 排序：品质底色吻合 > 库内 > 格数多
+    list=list.slice().sort((a,b)=>{
+      const qa=(a.t.quality||0)===q?1:0, qb=(b.t.quality||0)===q?1:0;
+      if(qa!==qb) return qb-qa;
+      if(a.src!==b.src) return a.src==='lib'?-1:1;
+      return (b.t.cells||[]).length-(a.t.cells||[]).length;
+    }).slice(0,40);
+    return { ar, ac, element, elScore, elWeak, q, shapeN:marks.length, list, note,
+      sig:cell?cell.sig:null, awaken:cell?cell.awaken:null };
+  }
+  function shotRenderFixPanel(){
+    const box=$('shotFixBox'); if(!box) return;
+    if(!shotState.mark){ box.innerHTML=''; return; }
+    let h='<div class="cap" style="margin-top:8px;line-height:1.7">✏️ 圈选模式：在图上<b>按住鼠标涂抹 / 再涂擦除绿格</b>，圈出识别错误的法宝实际占格——程序按「元素徽章 + 区域形状 + 品质底色」从库与云端目录重判。</div>';
+    const fc=shotFixCandidates();
+    if(fc){
+      h+='<div class="en-sec" style="margin-top:6px">选区 <b>'+fc.shapeN+'</b> 格 @('+fc.ar+','+fc.ac+') · 元素 <b>'+escapeHtml(fc.element||'?')+'</b>'+(fc.elWeak?'（低置信）':'')+' · 底色Q'+fc.q+'</div>';
+      if(fc.note) h+='<div class="en-sec warn">'+escapeHtml(fc.note)+'</div>';
+      if(fc.list.length){
+        h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">'+
+          '<select id="shotFixPick" style="max-width:360px">'+fc.list.map((x,i)=>
+            '<option value="'+i+'">'+(x.src==='cat'?'[云端] ':'')+escapeHtml(x.t.name)+' · Q'+(x.t.quality||0)+' · 共鸣'+(x.t.reson||0)+'</option>').join('')+'</select>'+
+          '<button type="button" class="primary" id="shotFixApply" style="padding:4px 12px">✓ 应用修正</button>'+
+          '<button type="button" class="ghost" id="shotFixClear" style="padding:4px 12px">清除选区</button></div>';
+      } else {
+        h+='<div class="cap" style="margin-top:6px">库与云端目录都没有能对上的候选——请核对元素徽章是否圈准，或直接在右侧该行选「➕ 作为新法宝录入」。</div>';
+      }
+    }
+    box.innerHTML=h;
+    const ap=$('shotFixApply');
+    if(ap) ap.onclick=()=>{ const sel=$('shotFixPick'); const x=fc&&fc.list[Number(sel&&sel.value)||0]; if(x) shotApplyFix(fc,x); };
+    const cl=$('shotFixClear');
+    if(cl) cl.onclick=()=>{ shotState.marks.clear(); shotDrawOverlay(); shotRenderFixPanel(); };
+  }
+  function shotApplyFix(fc,x){
+    const res=shotState.result; if(!res||!x) return;
+    const C=7;
+    const ids=[...shotState.marks].sort((a,b)=>a-b);
+    if(!ids.length) return;
+    const np={ row:fc.ar, col:fc.ac, element:fc.element, elementScore:fc.elScore,
+      form:(x.t.type||null), signature:fc.sig, awaken:fc.awaken,
+      quality:fc.q, status:'ok', equip:x.t, candidates:[], cells:ids, reason:null };
+    // 删除与选区重叠的旧件（识别错的整件移除），新件插到原位置，编号尽量不跳动
+    const oldPieces=res.pieces;
+    let insertAt=oldPieces.length;
+    const kept=[];
+    oldPieces.forEach(p=>{
+      const pids=(p.cells&&p.cells.length)?p.cells:[p.row*C+p.col];
+      if(pids.some(id=>shotState.marks.has(id))){ if(insertAt===oldPieces.length) insertAt=kept.length; return; }
+      kept.push(p);
+    });
+    kept.splice(Math.min(insertAt,kept.length),0,np);
+    res.pieces=kept;
+    res.stats.ok=kept.filter(p=>p.status==='ok').length;
+    res.stats.ambiguous=kept.filter(p=>p.status==='ambiguous').length;
+    res.stats.suspect=kept.filter(p=>p.status==='suspect').length;
+    shotState.marks.clear();
+    shotRenderResult(res, shotState.ms);
+    $('shotMsg').textContent='已按圈选区域修正为「'+(x.t.name||'')+'」，请继续核对其他件。';
   }
   function shotBindRows(){
     $('shotBody').querySelectorAll('.shot-pick').forEach(el=>el.onchange=e=>{
@@ -3072,8 +3232,8 @@ const ShotCore = (function(){
         if(r.learn&&nt&&p.signature){ nt.sig=(nt.sig||[]).concat([p.signature.map(Number)]); learned++; }
         added++;
       } else if(String(r.pick).indexOf('cat:')===0){
-        // 云端目录里的法宝：按目录信息新建入馆
-        const c=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(r.pick).slice(4));
+        // 云端目录里的法宝：按目录信息新建入馆（目录 id 自带 cat: 前缀）
+        const c=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(r.pick));
         if(!c) return;
         addToLibrary(c.name, shapeCells(p), 1, {
           element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0,

@@ -68,8 +68,8 @@
   .inv-table .mini { display:grid; gap:2px; }
   .inv-table .mini .mc { width:14px; height:14px; border-radius:3px; border:1px solid rgba(0,0,0,.15); }
   .inv-table .shape-td { white-space:nowrap; }
-  .inv-table .mini-wrap { margin-bottom:3px; }
-  .inv-table .shapein { width:84px !important; padding:3px 5px !important; font-size:11px; font-family:ui-monospace,Consolas,monospace; }
+  .inv-table .mini-wrap { margin-bottom:3px; display:inline-block; vertical-align:middle; }
+  .inv-table .shape-txt { font-size:11px; color:var(--muted); margin-left:6px; }
   .inv-table .del { color:#c0392b; border-color:#f0c5bf; padding:3px 8px; }
   .inv-table .del:hover { background:#c0392b; color:#fff; border-color:#c0392b; }
   /* 添加法宝面板 */
@@ -148,8 +148,26 @@
   /* 组别 */
   .group-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:4px 0 0; }
   .group-bar select { width:auto; min-width:130px; flex:0 0 auto; }
-  details.group-panel, details.cloud-panel { margin-top:10px; border:1px solid var(--line); border-radius:9px; padding:0 10px; }
-  details.group-panel summary, details.cloud-panel summary { cursor:pointer; padding:8px 0; font-size:13px; font-weight:600; }
+  /* 灵枢宝鉴双栏：左=法宝选择，右=已启用法宝信息 */
+  .lib-dual { display:flex; gap:14px; align-items:stretch; }
+  .lib-left { flex:1.5; min-width:0; display:flex; flex-direction:column; }
+  .lib-right { flex:1; min-width:0; border:1px solid var(--line); border-radius:9px; background:#fbfbfd; display:flex; flex-direction:column; }
+  .lib-pane-head { font-weight:600; font-size:13px; padding:8px 10px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; gap:8px; }
+  .lib-pane-sub { font-weight:400; font-size:11.5px; color:var(--muted); }
+  .lib-left-scroll { flex:1; max-height:540px; }
+  .lib-right-scroll { flex:1; overflow-y:auto; max-height:540px; padding:8px 10px; display:flex; flex-direction:column; gap:8px; }
+  .en-card { border:1px solid var(--line); border-radius:9px; background:#fff; padding:8px 10px; font-size:12.5px; }
+  .en-card.enkey { border-color:#f3c1ba; background:#fff8f6; }
+  .en-head { display:flex; align-items:center; gap:8px; font-weight:600; flex-wrap:wrap; }
+  .en-head .en-star { color:#e6342b; }
+  .en-shape { margin-left:auto; }
+  .en-meta { color:var(--muted); margin-top:4px; display:flex; flex-wrap:wrap; gap:3px 12px; }
+  .en-attrs { margin-top:5px; display:flex; flex-wrap:wrap; gap:3px 12px; }
+  .en-attrs b, .en-meta b { font-weight:600; }
+  .en-badge { display:inline-block; padding:1px 7px; border-radius:8px; font-size:11px; border:1px solid var(--line); background:#f4f5f8; color:var(--muted); }
+  .en-empty { color:var(--muted); font-size:12.5px; padding:6px 2px; }
+  @media (max-width:1100px){ .lib-dual { flex-direction:column; } .lib-right-scroll { max-height:340px; } }
+  details.group-panel, details.cloud-panel { margin-top:10px; border:1px solid var(--line); border-radius:9px; padding:0 10px; }  details.group-panel summary, details.cloud-panel summary { cursor:pointer; padding:8px 0; font-size:13px; font-weight:600; }
   .group-list { display:flex; flex-direction:column; gap:6px; padding:4px 0 10px; }
   .group-row { display:flex; gap:8px; align-items:center; }
   .group-row .gname { width:170px; }
@@ -321,14 +339,21 @@
           <button data-f="off">未启用</button>
         </div>
       </div>
-      <div class="table-scroll mt">
-        <table class="inv-table">
-          <thead><tr>
-            <th style="text-align:center">启用</th><th>名称</th><th style="text-align:center">重点</th><th>形状</th><th>组别</th><th>元素</th><th>类型</th><th>共鸣</th><th>品质</th>
-            <th>生命</th><th>防御</th><th>攻击</th><th>伤害</th><th>加成率%</th><th>加成类型</th><th>加成属性</th><th>觉醒</th><th>数量</th><th style="text-align:center">优先</th><th>操作</th>
-          </tr></thead>
-          <tbody id="invBody"></tbody>
-        </table>
+      <div class="lib-dual mt">
+        <div class="lib-left">
+          <div class="table-scroll lib-left-scroll">
+            <table class="inv-table">
+              <thead><tr>
+                <th style="text-align:center">启用</th><th>名称</th><th>形状</th><th>组别</th><th>数量</th><th style="text-align:center">重点</th><th>操作</th>
+              </tr></thead>
+              <tbody id="invBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="lib-right">
+          <div class="lib-pane-head">已启用法宝 <span class="lib-pane-sub" id="libOnCount"></span></div>
+          <div class="lib-right-scroll" id="enabledList"></div>
+        </div>
       </div>
       <div class="cap" id="invSummary"></div>
       <details class="group-panel">
@@ -995,6 +1020,20 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -1028,7 +1067,7 @@ const ShotCore = (function(){
     },
     thresholds: {
       anchorCandidate: 0.27, strictBadge: 0.4, strictMoat: 0.3, strictGap: 0.25,
-      glyphCorr: 0.4, glyphMargin: 0.02, glyphCombined: 0.58,
+      glyphCorr: 0.36, glyphMargin: 0.02, glyphCombined: 0.58,
       weakGlyphCorr: 0.5, weakGlyphMoat: 0.45,
       formCorr: 0.45, formMargin: 0.05,
       numberDisk: 0.7, numberAccept: 0.65, numberMargin: 0.1,
@@ -2033,26 +2072,9 @@ const ShotCore = (function(){
     // 精确覆盖切分（占格切不成时，逐步丢掉置信最低的占格重试）；钉住格视为已覆盖
     let occ = om.occ.slice();
     for (const p of pinned) for (const id of p.ids) occ[id] = 0;
-    // 身份分：形状+元素+品质底色 → 候选池里最优候选的吻合度（带缓存）。
+    // 身份分：形状+元素+品质底色（+共鸣数字）→ 候选池里最优候选的吻合度（带缓存）。
     // 融入切分搜索做 B&B 剪枝——「大件吞掉相邻件格子、把 2×2 切成 1×1」这类
     // 切分分打平的错误解，会因为品质底色对不上候选而联合分大幅落后被淘汰。
-    const idCache = new Map();
-    const identityScore = (sk, el, st) => {
-      if (!el || !sk) return 0;
-      const key = sk + '|' + el + '|' + (st.quality || 0);
-      if (idCache.has(key)) return idCache.get(key);
-      let bestS = 0;
-      for (const x of pool) {
-        if (x.sk !== sk || (x.eq.element || '') !== el) continue;
-        let s = 0;
-        if (st.quality && x.eq.quality === st.quality) s += 4;
-        if (st.bg && x.eq.quality) s += Math.max(0, 2 - colorDist(st.bg, CFG.palette['q' + x.eq.quality]) / 20);
-        if (x.src === 'lib') s += 0.6;
-        if (s > bestS) bestS = s;
-      }
-      idCache.set(key, bestS);
-      return bestS;
-    };
     let solve = null, dropped = [], attempt = 0, trace = null, jointInfo = null, solAll = [];
     for (; attempt < 10; attempt++) {
       const r = solveTiling(occ, anchorIds, [], shapes, TH.tileNodeLimit, om.stats);
@@ -2068,7 +2090,42 @@ const ShotCore = (function(){
       if (worst < 0) break;
       occ = occ.slice(); occ[worst] = 0; dropped.push(worst);
     }
-    // 单块联合分 = 切分分（锚点首格 + 面积 + 底色一致） + 身份分（形状+元素+品质 ↔ 候选池）
+    // 共鸣数字软信号：候选法宝的共鸣档位数字应出现在块的右下数字格。
+    // 不作硬门槛（金圆盘/数字可能被美术遮挡或误检），匹配则加分——专治
+    // 「切分分+身份分完全打平，只有数字能区分」型错误（如 2格+3格腰带 被
+    // 切成 S形4格+1格：前者 24/32 数字全对，后者 16/40 全错）。
+    const numCache = new Map();
+    const identityScoreN = (rg, cell, st) => {
+      const sk = shapeKey(rg.shape), el = cell && cell.element;
+      if (!el || !sk) return 0;
+      let maxR = -1, maxC = -1;
+      for (const id of rg.ids) {
+        const r0 = Math.floor(id / CFG.COLS), c0 = id % CFG.COLS;
+        if (r0 > maxR || (r0 === maxR && c0 > maxC)) { maxR = r0; maxC = c0; }
+      }
+      const key = sk + '|' + el + '|' + (st.quality || 0) + '|' + maxR + ',' + maxC;
+      if (numCache.has(key)) return numCache.get(key);
+      let bestS = 0;
+      for (const x of pool) {
+        if (x.sk !== sk || (x.eq.element || '') !== el) continue;
+        let s = 0;
+        if (st.quality && x.eq.quality === st.quality) s += 4;
+        if (st.bg && x.eq.quality) s += Math.max(0, 2 - colorDist(st.bg, CFG.palette['q' + x.eq.quality]) / 20);
+        if (x.src === 'lib') s += 0.6;
+        const reson = x.eq.reson;
+        if (reson && T_NUMBER.get(String(reson))) {
+          const ns = numberScore(bm, grid, maxR, maxC, reson, numCache);
+          if (ns !== null) {
+            if (ns >= TH.numberAccept) s += 1.2;
+            else if (ns >= TH.numberAccept - 0.1) s += 0.5;
+          }
+        }
+        if (s > bestS) bestS = s;
+      }
+      numCache.set(key, bestS);
+      return bestS;
+    };
+    // 单块联合分 = 切分分（锚点首格 + 面积 + 底色一致） + 身份分（形状+元素+品质+共鸣数字 ↔ 候选池）
     const regionJoint = rg => {
       const st = om.stats[rg.anchor] || {};
       let s = (rg.anchor === rg.ids[0] ? 2 : 0.5) + rg.ids.length * 0.05;
@@ -2082,7 +2139,7 @@ const ShotCore = (function(){
       }
       const cell = anchorById.get(rg.anchor);
       // 元素徽章永远在法宝的左上格（首格）：锚点不在首格的块视为可疑，身份分大幅打折
-      if (cell) s += identityScore(shapeKey(rg.shape), cell.element, st) * (rg.anchor === rg.ids[0] ? 1 : 0.3);
+      if (cell) s += identityScoreN(rg, cell, st) * (rg.anchor === rg.ids[0] ? 1 : 0.3);
       return s;
     };
     const jointOf = regions => regions.reduce((acc, rg) => acc + regionJoint(rg), 0);
@@ -2782,11 +2839,11 @@ const ShotCore = (function(){
     renderInventory(); saveLibrary();
   }
 
-  /* ---------- 灵枢宝鉴：表格渲染（等价于对方「已有物品清单」） ---------- */
+  /* ---------- 灵枢宝鉴：双栏渲染（左=法宝选择表，右=已启用法宝信息卡） ---------- */
   function renderInventory(){
     $('libCount').textContent = library.length;
     const body=$('invBody'); body.innerHTML='';
-    if(library.length===0){ body.innerHTML='<tr><td colspan="19" class="empty-note">宝鉴还没有法宝，请展开下方「添加法宝」录入，录入后自动保存到本机。</td></tr>'; updateSummary(); return; }
+    if(library.length===0){ body.innerHTML='<tr><td colspan="7" class="empty-note">宝鉴还没有法宝，请展开下方「添加法宝」录入，录入后自动保存到本机。</td></tr>'; updateSummary(); return; }
     // 按当前筛选（搜索 + 启用状态 + 组别）生成「实际索引」视图
     const view = library.map((t,i)=>i).filter(i=>{
       const t=library[i];
@@ -2813,15 +2870,11 @@ const ShotCore = (function(){
       if(cb!==ca) return cb-ca;
       return (tb.cells.length)-(ta.cells.length);
     });
-    if(view.length===0){ body.innerHTML='<tr><td colspan="19" class="empty-note">当前筛选下没有法宝（可切换上方「全部法宝 / 已启用 / 未启用 / 组别」）。</td></tr>'; updateSummary(); return; }
-    const optsB='<option value="none">无加成</option><option value="self">自身受加成</option><option value="buff">给他人加成</option>';
-    const optsA='<option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option>';
+    if(view.length===0){ body.innerHTML='<tr><td colspan="7" class="empty-note">当前筛选下没有法宝（可切换上方「全部法宝 / 已启用 / 未启用 / 组别」）。</td></tr>'; updateSummary(); return; }
     view.forEach(actualIndex=>{
       const i=actualIndex; const t=library[i];
       const _g=t.group?groups.find(x=>x.id===t.group):null; const _grpOff=!!(_g && !_g.enabled);
       const s=sel[t.id]||(sel[t.id]={include:!_grpOff,count:t.count||0,priority:false});
-      const bt=t.bonusType||'none'; const ba=t.bonusAttr||'hp';
-      const bDisabled=(bt==='none')?'disabled':'';
       const g=t.group?groups.find(x=>x.id===t.group):null;
       const grpOff = !!(g && !g.enabled);
       const tr=document.createElement('tr');
@@ -2829,24 +2882,11 @@ const ShotCore = (function(){
       tr.innerHTML =
         '<td style="text-align:center">'+(grpOff?'<span style="color:var(--c-text-dim);cursor:help" title="组别「'+escapeHtml(g.name)+'」未启用，无法勾选；请先在「组别管理」启用该组别。">🔒</span>':'<input type="checkbox" class="ck" '+(s.include?'checked':'')+' data-i="'+i+'">')+'</td>'+
         '<td><input type="text" class="nm" value="'+escapeHtml(t.name)+'" data-i="'+i+'"></td>'+
-        '<td style="text-align:center"><button class="keystar '+(t.key?'on':'')+'" data-i="'+i+'" title="标记/取消「重点法宝」：重点法宝永远排最前，名称与数值标红加粗">'+(t.key?'★':'☆')+'</button></td>'+
-        '<td class="shape-td"><div class="mini-wrap" id="mini-'+i+'">'+shapeMini(t.cells,t.color)+'</div><input type="text" class="shapein" value="'+escapeHtml(shapeText(t.cells))+'" data-i="'+i+'" placeholder="0,0 1,0" title="输入坐标对，以空格分隔，如 0,0 1,0 1,1（左上角为 0,0）"></td>'+
+        '<td class="shape-td"><div class="mini-wrap" id="mini-'+i+'">'+shapeMini(t.cells,t.color)+'</div><span class="shape-txt">'+t.cells.length+'格</span></td>'+
         '<td><select class="grp" data-i="'+i+'">'+groupOptions(t.group)+'</select></td>'+
-        '<td><select class="el" data-i="'+i+'">'+elementOptions(t.element)+'</select></td>'+
-        '<td><select class="tp" data-i="'+i+'">'+typeOptions(t.type)+'</select></td>'+
-        '<td><input type="number" min="0" class="resonin" value="'+(t.reson||0)+'" data-i="'+i+'" title="共鸣值（决定基础属性档位）"></td>'+
-        '<td><input type="number" min="0" max="5" class="qualityin" value="'+(t.quality||0)+'" data-i="'+i+'" title="品质 1-5（5=红色）"></td>'+
-        '<td><input type="number" min="0" class="anum hpnum" value="'+((t.base&&t.base.hp)||0)+'" data-i="'+i+'"></td>'+
-        '<td><input type="number" min="0" class="anum defnum" value="'+((t.base&&t.base.def)||0)+'" data-i="'+i+'"></td>'+
-        '<td><input type="number" min="0" class="anum atknum" value="'+((t.base&&t.base.atk)||0)+'" data-i="'+i+'"></td>'+
-        '<td><input type="number" min="0" class="anum dmgnum" value="'+((t.base&&t.base.dmg)||0)+'" data-i="'+i+'"></td>'+
-        '<td><input type="number" min="0" class="brate" value="'+(t.bonusRate||0)+'" data-i="'+i+'"></td>'+
-        '<td><select class="btype" data-i="'+i+'">'+optsB.replace('value="'+bt+'"','value="'+bt+'" selected')+'</select></td>'+
-        '<td><select class="battr" data-i="'+i+'" '+bDisabled+'>'+optsA.replace('value="'+ba+'"','value="'+ba+'" selected')+'</select></td>'+
-        '<td class="aw-cell"><span class="aw-sum">'+((t.awaken&&t.awaken.level>0)?t.awaken.level:'—')+'</span></td>'+
         '<td><input type="number" min="0" max="99" class="cnum" value="'+(t.count||0)+'" data-i="'+i+'"></td>'+
-        '<td style="text-align:center"><input type="checkbox" class="pk" '+(s.priority?'checked':'')+' data-i="'+i+'"></td>'+
-        '<td style="white-space:nowrap"><button class="dt" data-i="'+i+'" title="查看全部信息并录入技能参数">详情</button> <button class="del" data-i="'+i+'">删除</button></td>';
+        '<td style="text-align:center"><button class="keystar '+(t.key?'on':'')+'" data-i="'+i+'" title="标记/取消「重点法宝」：重点法宝永远排最前，名称与数值标红加粗">'+(t.key?'★':'☆')+'</button></td>'+
+        '<td style="white-space:nowrap"><button class="dt" data-i="'+i+'" title="查看全部信息：元素 / 类型 / 属性 / 加成 / 形状 / 觉醒 / 优先">详情</button> <button class="del" data-i="'+i+'">删除</button></td>';
       body.appendChild(tr);
     });
     body.querySelectorAll('.ck').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const t=library[i]; if(t.group){ const g=groups.find(x=>x.id===t.group); if(g && !g.enabled){ e.target.checked=false; sel[t.id].include=false; alert('无法启用「'+t.name+'」：其组别「'+g.name+'」尚未启用。请先在「组别管理」中勾选启用该组别。'); updateSummary(); return; } } sel[t.id].include=e.target.checked; updateSummary(); });
@@ -2854,35 +2894,59 @@ const ShotCore = (function(){
       el.oninput=e=>{ library[i].name=e.target.value; updateSummary(); saveLibrary(); };
       el.onchange=e=>{ const v=(e.target.value||'').trim(); if(v && library.some((t,idx)=>idx!==i && t.name===v)){ alert('法宝名称「'+v+'」已存在，名称必须唯一，已还原。'); library[i].name=el.dataset.orig; e.target.value=el.dataset.orig; } else { library[i].name=v||el.dataset.orig; el.dataset.orig=library[i].name; } updateSummary(); saveLibrary(); };
     });
-    body.querySelectorAll('.hpnum').forEach(el=>el.oninput=e=>{ const t=library[+e.target.dataset.i]; if(!t.base)t.base={}; t.base.hp=Number(e.target.value)||0; saveLibrary(); });
-    body.querySelectorAll('.defnum').forEach(el=>el.oninput=e=>{ const t=library[+e.target.dataset.i]; if(!t.base)t.base={}; t.base.def=Number(e.target.value)||0; saveLibrary(); });
-    body.querySelectorAll('.atknum').forEach(el=>el.oninput=e=>{ const t=library[+e.target.dataset.i]; if(!t.base)t.base={}; t.base.atk=Number(e.target.value)||0; saveLibrary(); });
-    body.querySelectorAll('.dmgnum').forEach(el=>el.oninput=e=>{ const t=library[+e.target.dataset.i]; if(!t.base)t.base={}; t.base.dmg=Number(e.target.value)||0; saveLibrary(); });
-    body.querySelectorAll('.brate').forEach(el=>el.oninput=e=>{ library[+e.target.dataset.i].bonusRate=Number(e.target.value)||0; saveLibrary(); });
-    body.querySelectorAll('.btype').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; library[i].bonusType=e.target.value; const ba=el.closest('tr').querySelector('.battr'); if(ba) ba.disabled=(e.target.value==='none'); saveLibrary(); });
-    body.querySelectorAll('.battr').forEach(el=>el.onchange=e=>{ library[+e.target.dataset.i].bonusAttr=e.target.value; saveLibrary(); });
     body.querySelectorAll('.cnum').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; const v=Math.max(0,parseInt(e.target.value)||0); library[i].count=v; sel[library[i].id].count=v; updateSummary(); saveLibrary(); });
-    body.querySelectorAll('.pk').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; sel[library[i].id].priority=e.target.checked; });
     body.querySelectorAll('.keystar').forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const t=library[i]; t.key=!t.key; saveLibrary(); renderInventory(); });
     body.querySelectorAll('.grp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const newG=e.target.value||null; library[i].group=newG; const g=newG?groups.find(x=>x.id===newG):null; if(g && !g.enabled) sel[library[i].id].include=false; renderInventory(); saveLibrary(); });
-    body.querySelectorAll('.tp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; library[i].type=e.target.value; saveLibrary(); });
-    body.querySelectorAll('.el').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; library[i].element=e.target.value; saveLibrary(); });
-    body.querySelectorAll('.resonin').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; library[i].reson=Math.max(0,Number(e.target.value)||0); saveLibrary(); });
-    body.querySelectorAll('.qualityin').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; library[i].quality=Math.min(5,Math.max(0,parseInt(e.target.value)||0)); saveLibrary(); });
-    body.querySelectorAll('.shapein').forEach(el=>{ const i=+el.dataset.i;
-      el.oninput=e=>{ const c=parseShapeInput(e.target.value); if(c){ library[i].cells=c; const mw=document.getElementById('mini-'+i); if(mw) mw.innerHTML=shapeMini(c, library[i].color); } };
-      el.onchange=e=>{ const c=parseShapeInput(e.target.value); if(c){ library[i].cells=c; } else { el.value=shapeText(library[i].cells); } updateSummary(); saveLibrary(); };
-    });
     body.querySelectorAll('.dt').forEach(el=>el.onclick=()=>openDetail(+el.dataset.i));
-    body.querySelectorAll('.del').forEach(el=>el.onclick=e=>{ const i=+e.target.dataset.i; const nm=library[i]?library[i].name:null; delete sel[library[i].id]; library.splice(i,1); if(nm){ deletedNames.add(nm); saveDeleted(deletedNames); } renderInventory(); saveLibrary(); });
+    body.querySelectorAll('.del').forEach(el=>el.onclick=e=>{ const i=+el.dataset.i; const nm=library[i]?library[i].name:null; delete sel[library[i].id]; library.splice(i,1); if(nm){ deletedNames.add(nm); saveDeleted(deletedNames); } renderInventory(); saveLibrary(); });
     updateSummary();
+  }
+  // 右栏：已启用法宝信息卡（只读展示，编辑走「详情」弹窗）
+  function renderEnabledPanel(){
+    const box=$('enabledList'); if(!box) return;
+    const list=library.filter(t=>{ const s=sel[t.id]; return s&&s.include; });
+    const onEl=$('libOnCount'); if(onEl) onEl.textContent=list.length?('共 '+list.length+' 种'):'';
+    if(!list.length){ box.innerHTML='<div class="en-empty">还没有启用的法宝：在左侧勾选「启用」并填写数量（>0）后，这里会显示每件法宝的完整信息。</div>'; return; }
+    list.sort((a,b)=>{
+      const ka=a.key?1:0, kb=b.key?1:0; if(ka!==kb) return kb-ka;
+      const ca=(sel[a.id]&&sel[a.id].count)||0, cb=(sel[b.id]&&sel[b.id].count)||0;
+      if(cb!==ca) return cb-ca;
+      return b.cells.length-a.cells.length;
+    });
+    const ET={none:'无加成',self:'自身受加成',buff:'给他人加成'}, EA={hp:'生命值',def:'防御力',atk:'攻击力'};
+    box.innerHTML=list.map(t=>{
+      const s=sel[t.id]||{}; const g=t.group?groups.find(x=>x.id===t.group):null;
+      const b=t.base||{};
+      const meta=[];
+      if(t.element) meta.push('<span class="en-badge">元素 · '+escapeHtml(t.element)+'</span>');
+      if(t.type) meta.push('<span class="en-badge">类型 · '+escapeHtml(t.type)+'</span>');
+      if(t.reson) meta.push('<span class="en-badge">共鸣 '+t.reson+'</span>');
+      if(t.quality) meta.push('<span class="en-badge">Q'+t.quality+'</span>');
+      meta.push('<span class="en-badge">'+escapeHtml(g?g.name:'未分组')+'</span>');
+      const attrs=[];
+      attrs.push('生命 <b>'+Math.round(b.hp||0).toLocaleString('en-US')+'</b>');
+      attrs.push('防御 <b>'+Math.round(b.def||0).toLocaleString('en-US')+'</b>');
+      attrs.push('攻击 <b>'+Math.round(b.atk||0).toLocaleString('en-US')+'</b>');
+      attrs.push('伤害 <b>'+Math.round(b.dmg||0).toLocaleString('en-US')+'</b>');
+      if(b.shield) attrs.push('护盾 <b>'+Math.round(b.shield).toLocaleString('en-US')+'</b>');
+      if(t.bonusType&&t.bonusType!=='none') attrs.push('加成 <b>'+(t.bonusRate||0)+'% '+ET[t.bonusType]+'·'+EA[t.bonusAttr||'hp']+'</b>');
+      if(t.awaken&&t.awaken.level>0) attrs.push('觉醒 <b>'+t.awaken.level+'</b>');
+      return '<div class="en-card'+(t.key?' enkey':'')+'">'+
+        '<div class="en-head">'+(t.key?'<span class="en-star">★</span>':'')+escapeHtml(t.name)+
+          '<span class="en-badge">数量 '+(s.count||0)+'</span>'+
+          '<span class="en-shape">'+shapeMini(t.cells,t.color)+'</span></div>'+
+        '<div class="en-meta">'+meta.join('')+'</div>'+
+        '<div class="en-attrs">'+attrs.join('')+'</div>'+
+      '</div>';
+    }).join('');
   }
   function updateSummary(){
     let included=0, cells=0;
-    library.forEach(t=>{ const s=sel[t.id]; if(s&&s.include){ included++; cells += (s.count||0)*t.cells.length; } });
+    library.forEach(t=>{ const s=sel[t.id]; if(s&&s.include){ included += (s.count||0); cells += (s.count||0)*t.cells.length; } });
     const R=bagRows(),C=bagCols(); const cap=R*C-bagBlocked.size;
     let extra = cap>=cells ? (' · 还差 <b>'+(cap-cells)+'</b> 格') : (' · <span style="color:var(--warn)">超出 <b>'+(cells-cap)+'</b> 格</span>');
     $('invSummary').innerHTML = '已选 <b>'+included+'</b> 件法宝 · 总格数 <b>'+cells+'</b> / 容量 <b>'+cap+'</b>'+extra;
+    renderEnabledPanel();
   }
 
   /* ---------- 智能补全：按名称匹配补全数据（类型/共鸣/品质/五级觉醒参数）----------
@@ -3454,50 +3518,86 @@ const ShotCore = (function(){
   }
   $('shotDo').onclick=()=>{
     const rows=shotState.rows;
-    let updated=0, added=0, learned=0;
+    let learned=0;
     const shapeCells=p=>{
       const ids=(p.cells&&p.cells.length)?p.cells:[p.row*7+p.col];
       const rc=ids.map(id=>[Math.floor(id/7),id%7]);
       const mr=Math.min.apply(null,rc.map(x=>x[0])), mc=Math.min.apply(null,rc.map(x=>x[1]));
       return rc.map(x=>[x[0]-mr,x[1]-mc]);
     };
-    rows.forEach(r=>{
-      if(!r.pick||r.pick==='__skip__') return;
+    /* ① 目标归并：多行识别到同一件法宝时只对应一个库内条目，数量 = 识别实例数。
+       · 库内法宝（r.pick=库 id）直接归并；
+       · 云端目录 / 新建名称：若库内已有同名法宝则复用（避免重复入馆），否则本次只新建一次。 */
+    const targets=new Map();
+    const targetOf=r=>{
       const p=r.piece;
       if(r.pick==='__new__'){
-        addToLibrary(r.newName.trim(), shapeCells(p), 1, {
-          element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.quality||(p.equip?p.equip.quality:0),
-          awaken:{level:r.aw===''?0:parseInt(r.aw)||0},
-        });
-        const nt=library[library.length-1];
-        if(r.learn&&nt&&p.signature){ nt.sig=(nt.sig||[]).concat([p.signature.map(Number)]); learned++; }
-        added++;
-      } else if(String(r.pick).indexOf('cat:')===0){
-        // 云端目录里的法宝：按目录信息新建入馆（目录 id 自带 cat: 前缀）
-        const c=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(r.pick));
-        if(!c) return;
-        addToLibrary(c.name, shapeCells(p), 1, {
-          element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0,
-          awaken:{level:r.aw===''?0:parseInt(r.aw)||0},
-        });
-        const nt=library[library.length-1];
-        if(r.learn&&nt&&p.signature){ nt.sig=(nt.sig||[]).concat([p.signature.map(Number)]); learned++; }
+        const nm=(r.newName||'').trim(); if(!nm) return null;
+        const key='n:'+nm;
+        if(!targets.has(key)){
+          const exist=library.find(x=>x.name===nm);
+          targets.set(key, exist?{ t:exist, isNew:false, rows:[] }
+            :{ t:null, isNew:true, name:nm, cells:shapeCells(p), rows:[],
+              opts:{ element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.quality||(p.equip?p.equip.quality:0) } });
+        }
+        return targets.get(key);
+      }
+      if(String(r.pick).indexOf('cat:')===0){
+        const c=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(r.pick)); if(!c) return null;
+        const key='c:'+c.id;
+        if(!targets.has(key)){
+          const exist=library.find(x=>x.name===c.name);
+          targets.set(key, exist?{ t:exist, isNew:false, rows:[] }
+            :{ t:null, isNew:true, name:c.name, cells:(c.cells&&c.cells.length)?c.cells.map(x=>x.slice()):shapeCells(p), rows:[],
+              opts:{ element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0 } });
+        }
+        return targets.get(key);
+      }
+      const t=library.find(x=>x.id===r.pick); if(!t) return null;
+      const key='t:'+t.id;
+      if(!targets.has(key)) targets.set(key, { t, isNew:false, rows:[] });
+      return targets.get(key);
+    };
+    rows.forEach(r=>{
+      if(!r.pick||r.pick==='__skip__') return;
+      const o=targetOf(r); if(o) o.rows.push(r);
+    });
+    /* ② 入馆 / 更新 + 启用 + 数量统计：导入即视为弟子实装清单 */
+    let added=0, updated=0, rowCount=0;
+    const touchedGroups=new Set();
+    targets.forEach(o=>{
+      const rs=o.rows; if(!rs.length) return;
+      rowCount+=rs.length;
+      if(o.isNew){
+        const awRow=rs.find(r=>r.aw!=='');
+        addToLibrary(o.name, o.cells, rs.length, Object.assign({}, o.opts, {
+          awaken:{level:awRow?(parseInt(awRow.aw)||0):0},
+        }));
+        o.t=library[library.length-1];
         added++;
       } else {
-        const t=library.find(x=>x.id===r.pick);
-        if(!t) return;
+        updated++;
+      }
+      const t=o.t;
+      rs.forEach(r=>{
+        const p=r.piece;
         if(r.aw!=='') t.awaken=cloneAwaken(Object.assign({}, t.awaken, {level:parseInt(r.aw)||0}));
-        if(r.learn&&p.signature){
+        if(r.learn&&p&&p.signature){
           const sig=p.signature.map(Number);
           const dup=(t.sig||[]).some(s=>ShotCore.sigDist(s,sig)<2);
           if(!dup){ t.sig=(t.sig||[]).concat([sig]).slice(-8); learned++; }
         }
-        updated++;
-      }
+      });
+      t.count=rs.length;
+      const s=sel[t.id]||(sel[t.id]={include:true,count:rs.length,priority:false});
+      s.include=true; s.count=rs.length;
+      if(t.group) touchedGroups.add(t.group);
     });
+    // ③ 启用导入法宝所在的组别（法宝可启用 ⇔ 组别已启用 的强关联不变量）
+    touchedGroups.forEach(gid=>{ const g=groups.find(x=>x.id===gid); if(g) g.enabled=true; });
     saveLibrary(); renderInventory(); renderGroups();
     $('shotMask').classList.remove('on');
-    alert('截图导入完成：\n· 更新库内法宝 '+updated+' 件（觉醒等级/签名）\n· 新法宝入馆 '+added+' 件（基础属性待补）\n· 学习签名 '+learned+' 条');
+    alert('截图导入完成：\n· 共导入 '+rowCount+' 件 → 库内 '+targets.size+' 种法宝（已自动启用并统计数量）\n· 新法宝入馆 '+added+' 件（基础属性待补）· 更新库内 '+updated+' 种\n· 学习签名 '+learned+' 条');
   };
 
   /* ---------- 背包空间 ---------- */
@@ -3622,7 +3722,25 @@ const ShotCore = (function(){
       '<div class="dt-info-card"><div class="dt-info-title">护盾</div><div class="dt-info-body">'+((t.base&&t.base.shield)?nf(t.base.shield):'-')+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">加成</div><div class="dt-info-body">'+(t.bonusType==='none'?'无':((t.bonusRate||0)+'% · '+BT[t.bonusType]+' · '+BA[t.bonusAttr||'hp']))+'</div></div>'+
       '<div class="dt-info-card"><div class="dt-info-title">启用状态</div><div class="dt-info-body">'+(s.include?'已启用':'未启用')+'</div></div>'+
-      '</div><div style="margin-top:9px">'+shapeMini(t.cells,t.color)+'</div>';
+      '</div><div style="margin-top:9px" id="dtShapeMini">'+shapeMini(t.cells,t.color)+'</div>';
+    /* --- 数值 / 加成 / 形状 / 优先（可编辑；原表格内联列已移入双栏左表的「详情」） --- */
+    const btE=t.bonusType||'none', baE=t.bonusAttr||'hp';
+    const boptsB='<option value="none">无加成</option><option value="self">自身受加成</option><option value="buff">给他人加成</option>';
+    const boptsA='<option value="hp">生命值</option><option value="def">防御力</option><option value="atk">攻击力</option>';
+    const stSel=sel[t.id]||{};
+    h+='<div class="sk-sub" style="margin-top:14px">数值 / 加成 / 形状</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">'+
+      '<div class="dt-edit"><label>生命</label><input type="number" id="dtHp" min="0" value="'+((t.base&&t.base.hp)||0)+'"></div>'+
+      '<div class="dt-edit"><label>防御</label><input type="number" id="dtDef" min="0" value="'+((t.base&&t.base.def)||0)+'"></div>'+
+      '<div class="dt-edit"><label>攻击</label><input type="number" id="dtAtk" min="0" value="'+((t.base&&t.base.atk)||0)+'"></div>'+
+      '<div class="dt-edit"><label>伤害</label><input type="number" id="dtDmg" min="0" value="'+((t.base&&t.base.dmg)||0)+'"></div>'+
+      '<div class="dt-edit"><label>加成率%</label><input type="number" id="dtBrate" min="0" value="'+(t.bonusRate||0)+'"></div>'+
+      '<div class="dt-edit"><label>加成类型</label><select id="dtBtype">'+boptsB.replace('value="'+btE+'"','value="'+btE+'" selected')+'</select></div>'+
+      '<div class="dt-edit"><label>加成属性</label><select id="dtBattr"'+(btE==='none'?' disabled':'')+'>'+boptsA.replace('value="'+baE+'"','value="'+baE+'" selected')+'</select></div>'+
+      '<div class="dt-edit"><label>形状</label><input type="text" id="dtShape" value="'+escapeHtml(shapeText(t.cells))+'" placeholder="0,0 1,0" title="输入坐标对，以空格分隔，如 0,0 1,0 1,1（左上角为 0,0）"></div>'+
+      '<div class="dt-edit"><label>启用</label><span><input type="checkbox" id="dtInclude" '+(stSel.include?'checked':'')+'> <span style="font-size:12px;color:var(--muted)">勾选后参与填充（组别需已启用）</span></span></div>'+
+      '<div class="dt-edit"><label>优先</label><span><input type="checkbox" id="dtPriority" '+(stSel.priority?'checked':'')+'> <span style="font-size:12px;color:var(--muted)">优先摆放</span></span></div>'+
+      '</div>';
     /* --- 类型属性（可编辑） --- */
     h+='<div class="sk-sub" style="margin-top:14px">类型属性</div>'+
       '<div class="dt-edit"><label>法宝元素</label><select id="dtElement">'+elementOptions(t.element)+'</select></div>'+
@@ -3672,10 +3790,39 @@ const ShotCore = (function(){
     h+='</div>';
     $('dtBody').innerHTML=h;
     $('dtALevel').onchange=function(){ captureAwDraft(); dtALv=parseInt(this.value)||0; renderDetail(); };
+    const btEl=$('dtBtype'), baEl=$('dtBattr');
+    if(btEl&&baEl) btEl.onchange=function(){ baEl.disabled=(this.value==='none'); };
+    const shEl=$('dtShape'), shMini=$('dtShapeMini');
+    if(shEl){ const applyShape=()=>{ const c=parseShapeInput(shEl.value); if(c&&shMini) shMini.innerHTML=shapeMini(c,library[dtIdx].color); };
+      shEl.oninput=applyShape;
+      shEl.onchange=()=>{ const c=parseShapeInput(shEl.value); if(!c){ shEl.value=shapeText(library[dtIdx].cells); if(shMini) shMini.innerHTML=shapeMini(library[dtIdx].cells,library[dtIdx].color); } };
+    }
   }
   $('dtX').onclick=closeDetail; $('dtCancel').onclick=closeDetail;
   $('dtMask').onclick=e=>{ if(e.target===$('dtMask')) closeDetail(); };
-  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){ t.element=$('dtElement').value||''; t.type=$('dtType').value||''; t.reson=Math.max(0,Number($('dtReson').value)||0); t.quality=Math.min(5,Math.max(0,Number($('dtQuality').value)||0)); t.base=t.base||{hp:0,def:0,atk:0,dmg:0}; t.base.shield=Math.max(0,Number($('dtShield').value)||0); t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk',lv:Number($('dtAL1Lv').value)||1}, l2:{rate:Number($('dtAL2Rate').value)||0,lv:Number($('dtAL2Lv').value)||2}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group',lv:Number($('dtAL3Lv').value)||3}, l4:{rate:Number($('dtAL4Rate').value)||0,lv:Number($('dtAL4Lv').value)||4}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group',lv:Number($('dtAL5Lv').value)||5} }); saveLibrary(); } closeDetail(); renderInventory(); };
+  $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){
+    t.element=$('dtElement').value||''; t.type=$('dtType').value||'';
+    t.reson=Math.max(0,Number($('dtReson').value)||0); t.quality=Math.min(5,Math.max(0,Number($('dtQuality').value)||0));
+    t.base=t.base||{hp:0,def:0,atk:0,dmg:0};
+    t.base.hp=Math.max(0,Number($('dtHp')?$('dtHp').value:0)||0);
+    t.base.def=Math.max(0,Number($('dtDef')?$('dtDef').value:0)||0);
+    t.base.atk=Math.max(0,Number($('dtAtk')?$('dtAtk').value:0)||0);
+    t.base.dmg=Math.max(0,Number($('dtDmg')?$('dtDmg').value:0)||0);
+    t.base.shield=Math.max(0,Number($('dtShield').value)||0);
+    t.bonusRate=Math.max(0,Number($('dtBrate')?$('dtBrate').value:0)||0);
+    t.bonusType=$('dtBtype')?$('dtBtype').value:'none';
+    t.bonusAttr=$('dtBattr')?$('dtBattr').value:'hp';
+    const shc=parseShapeInput($('dtShape')?$('dtShape').value:''); if(shc) t.cells=shc;
+    const dts=sel[t.id]||(sel[t.id]={include:true,count:t.count||0,priority:false});
+    if($('dtPriority')) dts.priority=$('dtPriority').checked;
+    if($('dtInclude')){
+      const inc=$('dtInclude').checked;
+      if(inc&&t.group){ const g=groups.find(x=>x.id===t.group); if(g&&!g.enabled){ alert('「'+t.name+'」所在组别「'+g.name+'」尚未启用，已保持未启用。请先在「组别管理」中启用该组别。'); dts.include=false; } else dts.include=true; }
+      else dts.include=inc;
+    }
+    t.awaken=cloneAwaken({ level:parseInt($('dtALevel').value)||0, l1:{rate:Number($('dtAL1Rate').value)||0,attr:$('dtAL1Attr').value||'atk',lv:Number($('dtAL1Lv').value)||1}, l2:{rate:Number($('dtAL2Rate').value)||0,lv:Number($('dtAL2Lv').value)||2}, l3:{rate:Number($('dtAL3Rate').value)||0,mode:$('dtAL3Mode').value||'global',series:$('dtAL3Series').value||'group',lv:Number($('dtAL3Lv').value)||3}, l4:{rate:Number($('dtAL4Rate').value)||0,lv:Number($('dtAL4Lv').value)||4}, l5:{rate:Number($('dtAL5Rate').value)||0,mode:$('dtAL5Mode').value||'global',series:$('dtAL5Series').value||'group',lv:Number($('dtAL5Lv').value)||5} });
+    saveLibrary(); }
+    closeDetail(); renderInventory(); };
 
 
   /* ---------- 一键生成（多批次 + 跨批全局最优合并） ---------- */

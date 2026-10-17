@@ -234,6 +234,20 @@
   .dt-info-card { border:1px solid var(--line); border-radius:9px; padding:9px 11px; background:#f8f9fb; }
   .dt-info-card .dt-info-title { font-size:11px; color:var(--muted); margin-bottom:2px; }
   .dt-info-card .dt-info-body { font-size:13.5px; font-weight:600; word-break:break-all; }
+  /* 截图识别结果：原图辅助线 + 编号（类名全新，避免复用 .cell 等既有样式） */
+  .shot-wrap { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+  .shot-left { flex:0 0 auto; }
+  .shot-right { flex:1 1 420px; min-width:340px; }
+  .shot-cvbox { border:1px solid var(--line); border-radius:10px; background:#11131a; padding:6px; line-height:0; }
+  .shot-cvbox canvas { border-radius:6px; display:block; max-width:100%; }
+  .shot-vbtns { display:flex; gap:6px; margin-top:7px; }
+  .shot-vbtn { font-size:11.5px; padding:3px 9px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--muted); cursor:pointer; }
+  .shot-vbtn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .shot-lgd { font-size:11.5px; color:var(--muted); line-height:1.7; margin-top:7px; max-width:300px; }
+  .shot-lgd i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+  .shot-tag { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;
+    background:var(--accent); color:#fff; font-size:12px; font-weight:700; }
+  .shot-tr.hot { background:#fff7ed !important; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -483,7 +497,7 @@
 </div>
 
 <div class="modal-mask" id="shotMask">
-  <div class="modal" style="max-width:900px">
+  <div class="modal" style="max-width:1140px">
     <div class="modal-hd"><h3>📷 截图导入</h3><button class="x" id="shotX">×</button></div>
     <div class="modal-bd" id="shotBody"></div>
     <div class="modal-ft">
@@ -930,6 +944,27 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -951,6 +986,16 @@ const ShotCore = (function(){
       q4: [215,164,116], q5: [196,109,96],
       empty: [168,158,149], locked: [125,114,93],
     },
+    // 金圆共鸣盘（2026-10 版 UI 实拍标定）
+    disk: {
+      ringLum: 175,     // 盘面亮度下限（盘色随品质 185~250，Q4 底色 ~166）
+      digitLum: 132,    // 数字笔画亮度上限
+      borderLum: 150,   // 盘沿描边亮度上限（深棕边框）
+      ringMin: 0.72,    // 内环盘面调性比例下限
+      borderMin: 0.45,  // 外沿暗描边比例下限
+      digitMin: 0.08,   // 盘内暗笔画比例下限
+      normN: 20,        // 模板向量边长
+    },
     thresholds: {
       anchorCandidate: 0.27, strictBadge: 0.4, strictMoat: 0.3, strictGap: 0.25,
       glyphCorr: 0.4, glyphMargin: 0.02, glyphCombined: 0.58,
@@ -958,6 +1003,7 @@ const ShotCore = (function(){
       formCorr: 0.45, formMargin: 0.05,
       numberDisk: 0.7, numberAccept: 0.65, numberMargin: 0.1,
       bgMaxDistance: 20, fitFalloff: 60, fitConverged: 33,
+      occupiedSd: 24, occupiedBgGap: 20, discGoldRatio: 0.045, tileNodeLimit: 1500000,
       signatureMaxDistance: 10, signatureMinMargin: 4,
       signatureRescueMaxDistance: 7.1, signatureBlindMaxDistance: 4.5,
     },
@@ -1542,6 +1588,111 @@ const ShotCore = (function(){
     return result(null, 0, 'uncertain');
   }
 
+  /* ---------- 金圆共鸣盘（2026-10 版 UI：金底圆形徽章 + 深色数字） ----------
+     2026-10 实拍标定：共鸣值画在形状右下角格的金色圆盘里（直径约 0.45 格，
+     中心约 (0.62,0.63)），数字为深色；盘色随品质变化（Q4 橙金/Q5 淡金），
+     与 Q4 底色接近——纯色判定不可靠，改用「亮环 + 盘内暗数字」形状判定。
+     觉醒徽章叠在同格金盘上方（彩色圆/焰 + 白字数字，颜色=等级族）。 */
+  const diskLum = p => 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
+  // 盘面调性：金/奶油色（hue 20~65，饱和度 0.10~0.62，亮）——排除白云/白焰艺术（低饱和）与蓝冰/绿叶（异色相）
+  function isDiskTone(p) {
+    const r = p[0], g = p[1], b = p[2];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const lum = diskLum(p);
+    if (lum < CFG.disk.ringLum || max < 180) return false;
+    const sat = max === 0 ? 0 : (max - min) / max;
+    if (sat < 0.10 || sat > 0.62) return false;
+    const hue = ((max === r ? (g - b) / (max - min) : max === g ? (b - r) / (max - min) + 2 : (r - g) / (max - min) + 4) * 60 + 360) % 360;
+    return hue >= 20 && hue <= 65;
+  }
+  function findResonDisk(bm, grid, row, col) {
+    const pw = grid.pw, ph = grid.ph;
+    if (pw < 24 || ph < 24) return null;
+    const left = grid.ox + col * pw, top = grid.oy + row * ph;
+    const RIN1 = pw * 0.115, RIN2 = pw * 0.175, RBRD = pw * 0.255;
+    let best = null;
+    for (let fy = 0.42; fy <= 0.961; fy += 0.04) {
+      for (let fx = 0.50; fx <= 0.961; fx += 0.04) {
+        const cx = left + fx * pw, cy = top + fy * ph;
+        // 内环双圈：盘面调性
+        let tone = 0, tot = 0;
+        for (let a = 0; a < 20; a++) {
+          const ang = a * Math.PI / 10;
+          for (const rr of [RIN1, RIN2]) {
+            const x = Math.round(cx + Math.cos(ang) * rr), y = Math.round(cy + Math.sin(ang) * rr);
+            tot++;
+            if (x < 0 || y < 0 || x >= bm.w || y >= bm.h) continue;
+            if (isDiskTone(bm.px(x, y))) tone++;
+          }
+        }
+        const ring = tot ? tone / tot : 0;
+        if (ring < CFG.disk.ringMin) continue;
+        // 外沿暗描边环（盘的深棕边框）——艺术图亮块没有
+        let darkB = 0, bn = 0;
+        for (let a = 0; a < 20; a++) {
+          const ang = a * Math.PI / 10 + 0.15;
+          const x = Math.round(cx + Math.cos(ang) * RBRD), y = Math.round(cy + Math.sin(ang) * RBRD);
+          bn++;
+          if (x < 0 || y < 0 || x >= bm.w || y >= bm.h) { darkB++; continue; }
+          if (diskLum(bm.px(x, y)) < CFG.disk.borderLum) darkB++;
+        }
+        if (darkB / bn < CFG.disk.borderMin) continue;
+        // 盘内暗数字
+        let dark = 0, dn = 0;
+        for (let a = 0; a < 28; a++) {
+          const ang = a * Math.PI / 14;
+          for (const rr of [RIN1 * 0.35, RIN1 * 0.75]) {
+            const x = Math.round(cx + Math.cos(ang) * rr), y = Math.round(cy + Math.sin(ang) * rr);
+            dn++;
+            if (x < 0 || y < 0 || x >= bm.w || y >= bm.h) continue;
+            if (diskLum(bm.px(x, y)) < CFG.disk.digitLum) dark++;
+          }
+        }
+        const digit = dark / dn;
+        if (digit < CFG.disk.digitMin || digit > 0.55) continue;
+        const score = ring + darkB / bn * 0.5 + digit * 0.4;
+        if (!best || score > best.score) best = { row, col, fx: +fx.toFixed(3), fy: +fy.toFixed(3),
+          ring: +ring.toFixed(3), border: +(darkB / bn).toFixed(3), digit: +digit.toFixed(3), score: +score.toFixed(3) };
+      }
+    }
+    return best;
+  }
+  // 盘内数字掩膜：以盘心为基准取 2R×2R 方窗，dark 掩膜 → 供模板比对（圆形参照系，抗偏移）
+  function diskDigitMask(bm, cx, cy, R) {
+    const W = R * 2;
+    if (W < 8 || cx - R < 0 || cy - R < 0 || cx + R > bm.w || cy + R > bm.h) return null;
+    const mask = new Uint8Array(W * W);
+    let n = 0;
+    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+      const dx = x - R + 0.5, dy = y - R + 0.5;
+      if (dx * dx + dy * dy > R * R * 0.92) continue;
+      if (diskLum(bm.px(Math.round(cx - R + x), Math.round(cy - R + y))) < CFG.disk.digitLum) { mask[y * W + x] = 1; n++; }
+    }
+    if (n < 10) return null;
+    return { W, mask, n };
+  }
+  // 掩膜 → 固定 N×N ±1 向量（以盘心为参照，忽略盘外噪声）
+  function normDiskVector(dmask, N) {
+    const { W, mask } = dmask;
+    const step = W / N;
+    const vec = new Float64Array(N * N);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      // 面积平均下采样
+      let sum = 0, cnt = 0;
+      const x0 = Math.floor(x * step), x1 = Math.min(W, Math.floor((x + 1) * step));
+      const y0 = Math.floor(y * step), y1 = Math.min(W, Math.floor((y + 1) * step));
+      for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) { sum += mask[yy * W + xx]; cnt++; }
+      vec[y * N + x] = (cnt && sum / cnt >= 0.5) ? 1 : -1;
+    }
+    return vec;
+  }
+  // 共鸣盘数字模板匹配：±1 向量相关（1=墨迹）
+  function diskVecCorr(a, b) {
+    let s = 0;
+    for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+    return s / a.length;
+  }
+
   /* ---------- 逐格识别（元素/形态/共鸣/品质/觉醒/签名） ---------- */
   function recognizeCells(bm, grid) {
     const refined = refineLatticeGlyphs(bm, refineLatticeGlyphs(bm, grid));
@@ -1592,7 +1743,153 @@ const ShotCore = (function(){
     }
     return out.sort((a, b) => a - b);
   }
-  // 形状的「数字格」：右下角格（共鸣数字所在格）
+  /* ---------- 占格判定（2026-10 版 UI 实拍标定） ----------
+     空格 = 平坦底色（纹理方差 sd 极低）；锁定格 = 深棕底 + 锁图标；
+     实格 = 有法宝美术（sd 高）且底色既不像空也不像锁定。 */
+  function goldRatio(bm, grid, row, col) {
+    let n = 0, g = 0;
+    for (let ty = 0; ty < 12; ty++) for (let tx = 0; tx < 12; tx++) {
+      const x = Math.round(grid.ox + (col + (tx + 0.5) / 12) * grid.pw);
+      const y = Math.round(grid.oy + (row + (ty + 0.5) / 12) * grid.ph);
+      if (!inBounds(bm, x, y)) continue;
+      n++; if (isDiskTone(bm.px(x, y))) g++;
+    }
+    return n ? g / n : 0;
+  }
+  function cellStats(bm, grid, row, col) {
+    // 只取格内 12%~88% 区域（避开格线描边，否则空格也会被误判成有美术）
+    let s1 = 0, s2 = 0, sn = 0;
+    for (let ty = 0; ty < 10; ty++) for (let tx = 0; tx < 10; tx++) {
+      const fx = 0.12 + 0.76 * (tx + 0.5) / 10, fy = 0.12 + 0.76 * (ty + 0.5) / 10;
+      const x = Math.round(grid.ox + (col + fx) * grid.pw);
+      const y = Math.round(grid.oy + (row + fy) * grid.ph);
+      if (!inBounds(bm, x, y)) continue;
+      const p = bm.px(x, y), L = 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
+      s1 += L; s2 += L * L; sn++;
+    }
+    const mean = sn ? s1 / sn : 0;
+    const sd = sn ? Math.sqrt(Math.max(0, s2 / sn - mean * mean)) : 0;
+    const bg = cellBg(bm, grid, row, col);
+    let quality = 0, qd = Infinity;
+    if (bg) for (let q = 1; q <= 5; q++) { const d = colorDist(bg, CFG.palette['q' + q]); if (d < qd) { qd = d; quality = q; } }
+    return { sd, mean, bg, quality, qd,
+      dEmpty: bg ? colorDist(bg, CFG.palette.empty) : Infinity,
+      dLock: bg ? colorDist(bg, CFG.palette.locked) : Infinity,
+      gold: goldRatio(bm, grid, row, col) };
+  }
+  function occupancyMap(bm, grid) {
+    const N = CFG.ROWS * CFG.COLS, stats = new Array(N), occ = new Uint8Array(N);
+    let sdSum = 0, sdN = 0;
+    for (let r = 0; r < CFG.ROWS; r++) for (let c = 0; c < CFG.COLS; c++) {
+      const st = cellStats(bm, grid, r, c), id = cellId(r, c);
+      stats[id] = st; sdSum += st.sd; sdN++;
+    }
+    const sdMean = sdN ? sdSum / sdN : 0;
+    // 自适应阈值：以全格 sd 均值的 45% 为界（空格 sd 通常只有均值的 1/5 以下）
+    const sdCut = Math.max(TH.occupiedSd, sdMean * 0.45);
+    // 底色既不像空格也不像锁定格 → 直接判占格（法宝底色本身就是品质色，哪怕格内美术很素）；
+    // 底色像空/锁定时，再用纹理方差兜底（有美术=占格，纯色=真空/锁定）
+    for (let i = 0; i < N; i++) {
+      const st = stats[i];
+      const looksBlank = st.dEmpty < TH.occupiedBgGap || st.dLock < TH.occupiedBgGap;
+      occ[i] = looksBlank ? (st.sd >= sdCut ? 1 : 0) : 1;
+    }
+    return { occ, stats, sdCut, sdMean };
+  }
+  function normCells(cells) {
+    if (!cells || !cells.length) return [];
+    let minR = Infinity, minC = Infinity;
+    for (const [r, c] of cells) { if (r < minR) minR = r; if (c < minC) minC = c; }
+    return cells.map(([r, c]) => [r - minR, c - minC]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  }
+  function shapeKey(cells) { return normCells(cells).map(x => x[0] + ',' + x[1]).join(' '); }
+  // 以「形状首个实格」对齐到 (row,col)——游戏把元素徽章画在形状首个实格上
+  function placeAt(cells, row, col) {
+    const nc = normCells(cells); if (!nc.length) return null;
+    const dr = row - nc[0][0], dc = col - nc[0][1], out = [];
+    for (const [r, c] of nc) {
+      const rr = r + dr, cc = c + dc;
+      if (rr < 0 || cc < 0 || rr >= CFG.ROWS || cc >= CFG.COLS) return null;
+      out.push(cellId(rr, cc));
+    }
+    return out.sort((a, b) => a - b);
+  }
+  /* 精确覆盖：把占格切成若干块，每块 = 一件法宝（形状取自库/目录），且恰含一个锚点 */
+  function solveTiling(occ, anchors, discs, shapes, limit, stats) {
+    const N = CFG.ROWS * CFG.COLS;
+    const aSet = new Set(anchors), dSet = new Set(discs || []);
+    const norms = [];
+    for (const s of shapes) { const nc = normCells(s); if (nc.length) norms.push(nc); }
+    const at = new Array(N); for (let k = 0; k < N; k++) at[k] = [];
+    for (let si = 0; si < norms.length; si++) {
+      const sc = norms[si];
+      let h = 0, w = 0;
+      for (const [r, c] of sc) { if (r + 1 > h) h = r + 1; if (c + 1 > w) w = c + 1; }
+      for (let r0 = 0; r0 <= CFG.ROWS - h; r0++) for (let c0 = 0; c0 <= CFG.COLS - w; c0++) {
+        const ids = []; let ok = true;
+        for (const [r, c] of sc) { const id = cellId(r0 + r, c0 + c); if (!occ[id]) { ok = false; break; } ids.push(id); }
+        if (!ok) continue;
+        ids.sort((a, b) => a - b);
+        const p = { si, ids, shape: sc, first: ids[0], last: ids[ids.length - 1],
+          ga: ids.filter(i => aSet.has(i)), gd: dSet.size ? ids.filter(i => dSet.has(i)) : [] };
+        for (const id of ids) at[id].push(p);
+      }
+    }
+    // 搜索顺序：先试「锚点落在形状首格」的大件——层数更少、更快收敛到真实切分
+    for (let k = 0; k < N; k++) at[k].sort((x, y) =>
+      ((y.ga.length === 1 && y.ga[0] === y.first) ? 0 : 1) - ((x.ga.length === 1 && x.ga[0] === x.first) ? 0 : 1)
+      || y.ids.length - x.ids.length);
+    const used = new Uint8Array(N), cur = [];
+    let nodes = 0, sols = 0, best = null;
+    const scoreOf = rgs => {
+      let s = 0;
+      for (const p of rgs) {
+        if (p.ga.length === 1) s += (p.ga[0] === p.first ? 2 : 0.5);
+        if (dSet.size) { if (p.gd.length === 1) { s += 2; if (p.gd[0] === p.last) s += 2; } }
+        s += p.ids.length * 0.05; // 同等条件下略偏好大件（避免全切成 1×1）
+        // 同一件法宝的底色应一致：块内各格底色与锚点格底色接近则加分
+        if (stats && p.ga.length === 1) {
+          const ab = stats[p.ga[0]] && stats[p.ga[0]].bg;
+          if (ab) for (const id of p.ids) {
+            const sb = stats[id] && stats[id].bg;
+            if (sb && colorDist(sb, ab) <= 14) s += 0.35;
+          }
+        }
+      }
+      return s;
+    };
+    function rec() {
+      if (++nodes > limit) return true;
+      let k = -1;
+      for (let i = 0; i < N; i++) if (occ[i] && !used[i]) { k = i; break; }
+      if (k < 0) {
+        let ok = true;
+        for (const a of aSet) { let found = false; for (const p of cur) if (p.ga.indexOf(a) >= 0) { found = true; break; } if (!found) { ok = false; break; } }
+        if (!ok) return false;
+        sols++;
+        const s = scoreOf(cur);
+        if (!best || s > best.score) best = { score: s, regions: cur.map(p => ({ ids: p.ids.slice(), shape: p.shape, anchor: p.ga.length ? p.ga[0] : p.ids[0] })) };
+        return sols >= 120;
+      }
+      for (const p of at[k]) {
+        if (p.ga.length !== 1) continue;
+        if (dSet.size && p.gd.length > 1) continue;
+        let free = true;
+        for (const id of p.ids) if (used[id]) { free = false; break; }
+        if (!free) continue;
+        for (const id of p.ids) used[id] = 1;
+        cur.push(p);
+        const stop = rec();
+        cur.pop();
+        for (const id of p.ids) used[id] = 0;
+        if (stop) return true;
+      }
+      return false;
+    }
+    rec();
+    return { best, nodes, sols, truncated: nodes > limit };
+  }
+
   // 形状的「数字格」：右下角格（共鸣数字所在格）——最大行，再取该行最大列（与原版 Xr 一致）
   function numberCellOf(cells, row, col) {
     const minR = Math.min(...cells.map(x => x[0])), minC = Math.min(...cells.map(x => x[1]));
@@ -1607,84 +1904,78 @@ const ShotCore = (function(){
    * @param library    用户库数组（需 element/type/cells/reson/quality，可选 sig[]）
    * @returns {grid, cells, pieces, stats}
    */
-  function recognize(imageData, library) {
+  function recognize(imageData, library, opts) {
+    opts = opts || {};
+    const catalog = opts.catalog || [];
     const bm = makeBitmap(imageData);
     const fit = fitLattice(bm);
-    const grid = fit.grid || fallbackGrid(bm);
-    const { cells, grid: refined } = recognizeCells(bm, grid);
-    const occupied = new Set(cells.map(c => cellId(c.row, c.col)));
-    const numCache = new Map();
-    // 库索引：元素|类型 → 法宝
-    const byElType = new Map();
-    for (const t of library) {
-      const el = t.element || '', ty = t.type || '';
-      const k = el + '|' + ty;
-      if (!byElType.has(k)) byElType.set(k, []);
-      byElType.get(k).push(t);
+    const baseGrid = fit.grid || fallbackGrid(bm);
+    const { cells: detected, grid } = recognizeCells(bm, baseGrid);
+    const om = occupancyMap(bm, grid);
+    const N = CFG.ROWS * CFG.COLS;
+    // 锚点 = 元素徽章格（元素置信）
+    const anchorById = new Map();
+    for (const c of detected) if (!c.elementWeak) anchorById.set(cellId(c.row, c.col), c);
+    const anchorIds = [...anchorById.keys()];
+    // 金圆共鸣盘格（形状右下角）——实拍标定不可靠（高光/艺术误检多），仅记录不参与切分
+    const discIds = [];
+    if (anchorIds.length) {
+      const cand = [];
+      for (let i = 0; i < N; i++) if (om.occ[i]) cand.push(i);
+      cand.sort((a, b) => (om.stats[b].gold - om.stats[a].gold));
+      for (let i = 0; i < anchorIds.length; i++)
+        if (cand[i] !== undefined && om.stats[cand[i]].gold >= TH.discGoldRatio) discIds.push(cand[i]);
     }
-    // 形态识别：该元素下库内出现过的类型才参与（与原版一致——形态是与元素并列的强判别信号）
-    const formsOf = el => [...new Set(library.filter(t => (t.element || '') === el).map(t => t.type || ''))].filter(ty => T_FORM.has(ty));
-    // 候选枚举：以 (row,col) 为锚点铺放形状 → 共鸣数字格打分 → 底色距离
-    const enumerate = (cell, tryForms) => {
-      const hits = [];
-      const seenId = new Set();
-      for (const ty of tryForms) {
-        for (const eq of byElType.get(cell.element + '|' + ty) || []) {
-          if (seenId.has(eq.id)) continue;
-          seenId.add(eq.id);
-          const placed = placeCells(eq.cells, cell.row, cell.col);
-          if (!placed) continue;
-          if (placed.some(id => id !== cellId(cell.row, cell.col) && occupied.has(id))) continue;
-          const nc = numberCellOf(eq.cells, cell.row, cell.col);
-          if (nc.row < 0 || nc.col < 0 || nc.row >= CFG.ROWS || nc.col >= CFG.COLS) continue;
-          const ns = eq.reson ? numberScore(bm, refined, nc.row, nc.col, eq.reson, numCache) : null;
-          if (ns === null) continue;
-          const qk = 'q' + (eq.quality || 4);
-          hits.push({ eq, type: ty, numberScore: ns, cells: placed, numberCell: nc,
-            bgDistance: cell.bg ? colorDist(cell.bg, CFG.palette[qk] || CFG.palette.q4) : Infinity });
-        }
+    // 候选池：库内法宝（优先） + 云端目录（库里没有同名的）
+    // 库内法宝常缺 element/type/reson/quality —— 用补全数据（byName）按名字补上，否则没法按元素匹配
+    const enrichByName = opts.enrich || {};
+    const enriched = t => {
+      const e = enrichByName[String(t.name || '').trim()];
+      if (!e) return t;
+      const out = Object.assign({}, t);
+      if (!out.element) out.element = e.element || '';
+      if (!out.type) out.type = e.type || '';
+      const tiers = e.tiers || [];
+      if (tiers.length) {
+        const top = tiers.reduce((a, b) => ((b.reson || 0) > (a.reson || 0) ? b : a));
+        if (!out.reson) out.reson = top.reson || 0;
+        if (!out.quality) out.quality = top.quality || 0;
       }
-      return hits.sort((a, b) => b.numberScore - a.numberScore);
+      return out;
     };
-    for (const cell of cells) {
-      cell.hits = [];
-      const forms = formsOf(cell.element);
-      if (forms.length) {
-        const fm = bestOf(forms.map(ty => ({ key: ty, score: bestCorr(bm, refined, cell.row, cell.col, CFG.geometry.formBox, T_FORM.get(ty)) })));
-        if (fm.score >= TH.formCorr && (forms.length === 1 || fm.margin >= TH.formMargin)) {
-          cell.form = fm.key; cell.formScore = fm.score;
-        }
-      }
-      cell.hits = enumerate(cell, cell.form ? [cell.form] : ['', ...forms]);
+    const pool = [];
+    const libNames = new Set((library || []).map(t => String(t.name || '').trim()).filter(Boolean));
+    for (const t of (library || [])) pool.push({ eq: enriched(t), src: 'lib' });
+    for (const c of catalog) {
+      if (libNames.has(String(c.name || '').trim())) continue;
+      pool.push({ eq: Object.assign({ sig: [], type: c.type || '', element: c.element || '' }, c), src: 'cat' });
     }
-    // 波段筛选：数字分达标者；同数字格多候选时取明显优者
-    const bandOf = cell => {
-      if (!cell.hits.length) return [];
-      const top = cell.hits[0];
-      let band = top.numberScore >= TH.numberAccept ? cell.hits.filter(h => h.numberScore >= top.numberScore - 0.18) : [];
-      if (band.length > 1) {
-        const first = band[0];
-        const other = band.find(h => h.eq.id !== first.eq.id);
-        if (other && other.numberCell.row === first.numberCell.row && other.numberCell.col === first.numberCell.col
-          && first.numberScore - other.numberScore >= TH.numberMargin)
-          band = band.filter(h => h.eq.id === first.eq.id);
+    const shapes = [...new Map(pool.map(x => [shapeKey(x.eq.cells), x.eq.cells])).values()]
+      .filter(cells => cells && cells.length);
+    // 精确覆盖切分（占格切不成时，逐步丢掉置信最低的占格重试）
+    let occ = om.occ, solve = null, dropped = [], attempt = 0, trace = null;
+    for (; attempt < 10; attempt++) {
+      const r = solveTiling(occ, anchorIds, [], shapes, TH.tileNodeLimit, om.stats);
+      trace = { nodes: r.nodes, sols: r.sols, truncated: r.truncated };
+      if (r.best) { solve = r.best; break; }
+      let worst = -1, wv = Infinity;
+      for (let i = 0; i < N; i++) {
+        if (!occ[i] || anchorById.has(i)) continue;
+        const st = om.stats[i];
+        const conf = Math.min(st.sd / Math.max(1, om.sdMean), Math.min(st.dEmpty, st.dLock) / 40);
+        if (conf < wv) { wv = conf; worst = i; }
       }
-      return band;
-    };
-    for (const cell of cells) {
-      cell.band = bandOf(cell);
-      // 形态识别置信但共鸣数字对不上：形态可能误判——放弃形态约束，用全部形态重试
-      if (!cell.band.length && cell.form) {
-        const alt = enumerate(cell, ['', ...formsOf(cell.element)]);
-        const altBand = bandOf({ hits: alt });
-        if (altBand.length) { cell.form = null; cell.formScore = null; cell.hits = alt; cell.band = altBand; }
-      }
+      if (worst < 0) break;
+      occ = occ.slice(); occ[worst] = 0; dropped.push(worst);
     }
-    // 签名裁决：band 内多候选时，用库内已学签名（eq.sig[]）取最近邻
+    // 切分失败 → 退化为「每件 1×1」的贪心（仍按元素+品质给候选）
+    if (!solve) {
+      solve = { score: 0, regions: anchorIds.map(a => ({ ids: [a], shape: [[0, 0]], anchor: a })) };
+    }
+    // 逐块匹配身份
     const sigPick = (sig, hits) => {
-      const uniq = [...new Map(hits.map(h => [h.eq.id, h])).values()];
       const ranked = [];
-      for (const h of uniq) {
+      for (const h of hits) {
         const sigs = (h.eq.sig || []).filter(s => s.length === sig.length);
         if (!sigs.length) continue;
         ranked.push({ h, d: Math.min(...sigs.map(s => sigDist(s, sig))) });
@@ -1696,64 +1987,60 @@ const ShotCore = (function(){
       if (ranked.length >= 2 && ranked[1].d - best.d < TH.signatureMinMargin) return null;
       return best.h;
     };
-    // 组装 pieces
     const pieces = [];
-    for (const cell of cells) {
-      const hits = cell.hits, band = cell.band;
-      const base = { row: cell.row, col: cell.col, element: cell.element, elementScore: cell.elementScore,
-        form: cell.form, signature: cell.sig, awaken: cell.awaken, candidates: [] };
-      const suspect = (reason) => ({ ...base, status: 'suspect', equip: null, cells: null, reason });
-      const ok = h => ({ ...base, status: 'ok', equip: h.eq, cells: h.cells, numberCell: h.numberCell, reason: null });
-      if (cell.elementWeak) { pieces.push(suspect('元素徽章置信度不足')); continue; }
-      if (!hits.length) { pieces.push(suspect('库中没有「' + cell.element + '」系可用候选（或形状越界）')); continue; }
-      if (!band.length) {
-        const pick = sigPick(cell.sig, hits);
-        if (pick && hits.every(h => pick.numberScore >= h.numberScore - 0.02)) pieces.push(ok(pick));
-        else pieces.push(suspect('共鸣数字读不出（库内无该共鸣档或数字模糊）'));
-        continue;
-      }
-      let pool = band;
-      const quals = new Set(pool.map(h => h.eq.quality || 4));
-      if (pool.length > 1 && quals.size > 1) {
-        const sorted = [...pool].sort((a, b) => a.bgDistance - b.bgDistance);
-        const near = sorted[0];
-        if (!Number.isFinite(near.bgDistance) || near.bgDistance > TH.bgMaxDistance) {
-          const pick = sigPick(cell.sig, pool);
-          if (!pick) { pieces.push(suspect('同档候选品质不同，底色无法裁决')); continue; }
-          pool = [pick];
-        } else pool = pool.filter(h => (h.eq.quality || 4) === (near.eq.quality || 4));
-      }
-      const uniq = [...new Map(pool.map(h => [h.eq.id, h])).values()];
-      if (uniq.length === 1) { pieces.push(ok(uniq[0])); continue; }
+    for (const rg of solve.regions) {
+      const aid = rg.anchor;
+      const cell = anchorById.get(aid);
+      const row = Math.floor(aid / CFG.COLS), col = aid % CFG.COLS;
+      const st = om.stats[aid] || {};
+      const sk = shapeKey(rg.shape);
+      const base = { row, col, element: cell ? cell.element : null, elementScore: cell ? cell.elementScore : null,
+        form: null, signature: cell ? cell.sig : null, awaken: cell ? cell.awaken : null,
+        quality: st.quality || 0, qualityDistance: st.qd, candidates: [], cells: rg.ids };
+      const suspect = reason => ({ ...base, status: 'suspect', equip: null, reason });
+      if (!cell) { pieces.push(suspect('元素徽章置信度不足')); continue; }
+      // 同元素+同形状：库内法宝优先（用户自己的库更可能是截图里的那件），
+      // 库里没有才用云端目录兜底
+      const byShape = pool.filter(x => shapeKey(x.eq.cells) === sk && (x.eq.element || '') === cell.element);
+      const libHit = byShape.filter(x => x.src === 'lib');
+      let cands = libHit.length ? libHit : byShape;
+      if (!cands.length) cands = pool.filter(x => (x.eq.element || '') === cell.element);
+      if (!cands.length) { pieces.push(suspect('库与云端目录中都没有「' + cell.element + '」系法宝')); continue; }
+      // 排序：品质底色吻合 > 库内优先 > 共鸣档位大者
+      const scored = cands.map(x => {
+        let s = 0;
+        if (st.quality && x.eq.quality === st.quality) s += 4;
+        if (st.bg && x.eq.quality) s += Math.max(0, 2 - colorDist(st.bg, CFG.palette['q' + x.eq.quality]) / 20);
+        if (x.src === 'lib') s += 0.6;
+        return { x, s };
+      }).sort((a, b) => b.s - a.s);
+      const uniq = [...new Map(scored.map(o => [o.x.eq.id || o.x.eq.name, o.x])).values()];
+      if (uniq.length === 1) { pieces.push({ ...base, status: 'ok', equip: uniq[0].eq, reason: null }); continue; }
+      // 多候选：先让已学签名裁决，再按品质底色裁决，都不行才算 ambiguous
       const pick = sigPick(cell.sig, uniq);
-      if (pick) pieces.push(ok(pick));
-      else pieces.push({ ...base, status: 'ambiguous', equip: null, cells: uniq[0].cells, numberCell: uniq[0].numberCell,
-        candidates: uniq.map(h => h.eq), reason: null });
-    }
-    // 重叠检测：多件法宝声称同一格 → 全部标 suspect
-    const owner = new Map();
-    pieces.forEach((p, i) => { if (p.cells) for (const id of p.cells) { const arr = owner.get(id) || []; arr.push(i); owner.set(id, arr); } });
-    for (const [, list] of owner) if (list.length > 1)
-      for (const i of list) if (pieces[i].status !== 'suspect')
-        pieces[i] = { ...pieces[i], status: 'suspect', equip: null, cells: null, reason: '与相邻件的形状重叠（识别有误）' };
-    // 多格件内部格去重：被 ok/ambiguous 件形状覆盖的 suspect 格，只是该件的非锚点格（自己的铺法数字格落在空格，必然读不出）——去掉，避免一件法宝报两行
-    const claimed = new Set();
-    pieces.forEach(p => { if (p.cells && p.status !== 'suspect') for (const id of p.cells) claimed.add(id); });
-    for (let i = pieces.length - 1; i >= 0; i--) {
-      const p = pieces[i];
-      if (p.status === 'suspect' && !p.cells && claimed.has(cellId(p.row, p.col))) pieces.splice(i, 1);
+      if (pick) { pieces.push({ ...base, status: 'ok', equip: pick.eq, reason: null }); continue; }
+      const q = st.quality;
+      const sameQ = q ? uniq.filter(x => (x.eq.quality || 0) === q) : [];
+      if (sameQ.length === 1) { pieces.push({ ...base, status: 'ok', equip: sameQ[0].eq, reason: null }); continue; }
+      pieces.push({ ...base, status: 'ambiguous', equip: null,
+        candidates: (sameQ.length ? sameQ : uniq).slice(0, 8).map(x => x.eq), reason: null });
     }
     const stats = { anchors: fit.anchors || 0, converged: !!fit.converged,
       gridLowConfidence: (fit.anchors || 0) < 3,
+      occupied: (() => { let n = 0; for (let i = 0; i < N; i++) if (om.occ[i]) n++; return n; })(),
+      tiles: solve.regions.length, dropped: dropped.length, discs: discIds.length, tile: trace,
       ok: pieces.filter(p => p.status === 'ok').length,
       ambiguous: pieces.filter(p => p.status === 'ambiguous').length,
       suspect: pieces.filter(p => p.status === 'suspect').length };
-    return { grid: refined, cells, pieces, stats };
+    return { grid, occupancy: om.occ, cellStats: om.stats, cells: detected, pieces, stats,
+      debug: { anchors: anchorIds, discs: discIds, occArr: Array.from(om.occ), dropped } };
   }
 
   const api = { recognize, fitLattice, recognizeCells, recognizeAwaken, bestCorr, decodeTemplate,
-    cellSignature, sigDist, placeCells, colorFamily, glyphScore, seamCandidates, CFG,
-    _dbg: { gridFitOriginal, scoreGrid, countAnchors, cellBg, downsample } };
+    cellSignature, sigDist, placeCells, placeAt, shapeKey, normCells, colorFamily, glyphScore, seamCandidates, CFG,
+    occupancyMap, cellStats, solveTiling, numberScore,
+    _dbg: { gridFitOriginal, scoreGrid, countAnchors, cellBg, downsample, darkRatio, refineLatticeGlyphs,
+      findResonDisk, diskDigitMask, normDiskVector, diskVecCorr, isDiskTone, cellSignature } };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   (typeof globalThis !== 'undefined' ? globalThis : window).ShotCore = api;
   return api;
@@ -2496,15 +2783,96 @@ const ShotCore = (function(){
   $('enMask').onclick=e=>{ if(e.target===$('enMask')) $('enMask').classList.remove('on'); };
 
   /* ---------- 截图导入（ShotCore 本地识别） ---------- */
-  const shotState={ result:null, rows:[] };
+  const shotState={ result:null, rows:[], src:null, w:0, h:0, view:'bag', hover:-1 };
+  let SHOT_CATALOG=null, SHOT_ENRICH=null;
+  // 云端目录（375 件法宝的元素/形状/共鸣/品质）+ 补全数据（按名字给库内法宝补元素）
+  async function shotEnsureData(){
+    if(SHOT_CATALOG) return true;
+    try{
+      const r=await fetch('enrich-map.json?_='+Date.now(),{cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const m=await r.json();
+      SHOT_CATALOG=m.catalog||[]; SHOT_ENRICH=m.byName||{};
+      return true;
+    }catch(e){ SHOT_CATALOG=[]; SHOT_ENRICH={}; return false; }
+  }
+  function shotShapeOf(p){
+    const ids=(p.cells&&p.cells.length)?p.cells:[p.row*7+p.col];
+    const rc=ids.map(id=>[Math.floor(id/7),id%7]);
+    const mr=Math.min.apply(null,rc.map(x=>x[0])), mc=Math.min.apply(null,rc.map(x=>x[1]));
+    return rc.map(function(x){ return (x[0]-mr)+','+(x[1]-mc); }).sort().join(' ');
+  }
+  // 在导入的原图上画辅助线：网格 + 法宝分割轮廓 + ①②③ 编号
+  function shotDrawOverlay(){
+    const st=shotState, res=st.result; if(!st.src||!res) return;
+    const cv=$('shotCanvas'); if(!cv) return;
+    const g=res.grid, R=6, C=7;
+    let vx=0, vy=0, vw=st.w, vh=st.h;
+    if(st.view==='bag'){
+      vx=Math.max(0, g.ox-5); vy=Math.max(0, g.oy-5);
+      vw=Math.min(st.w-vx, C*g.pw+10); vh=Math.min(st.h-vy, R*g.ph+10);
+    }
+    const MAXW=(st.view==='bag')?450:250, MAXH=380;
+    const s=Math.min(MAXW/vw, MAXH/vh);
+    const dw=Math.max(60,Math.round(vw*s)), dh=Math.max(60,Math.round(vh*s));
+    cv.width=dw; cv.height=dh; cv.style.width=dw+'px'; cv.style.height=dh+'px';
+    const ctx=cv.getContext('2d');
+    ctx.drawImage(st.src, vx,vy,vw,vh, 0,0,dw,dh);
+    const X=function(x){ return (x-vx)*s; }, Y=function(y){ return (y-vy)*s; };
+    const gx=function(c){ return X(g.ox+c*g.pw); }, gy=function(r){ return Y(g.oy+r*g.ph); };
+    // 网格线（细）
+    ctx.lineWidth=1; ctx.strokeStyle='rgba(255,255,255,.28)';
+    for(let c=0;c<=C;c++){ ctx.beginPath(); ctx.moveTo(gx(c),gy(0)); ctx.lineTo(gx(c),gy(R)); ctx.stroke(); }
+    for(let r=0;r<=R;r++){ ctx.beginPath(); ctx.moveTo(gx(0),gy(r)); ctx.lineTo(gx(C),gy(r)); ctx.stroke(); }
+    // 未占格（空/锁定）打淡叉
+    if(res.occupancy) for(let r=0;r<R;r++) for(let c=0;c<C;c++){
+      if(res.occupancy[r*C+c]) continue;
+      ctx.fillStyle='rgba(0,0,0,.30)';
+      ctx.fillRect(gx(c)+1, gy(r)+1, gx(c+1)-gx(c)-2, gy(r+1)-gy(r)-2);
+    }
+    // 每件法宝：轮廓 + 编号
+    const COLORS={ ok:'#22c55e', ambiguous:'#f59e0b', suspect:'#ef4444' };
+    res.pieces.forEach(function(p,i){
+      const ids=(p.cells&&p.cells.length)?p.cells:[p.row*C+p.col];
+      const set=new Set(ids);
+      const hot=(st.hover===i);
+      const col=COLORS[p.status]||'#22c55e';
+      ctx.strokeStyle=col; ctx.lineWidth=hot?3.5:2;
+      ids.forEach(function(id){
+        const r=Math.floor(id/C), c=id%C;
+        const x0=gx(c), y0=gy(r), x1=gx(c+1), y1=gy(r+1);
+        const up=set.has((r-1)*C+c), dn=set.has((r+1)*C+c), lf=set.has(r*C+c-1), rt=set.has(r*C+c+1);
+        ctx.beginPath();
+        if(!up){ ctx.moveTo(x0,y0); ctx.lineTo(x1,y0); }
+        if(!dn){ ctx.moveTo(x0,y1); ctx.lineTo(x1,y1); }
+        if(!lf){ ctx.moveTo(x0,y0); ctx.lineTo(x0,y1); }
+        if(!rt){ ctx.moveTo(x1,y0); ctx.lineTo(x1,y1); }
+        ctx.stroke();
+      });
+      if(hot){ ctx.fillStyle='rgba(245,158,11,.22)'; ids.forEach(function(id){
+        const r=Math.floor(id/C), c=id%C;
+        ctx.fillRect(gx(c), gy(r), gx(c+1)-gx(c), gy(r+1)-gy(r));
+      }); }
+      // 编号徽标（画在锚点格左上角）
+      const ar=p.row, ac=p.col;
+      const bx=gx(ac)+3, by=gy(ar)+3, rr=Math.max(7, Math.min(11, (gx(ac+1)-gx(ac))*0.28));
+      ctx.beginPath(); ctx.arc(bx+rr, by+rr, rr, 0, Math.PI*2);
+      ctx.fillStyle=hot?'#ea580c':'#1d4ed8'; ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.font='bold '+Math.round(rr*1.35)+'px system-ui,-apple-system,Segoe UI,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(String(i+1), bx+rr, by+rr+0.5);
+    });
+  }
   function shotOpen(){
-    shotState.result=null; shotState.rows=[];
+    shotState.result=null; shotState.rows=[]; shotState.src=null; shotState.hover=-1;
+    shotEnsureData();
     const elCount=library.filter(t=>t.element).length;
     const ready=elCount>=10;
     $('shotBody').innerHTML='<div class="en-stat"><div class="stc"><div class="n">7×6</div><div class="t">背包网格</div></div>'+
       '<div class="stc"><div class="n">本地</div><div class="t">图片不上传</div></div>'+
       '<div class="stc"><div class="n" style="color:'+(ready?'#16a34a':'#b45309')+'">'+elCount+'</div><div class="t">库内已填元素</div></div></div>'+
-      (ready?'':'<div class="en-sec warn">⚠️ 库内只有 '+elCount+' 件法宝填了「元素」，截图识别按元素+形状匹配库内法宝——元素填得越少，能自动匹配的越少。建议先点「✨ 智能补全」批量补全元素/共鸣/品质后再截图导入。</div>')+
+      (ready?'':'<div class="en-sec warn">⚠️ 库内只有 '+elCount+' 件法宝填了「元素」。识别时会用云端补全数据给它们自动补上元素再匹配；仍想更准可先点「✨ 智能补全」把元素/共鸣/品质写进库里。</div>')+
       '<div class="en-sec">① 选择截图</div>'+
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
       '<button id="shotPick" class="primary">选择图片文件…</button>'+
@@ -2544,8 +2912,10 @@ const ShotCore = (function(){
     reader.onerror=()=>{ $('shotMsg').textContent='无法读取该文件'; };
     reader.readAsDataURL(file);
   }
-  function shotRecognize(img){
-    $('shotMsg').textContent='识别中（网格定位 + 逐格识别）…';
+  async function shotRecognize(img){
+    $('shotMsg').textContent='读取云端目录…';
+    await shotEnsureData();
+    $('shotMsg').textContent='识别中（网格定位 + 逐格识别 + 形状切分）…';
     // 大图降采样提速（识别区域框都是相对坐标，缩小不影响匹配）
     let w=img.naturalWidth, h=img.naturalHeight;
     const MAXW=1600;
@@ -2557,19 +2927,35 @@ const ShotCore = (function(){
     try{ imageData=ctx.getImageData(0,0,w,h); }
     catch(e){ $('shotMsg').textContent='无法读取图片像素（跨域图片会被浏览器拦截）'; return; }
     const t0=Date.now();
-    const result=ShotCore.recognize(imageData, library);
-    shotState.result=result;
+    let result;
+    try{
+      result=ShotCore.recognize(imageData, library, { catalog:SHOT_CATALOG||[], enrich:SHOT_ENRICH||{} });
+    }catch(err){ $('shotMsg').textContent='识别失败：'+err.message; return; }
+    shotState.result=result; shotState.src=cv; shotState.w=w; shotState.h=h;
     shotRenderResult(result, Date.now()-t0);
   }
   function shotLibOptions(cell, curId){
-    // 库内同元素候选：已匹配到装备的排最前，其余按同元素列出
     let h='<option value="">— 请选择 —</option>';
+    // 库内法宝用自己的 id；云端目录法宝的 id 形如 cat:12（ShotCore 里加的前缀）
+    const val=function(t){ return String(t.id||''); };
+    const opt=function(t){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · Q'+t.quality+' · 共鸣'+t.reson:'')+'</option>'; };
+    const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(opt).join('')+'</optgroup>'; };
+    // 识别推荐（可能是库内法宝，也可能是云端目录里的新法宝）
+    if(cell.equip){
+      const inLib=library.some(t=>t.id===cell.equip.id);
+      grp([cell.equip], inLib?'识别推荐（库内）':'识别推荐（云端目录，导入后会新建）');
+    }
+    // 库内同元素
     const sameEl=library.filter(t=>(t.element||'')===cell.element);
-    const matched=cell.equip?sameEl.filter(t=>t.id===cell.equip.id):[];
-    const rest=sameEl.filter(t=>matched.indexOf(t)<0);
-    const grp=(arr,label)=>{ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(t=>'<option value="'+escapeHtml(t.id)+'"'+(t.id===curId?' selected':'')+'>'+escapeHtml(t.name)+'</option>').join('')+'</optgroup>'; };
-    grp(matched,'识别推荐');
-    grp(rest,'同元素法宝');
+    const dupId=cell.equip?cell.equip.id:null;
+    grp(sameEl.filter(t=>t.id!==dupId),'库内 · 同元素');
+    // 云端目录：同元素 + 同形状
+    const sk=shotShapeOf(cell);
+    const cloud=(SHOT_CATALOG||[]).filter(function(c){
+      return c.element===cell.element && ShotCore.shapeKey(c.cells)===sk && (!cell.equip || c.name!==cell.equip.name);
+    }).slice(0,24);
+    grp(cloud,'云端目录 · 同元素同形状');
+    if(!sameEl.length && !cloud.length) grp(library.slice(0,0),'');
     h+='<option value="__new__">➕ 作为新法宝录入…</option>';
     h+='<option value="__skip__">🚫 忽略此件</option>';
     return h;
@@ -2591,24 +2977,36 @@ const ShotCore = (function(){
       '<div class="stc"><div class="n" style="color:#b45309">'+st.ambiguous+'</div><div class="t">多候选待选</div></div>'+
       '<div class="stc"><div class="n" style="color:#b91c1c">'+st.suspect+'</div><div class="t">待确认</div></div>'+
       '<div class="stc"><div class="n">'+(st.converged?'√':'×')+'</div><div class="t">网格定位</div></div>'+
+      '<div class="stc"><div class="n">'+(st.occupied||0)+'</div><div class="t">占格</div></div>'+
       '<div class="stc"><div class="n">'+ms+'ms</div><div class="t">识别耗时</div></div></div>';
     if(!st.converged) h+='<div class="en-sec warn">⚠️ 网格定位置信度低（仅 '+st.anchors+' 件法宝可用于定位，背包里法宝越多定位越准）——逐格识别结果请逐件核对后再导入</div>';
-    h+='<div class="table-scroll mt"><table class="inv-table"><thead><tr>'+
-      '<th style="text-align:center">格</th><th>识别信息</th><th>匹配法宝</th><th style="text-align:center">觉醒</th><th style="text-align:center">学签名</th><th>状态</th>'+
+    h+='<div class="shot-wrap">'+
+      '<div class="shot-left">'+
+      '<div class="shot-cvbox"><canvas id="shotCanvas"></canvas></div>'+
+      '<div class="shot-vbtns">'+
+      '<button type="button" class="shot-vbtn'+(shotState.view==='bag'?' on':'')+'" id="shotViewBag">识别区域</button>'+
+      '<button type="button" class="shot-vbtn'+(shotState.view==='full'?' on':'')+'" id="shotViewAll">整张原图</button>'+
+      '</div>'+
+      '<div class="shot-lgd">原图上的辅助线 = 识别出的背包网格与法宝分割，蓝底数字 <b>①②③…</b> = 右侧表格的「#」编号，鼠标划过表格行可高亮对应法宝。'+
+      '<br><i style="background:#22c55e"></i>已匹配　<i style="background:#f59e0b"></i>多候选　<i style="background:#ef4444"></i>待确认　<i style="background:#000"></i>空格/锁定'+
+      '</div></div>'+
+      '<div class="shot-right"><div class="table-scroll"><table class="inv-table"><thead><tr>'+
+      '<th style="text-align:center">#</th><th>识别信息</th><th>匹配法宝</th><th style="text-align:center">觉醒</th><th style="text-align:center">学签名</th><th>状态</th>'+
       '</tr></thead><tbody>';
     rows.forEach((p,i)=>{
       const r=shotState.rows[i];
       const el=p.element||'?';
       const info='<b>'+escapeHtml(el)+'</b>系'+(p.form?' · '+escapeHtml(p.form):'')+
-        (p.equip?' · 共鸣'+p.equip.reson:'')+(p.equip?' · Q'+p.equip.quality:'')+
-        ' · 占'+(p.cells?p.cells.length:1)+'格';
+        ' · '+shotShapeOf(p).split(' ').length+'格 @('+p.row+','+p.col+')'+
+        (p.quality?' · 底色Q'+p.quality:'')+
+        (p.equip?' · 共鸣'+p.equip.reson+' · Q'+p.equip.quality:'');
       let status, cls;
       if(p.status==='ok'){ status='已匹配'; cls='ok'; }
       else if(p.status==='ambiguous'){ status='多候选：'+(p.candidates||[]).map(c=>escapeHtml(c.name)).join(' / '); cls='warn'; }
       else { status=escapeHtml(p.reason||'待确认'); cls='bad'; }
       const awOpts=[0,1,2,3,4,5].map(v=>'<option value="'+v+'"'+(String(r.aw)===String(v)?' selected':'')+'>'+v+'</option>').join('');
       const awUncertain=p.awaken&&p.awaken.awakenStatus!=='recognized'&&p.awaken.awakenStatus!=='none';
-      h+='<tr><td style="text-align:center">('+p.row+','+p.col+')</td>'+
+      h+='<tr class="shot-tr" data-i="'+i+'"><td style="text-align:center"><span class="shot-tag">'+(i+1)+'</span></td>'+
         '<td>'+info+'</td>'+
         '<td><select class="shot-pick" data-i="'+i+'" style="width:100%">'+shotLibOptions(p, r.pick)+'</select>'+
         (r.pick==='__new__'?'<input type="text" class="shot-newname" data-i="'+i+'" placeholder="新法宝名称" value="'+escapeHtml(r.newName)+'" style="width:100%;margin-top:3px">':'')+'</td>'+
@@ -2617,10 +3015,20 @@ const ShotCore = (function(){
         '<td style="text-align:center"><input type="checkbox" class="shot-learn" data-i="'+i+'"'+(r.learn?' checked':'')+' title="把当格签名写入该法宝，之后同款法宝可自动识别"></td>'+
         '<td class="'+cls+'">'+status+'</td></tr>';
     });
-    h+='</tbody></table></div>';
-    h+='<div class="cap" style="margin-top:10px;line-height:1.7">导入规则：匹配到库内法宝的，只更新<b>觉醒等级</b>并学习签名，不动其他字段；选「新法宝录入」的，按识别到的元素/形状/共鸣/品质入馆，基础属性留空待补。'+
-      '「待确认」行必须选一个法宝（或忽略）后才能导入。</div>';
+    h+='</tbody></table></div></div></div>';
+    h+='<div class="cap" style="margin-top:10px;line-height:1.7">导入规则：匹配到库内法宝的，只更新<b>觉醒等级</b>并学习签名，不动其他字段；选云端目录或「新法宝录入」的，按识别到的元素/形状/共鸣/品质新建入馆，基础属性留空待补。'+
+      '「待确认 / 多候选」行必须选定一个法宝（或忽略）后才能导入。</div>';
     $('shotBody').innerHTML=h;
+    // 画原图辅助线
+    shotDrawOverlay();
+    const vb=$('shotViewBag'), va=$('shotViewAll');
+    if(vb) vb.onclick=()=>{ shotState.view='bag'; vb.classList.add('on'); if(va) va.classList.remove('on'); shotDrawOverlay(); };
+    if(va) va.onclick=()=>{ shotState.view='full'; va.classList.add('on'); if(vb) vb.classList.remove('on'); shotDrawOverlay(); };
+    // 表格行 ↔ 图上高亮
+    $('shotBody').querySelectorAll('.shot-tr').forEach(tr=>{
+      tr.onmouseenter=()=>{ shotState.hover=+tr.dataset.i; tr.classList.add('hot'); shotDrawOverlay(); };
+      tr.onmouseleave=()=>{ shotState.hover=-1; tr.classList.remove('hot'); shotDrawOverlay(); };
+    });
     $('shotDo').style.display='';
     $('shotDo').textContent='导入选中';
     shotBindRows();
@@ -2646,17 +3054,33 @@ const ShotCore = (function(){
   $('shotDo').onclick=()=>{
     const rows=shotState.rows;
     let updated=0, added=0, learned=0;
+    const shapeCells=p=>{
+      const ids=(p.cells&&p.cells.length)?p.cells:[p.row*7+p.col];
+      const rc=ids.map(id=>[Math.floor(id/7),id%7]);
+      const mr=Math.min.apply(null,rc.map(x=>x[0])), mc=Math.min.apply(null,rc.map(x=>x[1]));
+      return rc.map(x=>[x[0]-mr,x[1]-mc]);
+    };
     rows.forEach(r=>{
       if(!r.pick||r.pick==='__skip__') return;
       const p=r.piece;
       if(r.pick==='__new__'){
-        const cells=(p.cells&&p.cells.length)?p.cells.map(id=>[Math.floor(id/7),id%7]):[[p.row,p.col]];
-        addToLibrary(r.newName.trim(), cells, 1, {
-          element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.equip?p.equip.quality:0,
+        addToLibrary(r.newName.trim(), shapeCells(p), 1, {
+          element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.quality||(p.equip?p.equip.quality:0),
           awaken:{level:r.aw===''?0:parseInt(r.aw)||0},
         });
         const nt=library[library.length-1];
-        if(r.learn&&nt){ nt.sig=(nt.sig||[]).concat([p.signature.map(Number)]); learned++; }
+        if(r.learn&&nt&&p.signature){ nt.sig=(nt.sig||[]).concat([p.signature.map(Number)]); learned++; }
+        added++;
+      } else if(String(r.pick).indexOf('cat:')===0){
+        // 云端目录里的法宝：按目录信息新建入馆
+        const c=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(r.pick).slice(4));
+        if(!c) return;
+        addToLibrary(c.name, shapeCells(p), 1, {
+          element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0,
+          awaken:{level:r.aw===''?0:parseInt(r.aw)||0},
+        });
+        const nt=library[library.length-1];
+        if(r.learn&&nt&&p.signature){ nt.sig=(nt.sig||[]).concat([p.signature.map(Number)]); learned++; }
         added++;
       } else {
         const t=library.find(x=>x.id===r.pick);

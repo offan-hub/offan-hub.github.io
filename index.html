@@ -268,6 +268,11 @@
   .shot-tag { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%;
     background:var(--accent); color:#fff; font-size:12px; font-weight:700; }
   .shot-tr.hot { background:#fff7ed !important; }
+  /* 导入校验失败：红框标记待处理项 */
+  .shot-pick.shot-err, .shot-aw.shot-err, .shot-newname.shot-err {
+    border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25); background:#fff5f5; }
+  .shot-err-msg { color:#b91c1c; font-weight:600; }
+  #shotMsg.on-err { color:#b91c1c; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -3514,15 +3519,53 @@ const ShotCore = (function(){
     $('shotBody').querySelectorAll('.shot-learn').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; shotState.rows[i].learn=e.target.checked; });
     $('shotBody').querySelectorAll('.shot-newname').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; shotState.rows[i].newName=e.target.value; shotRefreshImportBtn(); });
   }
+  // 仅 Q5 法宝强制要求选觉醒等级（非 Q5 留空即视为 0 级，不阻拦）
+  function shotPickIsQ5(r){
+    if(!r.pick||r.pick==='__skip__'||r.pick==='__new__') return false;
+    let eq=library.find(t=>t.id===r.pick);
+    if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
+    return !!(eq && Number(eq.quality)===5);
+  }
   function shotRefreshImportBtn(){
-    const pending=shotState.rows.filter(r=>!r.pick).length;
-    const newNoName=shotState.rows.filter(r=>r.pick==='__new__'&&!r.newName.trim()).length;
-    $('shotDo').disabled=pending>0||newNoName>0;
-    $('shotMsg').textContent=pending>0?('还有 '+pending+' 件待确认（选择法宝或忽略）')
-      :(newNoName>0?('还有 '+newNoName+' 件新法宝未填名称'):('可以导入了 · '+shotState.rows.filter(r=>r.pick&&r.pick!=='__skip__').length+' 件'));
+    if(typeof document!=='undefined') document.querySelectorAll('.shot-err').forEach(el=>el.classList.remove('shot-err'));
+    const m=$('shotMsg'); if(m) m.classList.remove('on-err');
+    const rows=shotState.rows;
+    const pending=rows.filter(r=>!r.pick).length;
+    const newNoName=rows.filter(r=>r.pick==='__new__'&&!(r.newName||'').trim()).length;
+    const needAw=rows.filter(r=>r.aw===''&&shotPickIsQ5(r)).length;
+    if(m) m.textContent = pending>0 ? ('还有 '+pending+' 件待确认（选择法宝或忽略）')
+      : (newNoName>0 ? ('还有 '+newNoName+' 件新法宝未填名称')
+      : (needAw>0 ? ('还有 '+needAw+' 件（Q5）法宝未选觉醒等级')
+      : ('可以导入了 · '+rows.filter(r=>r.pick&&r.pick!=='__skip__').length+' 件')));
   }
   $('shotDo').onclick=()=>{
     const rows=shotState.rows;
+    // —— 导入前置校验：未选匹配 / 未选觉醒（Q5）/ 新法宝未命名 一律拦截，提示原因 + 红框标记 ——
+    const badPick=[], badAw=[], badName=[];
+    rows.forEach((r,i)=>{
+      if(!r.pick){ badPick.push(i); return; }
+      if(r.pick==='__new__' && !(r.newName||'').trim()){ badName.push(i); return; }
+      if(r.pick!=='__skip__' && r.pick!=='__new__' && r.aw===''){
+        let eq=library.find(t=>t.id===r.pick);
+        if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
+        if(eq && Number(eq.quality)===5) badAw.push(i);
+      }
+    });
+    if(badPick.length||badAw.length||badName.length){
+      const doc=(typeof document!=='undefined')?document:null;
+      const mark=(sel,arr)=>{ if(!doc) return; arr.forEach(i=>{ const el=doc.querySelector(sel+'[data-i="'+i+'"]'); if(el) el.classList.add('shot-err'); }); };
+      mark('.shot-pick',badPick); mark('.shot-aw',badAw); mark('.shot-newname',badName);
+      const reasons=[];
+      if(badPick.length) reasons.push(badPick.length+' 件法宝未选择匹配（请选法宝或「忽略此件」）');
+      if(badAw.length) reasons.push(badAw.length+' 件法宝（Q5）未选择觉醒等级');
+      if(badName.length) reasons.push(badName.length+' 件新法宝未填写名称');
+      const m=$('shotMsg');
+      if(m){ m.innerHTML='<span class="shot-err-msg">⚠️ 无法导入：'+reasons.join('；')+'。已用红框标出待处理项。</span>'; if(m.classList&&m.classList.add) m.classList.add('on-err'); }
+      return;
+    }
+    // 校验通过：清掉可能的红框残留
+    if(typeof document!=='undefined') document.querySelectorAll('.shot-err').forEach(el=>el.classList.remove('shot-err'));
+    { const m=$('shotMsg'); if(m&&m.classList&&m.classList.remove) m.classList.remove('on-err'); }
     let learned=0;
     const shapeCells=p=>{
       const ids=(p.cells&&p.cells.length)?p.cells:[p.row*7+p.col];

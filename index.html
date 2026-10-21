@@ -3566,6 +3566,13 @@ const ShotCore = (function(){
     // 校验通过：清掉可能的红框残留
     if(typeof document!=='undefined') document.querySelectorAll('.shot-err').forEach(el=>el.classList.remove('shot-err'));
     { const m=$('shotMsg'); if(m&&m.classList&&m.classList.remove) m.classList.remove('on-err'); }
+    // 若导入前已存在启用的法宝，先清空法宝队列（重置全部启用与数量、取消组别启用），
+    // 再导入则只保留本次截图识别到的法宝数据（替换而非追加）
+    const hadEnabled=library.some(t=>{ const s=sel[t.id]; return s&&s.include; });
+    if(hadEnabled){
+      library.forEach(t=>{ const s=sel[t.id]||(sel[t.id]={include:false,count:0,priority:false}); s.include=false; s.count=0; t.count=0; });
+      groups.forEach(g=>{ g.enabled=false; });
+    }
     let learned=0;
     const shapeCells=p=>{
       const ids=(p.cells&&p.cells.length)?p.cells:[p.row*7+p.col];
@@ -3645,7 +3652,7 @@ const ShotCore = (function(){
     touchedGroups.forEach(gid=>{ const g=groups.find(x=>x.id===gid); if(g) g.enabled=true; });
     saveLibrary(); renderInventory(); renderGroups();
     $('shotMask').classList.remove('on');
-    alert('截图导入完成：\n· 共导入 '+rowCount+' 件 → 库内 '+targets.size+' 种法宝（已自动启用并统计数量）\n· 新法宝入馆 '+added+' 件（基础属性待补）· 更新库内 '+updated+' 种\n· 学习签名 '+learned+' 条');
+    alert('截图导入完成：\n· 共导入 '+rowCount+' 件 → 库内 '+targets.size+' 种法宝（已自动启用并统计数量）'+(hadEnabled?'\n· 已先清空原启用的法宝队列，仅保留本次截图导入的法宝':'')+'\n· 新法宝入馆 '+added+' 件（基础属性待补）· 更新库内 '+updated+' 种\n· 学习签名 '+learned+' 条');
   };
 
   /* ---------- 背包空间 ---------- */

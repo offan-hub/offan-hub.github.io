@@ -3581,16 +3581,17 @@ const ShotCore = (function(){
       return rc.map(x=>[x[0]-mr,x[1]-mc]);
     };
     /* ① 目标归并：多行识别到同一件法宝时只对应一个库内条目，数量 = 识别实例数。
-       · 库内法宝（r.pick=库 id）直接归并；
-       · 云端目录 / 新建名称：若库内已有同名法宝则复用（避免重复入馆），否则本次只新建一次。 */
+       · 归并键统一为「最终落到的库内条目」：库内法宝（r.pick=库 id）用 t:id；
+         云端目录 / 新建名称若库内已有同名法宝，也归并到 t:<库id>。
+         否则同一件法宝会被 t:/c:/n: 两条路线建成两个 target，count 相互覆盖 → 实例丢失（42 格只导入 37 格事故）。 */
     const targets=new Map();
     const targetOf=r=>{
       const p=r.piece;
       if(r.pick==='__new__'){
         const nm=(r.newName||'').trim(); if(!nm) return null;
-        const key='n:'+nm;
+        const exist=library.find(x=>x.name===nm);
+        const key=exist?('t:'+exist.id):('n:'+nm);
         if(!targets.has(key)){
-          const exist=library.find(x=>x.name===nm);
           targets.set(key, exist?{ t:exist, isNew:false, rows:[] }
             :{ t:null, isNew:true, name:nm, cells:shapeCells(p), rows:[],
               opts:{ element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.quality||(p.equip?p.equip.quality:0) } });
@@ -3599,9 +3600,9 @@ const ShotCore = (function(){
       }
       if(String(r.pick).indexOf('cat:')===0){
         const c=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(r.pick)); if(!c) return null;
-        const key='c:'+c.id;
+        const exist=library.find(x=>x.name===c.name);
+        const key=exist?('t:'+exist.id):('c:'+c.id);
         if(!targets.has(key)){
-          const exist=library.find(x=>x.name===c.name);
           targets.set(key, exist?{ t:exist, isNew:false, rows:[] }
             :{ t:null, isNew:true, name:c.name, cells:(c.cells&&c.cells.length)?c.cells.map(x=>x.slice()):shapeCells(p), rows:[],
               opts:{ element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0 } });

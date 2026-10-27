@@ -670,6 +670,48 @@
     }
     return best;
   }
+  /* —— 后置优化（目标感知）：迭代局部搜索（ruin‑recreate + 偶发随机重启），以「真实属性加权分」
+         (weightedDefault, 与 UI 排序口径完全一致) 为目标，逃逸纯几何贪心易陷的局部最优（如攻击权重下的 306096 陷阱）。
+         只接受更优解（单调推进全局最优点），不改变填充率（移除/重放的是同一组实例，满填不变）。 —— */
+  function sameGroupAttr(a,b){ return !!(a&&b && a.group!=null && b.group!=null && a.group===b.group); }
+  function refineByWeighted(R,C,blocked,infos,w,K,seed,initUsed,deadline){
+    const total=R*C;
+    function scoreOf(used){ return weightedDefault(attrTotalsOfUsed(used,infos,R,C), w); }
+    const n=initUsed.length;
+    let current=initUsed.slice();
+    let curW=scoreOf(current);
+    let best={used:current.slice(),w:curW};
+    for(let it=0; it<K; it++){
+      if(deadline && Date.now()>deadline) break;
+      const rng=mulberry32((seed ^ (it*0x85EBCA6B))>>>0);
+      let work;
+      if(rng()<0.12){ work=greedyFill(R,C,blocked,infos,'random',rng).used; if(work.length<n) work=current.slice(); }
+      else work=current.slice();
+      const removeN = 2 + Math.floor(rng()*Math.min(8, work.length));
+      const pool=[...Array(work.length).keys()]; const idxs=[];
+      for(let q=0;q<removeN && pool.length;q++){ const j=Math.floor(rng()*pool.length); idxs.push(pool[j]); pool.splice(j,1); }
+      const removed=idxs.map(i=>work[i]);
+      const remaining=work.filter((_,i)=>!idxs.includes(i));
+      const occ2=Uint8Array.from(blocked); const instAt2=new Array(total).fill(-1);
+      remaining.forEach((u,id)=>{ for(const idx of infos[u.pi].placements[u.pIdx]){ occ2[idx]=1; instAt2[idx]=id; } });
+      const order=removed.slice().sort((a,b)=>(infos[b.pi].size-infos[a.pi].size)||(rng()*2-1));
+      let ok=true; const newUsed=remaining.slice(); let nextId=remaining.length;
+      for(const u of order){
+        const pls=infos[u.pi].placements; let bj=-1, bscore=-Infinity;
+        for(let j=0;j<pls.length;j++){
+          if(!canPlace(pls[j],occ2)) continue;
+          let edges=0, sg=0;
+          for(const idx of pls[j]){ const r=(idx/C)|0,c=idx%C; for(const [nr,nc] of [[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){ if(nr<0||nr>=R||nc<0||nc>=C) continue; const ni=nr*C+nc; if(occ2[ni]){ edges++; const oi=instAt2[ni]; if(oi>=0 && sameGroupAttr(infos[u.pi].attr, infos[newUsed[oi].pi].attr)) sg++; } } }
+          const h=edges + sg*8 + rng();
+          if(h>bscore){ bscore=h; bj=j; }
+        }
+        if(bj<0){ ok=false; break; }
+        placeOn(pls[bj],occ2); const id=nextId++; for(const idx of pls[bj]) instAt2[idx]=id; newUsed.push({pi:u.pi,pIdx:bj});
+      }
+      if(ok){ const w2=scoreOf(newUsed); if(w2>curW){ curW=w2; current=newUsed; if(w2>best.w) best={used:newUsed.slice(),w:w2}; } }
+    }
+    return best;
+  }
   // 按“每件法宝的摆放（类型+具体位置）”生成签名：满填充方案彼此占用格相同，必须用摆放区分，否则会被错误合并
   function sigOfUsed(used,infos,R,C){ const owner=new Array(R*C).fill('.'); used.forEach((u,instId)=>{ const lab=infos[u.pi].name+'#'+(u.pIdx); for(const idx of infos[u.pi].placements[u.pIdx]) owner[idx]=lab; }); return owner.join(','); }
 
@@ -933,6 +975,23 @@
     const base=baselinePlans(R,C,blocked,infos,prioritySet,priorityExists,strategies,runsPerStrategy,restarts,baseSeed,4000,baseStart,timeBudget*0.5,poolLimit*2);
     for(const p of base.plans){ addCandidate(p.used,p.score); }
     runs+=base.runs;
+
+    /* ---------- 目标感知局部搜索：对加权分最高的若干候选做迭代局部搜索，逃逸局部最优（如攻击权重下的 306096 陷阱） ---------- */
+    const refineDeadline = start + Math.floor(timeBudget*0.9);
+    const refineEntries=[...map.values()].sort((a,b)=> (b.fill-a.fill) || (b.weighted-a.weighted) || (b.used.length-a.used.length));
+    const refineSeeds=Math.min(opts.refineSeeds||24, refineEntries.length);
+    if(refineSeeds>0){
+      const refineK=opts.refineK||350;
+      const rb=(baseSeed ^ 0x5A5A5A)>>>0;
+      for(let si=0; si<refineSeeds; si++){
+        const e=refineEntries[si];
+        const rf=refineByWeighted(R,C,blocked,infos,w,refineK,(rb ^ (si*0xC2B2AE35))>>>0, e.used, refineDeadline);
+        if(rf.w>e.weighted) addCandidate(rf.used,0);
+      }
+      const topBest=refineEntries[0];
+      const rf2=refineByWeighted(R,C,blocked,infos,w, refineK*2, (rb ^ 0xF00D)>>>0, topBest.used, refineDeadline);
+      if(rf2.w>topBest.weighted) addCandidate(rf2.used,0);
+    }
 
     let pool=[...map.values()];
     const fullAchievable = bestFill===capacity;

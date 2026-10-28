@@ -906,11 +906,15 @@
   }
 
   /* ===================== 生成-筛选分离总入口（满填充前提 + 按属性总分排序 + 多策略多样性） ===================== */
+  /* —— 由 pieces 构建求解 infos（generatePlans 与 polishPlans 共用，防两处漂移） —— */
+  function buildInfos(pieces,R,C,blocked){
+    return pieces.map(p=>({ name:p.name, size:normalizeShape(p.cells).length, count:Math.max(1,p.count||1), priority:p.priority?1:0, key:p.key?1:0, placements:enumeratePlacements(R,C,normalizeShape(p.cells),blocked), attr:{ hp:Number(p.hp)||0, def:Number(p.def)||0, atk:Number(p.atk)||0, dmg:Number(p.dmg)||0, bonusRate:Number(p.bonusRate)||0, bonusType:p.bonusType||'none', bonusAttr:p.bonusAttr||'hp', group:(p.group!=null?p.group:null), type:(p.type!=null?p.type:null), awaken:(p.awaken||null) } })).filter(p=>p.placements.length>0);
+  }
   function generatePlans(backpack,pieces,opts){
     opts=opts||{};
     const R=backpack.rows,C=backpack.cols,total=R*C;
     const blocked=new Uint8Array(total); if(backpack.blocked) for(const i of backpack.blocked) if(i>=0&&i<total) blocked[i]=1;
-    const infos=pieces.map(p=>({ name:p.name, size:normalizeShape(p.cells).length, count:Math.max(1,p.count||1), priority:p.priority?1:0, key:p.key?1:0, placements:enumeratePlacements(R,C,normalizeShape(p.cells),blocked), attr:{ hp:Number(p.hp)||0, def:Number(p.def)||0, atk:Number(p.atk)||0, dmg:Number(p.dmg)||0, bonusRate:Number(p.bonusRate)||0, bonusType:p.bonusType||'none', bonusAttr:p.bonusAttr||'hp', group:(p.group!=null?p.group:null), type:(p.type!=null?p.type:null), awaken:(p.awaken||null) } })).filter(p=>p.placements.length>0);
+    const infos=buildInfos(pieces,R,C,blocked);
     if(infos.length===0) return [];
     const prioritySet=new Set(infos.filter(p=>p.priority).map(p=>p.name));
     const priorityExists=prioritySet.size>0;
@@ -1000,7 +1004,64 @@
     if(pool.length>poolLimit) pool=pool.slice(0,poolLimit);
     return buildOutput(pool,infos,R,C,blocked,capacity,blockedCount,runs,map.size,bestFill,fullAchievable);
   }
-  const api={ generatePlans, normalizeShape, enumeratePlacements, mulberry32, shuffle, greedyFill, neighborScore };
+  /* ---------- P1 全局抛光：批次收敛后，对候选池 top 解继续深爬山（跨批协作的最后一道封顶） ----------
+     入参 plans 为 generatePlans 的输出格式（含 placements/weighted）；返回同格式的新方案数组（只含更优或原样，UI 侧按签名去重合并）。 */
+  function polishPlans(backpack,pieces,plans,opts){
+    opts=opts||{};
+    if(!plans||!plans.length) return [];
+    const R=backpack.rows,C=backpack.cols,total=R*C;
+    const blocked=new Uint8Array(total); if(backpack.blocked) for(const i of backpack.blocked) if(i>=0&&i<total) blocked[i]=1;
+    const infos=buildInfos(pieces,R,C,blocked);
+    if(infos.length===0) return [];
+    const w=opts.weights||{hp:34,atk:33,def:33};
+    const K=opts.refineK||3000;
+    const budget=opts.timeLimitMs||8000;
+    const seeds=Math.min(opts.seeds||40, plans.length);
+    const start=Date.now(); const deadline=start+budget;
+    let blockedCount=0; for(let i=0;i<total;i++) if(blocked[i]) blockedCount++;
+    const capacity=total-blockedCount;
+    const keySet=new Set(infos.filter(p=>p.key).map(p=>p.name));
+    const oneCellSet=new Set(infos.filter(p=>p.size===1).map(p=>p.name));
+    const hasOneCell=oneCellSet.size>0;
+    const nameIdx=new Map(); infos.forEach((info,pi)=>{ if(!nameIdx.has(info.name)) nameIdx.set(info.name,pi); });
+    const plLookup=infos.map(info=>{ const m=new Map(); info.placements.forEach((pl,pi)=>{ m.set(pl.slice().sort((a,b)=>a-b).join(','),pi); }); return m; });
+    const sorted=plans.slice().sort((a,b)=>((b.weighted||0)-(a.weighted||0)));
+    // 种子多样性：60% 按加权取 top + 40% 从全池随机补，避免全员困在同一盆地
+    const topN=Math.max(1,Math.ceil(seeds*0.6));
+    const rngPick=mulberry32(((opts.seed||20260721)^0x51ED)>>>0);
+    const restIdx=[...Array(Math.max(0,sorted.length-topN)).keys()]; shuffle(restIdx,rngPick);
+    const seedPlans=sorted.slice(0,Math.min(topN,sorted.length));
+    for(let i=0;i<restIdx.length&&seedPlans.length<seeds;i++) seedPlans.push(sorted[topN+restIdx[i]]);
+    const out=[]; const seen=new Set();
+    for(let i=0;i<seedPlans.length;i++){
+      const src=seedPlans[i];
+      let used=[], ok=true;
+      for(const pl of src.placements){
+        const pi=nameIdx.get(pl.name); if(pi==null){ ok=false; break; }
+        const pIdx=plLookup[pi].get(pl.cells.map(c=>c[0]*C+c[1]).sort((a,b)=>a-b).join(','));
+        if(pIdx==null){ ok=false; break; }
+        used.push({pi,pIdx});
+      }
+      if(!ok||!used.length) continue;
+      const w0=(src.weighted!=null?src.weighted:weightedDefault(attrTotalsOfUsed(used,infos,R,C),w));
+      const rf=refineByWeighted(R,C,blocked,infos,w,K,((opts.seed||20260721)^(i*0xC2B2AE35))>>>0,used,deadline);
+      const bestUsed=rf.w>w0?rf.used:used;
+      const sig=sigOfUsed(bestUsed,infos,R,C);
+      if(seen.has(sig)) continue; seen.add(sig);
+      const totals=attrTotalsOfUsed(bestUsed,infos,R,C);
+      const occ=buildOcc(bestUsed,infos,total,blocked);
+      let filled=0; for(let j=0;j<total;j++) if(occ[j]&&!blocked[j]) filled++;
+      const st=buildState(R,C,blocked,bestUsed,infos);
+      const kc=hasOneCell?keyContactScore(R,C,bestUsed,infos,st.instAt,keySet,oneCellSet):0;
+      out.push({ filled, capacity, blocked:blockedCount,
+        placements:bestUsed.map(u=>{ const info=infos[u.pi]; const idxs=info.placements[u.pIdx]; const cells=idxs.map(idx=>[((idx/C)|0),idx%C]); const minR=Math.min(...cells.map(x=>x[0])),minC=Math.min(...cells.map(x=>x[1])); return {name:info.name,size:info.size,anchor:[minR,minC],cells}; }),
+        score:0, keyContact:kc, timedOut:false, optimal:true, nodes:K, poolSize:plans.length, bestFill:filled, runs:K,
+        totals, weighted:weightedDefault(totals,w), fullAchievable: filled===capacity?true:(src.fullAchievable!==false) });
+    }
+    out.sort((a,b)=>(b.filled-a.filled)||(b.weighted-a.weighted)||(b.keyContact-a.keyContact));
+    return out;
+  }
+  const api={ generatePlans, polishPlans, normalizeShape, enumeratePlacements, mulberry32, shuffle, greedyFill, neighborScore };
   if(typeof module!=='undefined'&&module.exports) module.exports=api; global.PackCore=api;
 })(typeof window!=='undefined'?window:globalThis);
 
@@ -3987,6 +4048,7 @@ const ShotCore = (function(){
       const ms=(performance.now()-t0).toFixed(0);
       renderMerged(ms);
       if(target>0){ const sb=$('statusBox'); if(sb) sb.textContent+=' · 候选池目标 '+target+(poolGlobal.length>=target?' ✓ 已达成':'（已收敛：连续多批无新增布局）'); }
+      polishGlobal();
     }
     function step(){
       const before=poolGlobal.length;
@@ -4003,6 +4065,24 @@ const ShotCore = (function(){
       setTimeout(step,0);
     }
     setTimeout(step,10);
+  }
+  /* 🔥 P1 全局抛光：批次收敛后，对全池最优解继续深爬山（跨批协作封顶，不再只靠单批运气） */
+  function polishGlobal(){
+    if(!poolGlobal.length||typeof PackCore.polishPlans!=='function') return;
+    const sb=$('statusBox'); if(sb) sb.textContent='🔥 全局深抛光中…（对候选池最优解继续爬山）';
+    setTimeout(()=>{
+      if(solvingPool) return;
+      const t1=performance.now();
+      let improved=[];
+      try{
+        improved=PackCore.polishPlans({rows:bagRows(),cols:bagCols(),blocked:[...bagBlocked]},buildPieces(),poolGlobal.slice().sort((a,b)=>(b.weighted||0)-(a.weighted||0)),{weights:readWeights(),seed:((Date.now()&0x7fffffff)^(poolGlobal.length*0x9E3779B1))>>>0});
+      }catch(e){ improved=[]; }
+      const ws=readWeights(); let added=0,bestNew=0;
+      for(const p of improved){ const sg=sigOfPlan(p); if(sigGlobal.has(sg)) continue; sigGlobal.add(sg); if(p.weighted==null) p.weighted=weightedScore(p.totals,ws); poolGlobal.push(p); added++; if(p.weighted>bestNew) bestNew=p.weighted; }
+      const ms2=(performance.now()-t1).toFixed(0);
+      renderMerged(ms2);
+      if(sb) sb.textContent='🔥 全局抛光：'+(added?('新增 '+added+' 个更优布局（最高属性评分 '+Math.round(bestNew)+'）'):'无更优解')+' · '+ms2+'ms · '+(sb.textContent||'');
+    },30);
   }
   $('solve').onclick=runBatches;
   if($('reshuffle')) $('reshuffle').onclick=()=>{

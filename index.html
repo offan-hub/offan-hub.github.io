@@ -324,6 +324,7 @@
         <button id="importBase" class="ghost">导入基础法宝库</button>
         <button id="importFile" class="ghost">📥 导入法宝库（Excel/CSV）</button>
         <button id="smartEnrich" class="ghost" title="按法宝名称匹配补全数据，自动补全：类型 / 共鸣值 / 品质 / 五级觉醒参数。只填空白字段，不覆盖已有数据">✨ 智能补全</button>
+        <button id="expandQ" class="ghost" title="依据 enrich-map（游戏配置提取）的逐档数据，把每件法宝拆成 Q1–Q4 独立条目（基础属性逐档自动填入）。效果加成沿用现有值并标黄待核对，识别端会按底色自动选对应档。">🔢 展开 Q 档库</button>
         <button id="shotImport" class="ghost" title="上传游戏背包截图，自动识别网格与每格法宝（元素/共鸣/品质/觉醒等级），匹配本地库后确认导入。图片仅在本机处理，不上传">📷 截图导入</button>
         <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" style="display:none">
         <input type="file" id="shotFile" accept="image/*" style="display:none">
@@ -2841,7 +2842,9 @@ const ShotCore = (function(){
       const typeVal = map.type!=null ? String(r[map.type]!=null?r[map.type]:'').trim() : null;   // null=表里没有该列
       const elVal = map.element!=null ? String(r[map.element]!=null?r[map.element]:'').trim() : null;   // null=表里没有该列
       const awLevel = map.awLevel!=null ? (parseInt(r[map.awLevel])||0) : null;
-      const existing=library.find(t=>t.name===name);
+      const qVal=(map.quality!=null)?Math.min(5,Math.max(0,parseInt(r[map.quality])||0)):0;
+      // 合并主键：有档位列时按 (名称, 档位) 区分，避免把多档法宝并回同一条
+      const existing=library.find(t=>t.name===name && (qVal? t.quality===qVal : true));
       if(existing){
         existing.cells=PackCore.normalizeShape(cells);
         existing.group=group;
@@ -2850,14 +2853,14 @@ const ShotCore = (function(){
         if(typeVal!=null) existing.type=typeVal;
         if(elVal!=null) existing.element=elVal;
         if(map.reson!=null) existing.reson=Math.max(0,parseInt(r[map.reson])||0);
-        if(map.quality!=null) existing.quality=Math.min(5,Math.max(0,parseInt(r[map.quality])||0));
+        if(map.quality!=null) existing.quality=qVal;
         if(awLevel!=null) existing.awaken=cloneAwaken(Object.assign({}, existing.awaken, {level:awLevel}));  // 仅更新等级，保留已填的 L1~L5 参数
         existing.key=keyVal; existing.count=Math.max(0,existing.count||0);
         if(sel[existing.id]){ if(!grpEnabled) sel[existing.id].include=false; sel[existing.id].count=Math.max(0,sel[existing.id].count||0); }
         updated++;
       } else {
-        const id=uniqueName(name);
-        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk,dmg,shield},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),element:(elVal!=null?elVal:''),reson:(map.reson!=null?Math.max(0,parseInt(r[map.reson])||0):0),quality:(map.quality!=null?Math.min(5,Math.max(0,parseInt(r[map.quality])||0)):0),awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
+        const id=qVal? (name+'·Q'+qVal) : uniqueName(name);
+        library.push({id,name,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),base:{hp,def,atk,dmg,shield},bonusRate,bonusType,bonusAttr,count:0,group,type:(typeVal!=null?typeVal:''),element:(elVal!=null?elVal:''),reson:(map.reson!=null?Math.max(0,parseInt(r[map.reson])||0):0),quality:qVal,awaken:cloneAwaken({level:awLevel||0}),key:keyVal,skill:null});
         sel[id]={include:grpEnabled,count:0,priority:false};
         added++;
       }
@@ -3013,7 +3016,7 @@ const ShotCore = (function(){
       if(t.key) tr.className='key-row';
       tr.innerHTML =
         '<td style="text-align:center">'+(grpOff?'<span style="color:var(--c-text-dim);cursor:help" title="组别「'+escapeHtml(g.name)+'」未启用，无法勾选；请先在「组别管理」启用该组别。">🔒</span>':'<input type="checkbox" class="ck" '+(s.include?'checked':'')+' data-i="'+i+'">')+'</td>'+
-        '<td><input type="text" class="nm" value="'+escapeHtml(t.name)+'" data-i="'+i+'"></td>'+
+        '<td><input type="text" class="nm" value="'+escapeHtml(t.name)+'" data-i="'+i+'">'+(t.qlevel?'<span style="display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;background:rgba(124,58,237,.14);color:#7c3aed;font-size:11px;font-weight:700;border:1px solid rgba(124,58,237,.35)">Q'+t.qlevel+'</span>':'')+'</td>'+
         '<td class="shape-td"><div class="mini-wrap" id="mini-'+i+'">'+shapeMini(t.cells,t.color)+'</div><span class="shape-txt">'+t.cells.length+'格</span></td>'+
         '<td><select class="grp" data-i="'+i+'">'+groupOptions(t.group)+'</select></td>'+
         '<td><input type="number" min="0" max="99" class="cnum" value="'+(t.count||0)+'" data-i="'+i+'"></td>'+
@@ -3065,6 +3068,7 @@ const ShotCore = (function(){
       if(t.awaken&&t.awaken.level>0) attrs.push('觉醒 <b>'+t.awaken.level+'</b>');
       return '<div class="en-card'+(t.key?' enkey':'')+'">'+
         '<div class="en-head">'+(t.key?'<span class="en-star">★</span>':'')+escapeHtml(t.name)+
+          (t.qlevel?'<span class="en-badge" style="background:rgba(124,58,237,.14);color:#7c3aed;border:1px solid rgba(124,58,237,.35)">Q'+t.qlevel+'</span>':'')+
           '<span class="en-badge">数量 '+(s.count||0)+'</span>'+
           '<span class="en-shape">'+shapeMini(t.cells,t.color)+'</span></div>'+
         '<div class="en-meta">'+meta.join('')+'</div>'+
@@ -3174,6 +3178,63 @@ const ShotCore = (function(){
   $('enX').onclick=()=>$('enMask').classList.remove('on');
   $('enOk').onclick=()=>$('enMask').classList.remove('on');
   $('enMask').onclick=e=>{ if(e.target===$('enMask')) $('enMask').classList.remove('on'); };
+
+  /* ---------- 展开 Q 档库：依据 enrich-map 逐档数据，把每件法宝拆成 Q1–Q4 独立条目 ---------- */
+  // 已知逐品质效果修正（用户从游戏确认）：流水散 Q4=100 / Q3=80
+  const KNOWN_Q_EFFECT = { '流水散': { 3: 80, 4: 100 } };
+  async function expandLibraryQLevels(){
+    const btn=$('expandQ'); if(btn) btn.disabled=true;
+    let map=null;
+    try{
+      const r=await fetch('enrich-map.json?_='+Date.now(),{cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      map=await r.json();
+    }catch(e){ if(btn) btn.disabled=false; alert('enrich-map 加载失败：'+e.message); return; }
+    const byName=map.byName||{}, catalog=map.catalog||[];
+    const oldSel=Object.assign({}, sel);
+    const newLib=[], newSel={}, seen=new Set();
+    const stats={seeds:0, emitted:0, flagged:0, corrected:0, skipped:0};
+    for(const seed of library){
+      stats.seeds++;
+      if(seed.qlevel){ newLib.push(seed); newSel[seed.id]=oldSel[seed.id]||{include:false,count:0,priority:false}; continue; } // 已展开则保留
+      const name=(seed.name||'').trim();
+      const en=byName[name];
+      if(!en||!en.tiers||!en.tiers.length){ newLib.push(seed); newSel[seed.id]=oldSel[seed.id]||{include:false,count:0,priority:false}; continue; }
+      for(const t of en.tiers){
+        const q=t.quality, id=name+'·Q'+q;
+        if(seen.has(id)) continue; seen.add(id);
+        const c=catalog.find(x=>x.name===name&&x.quality===q);
+        const item={
+          id, name, qlevel:q,
+          cells:(c&&c.cells)?c.cells:(seed.cells||[[0,0]]),
+          color:seed.color||'',
+          base:{hp:t.base.hp||0,def:t.base.def||0,atk:t.base.atk||0,dmg:t.base.dmg||0,shield:t.base.shield||0},
+          bonusRate:seed.bonusRate||0, bonusType:seed.bonusType||'none', bonusAttr:seed.bonusAttr||'hp',
+          count:(seed.quality===q)?(seed.count||0):0,
+          group:seed.group||en.element||'', type:seed.type||en.type||'', element:seed.element||en.element||'',
+          reson:t.reson||0, quality:q, awaken:cloneAwaken(seed.awaken), sig:seed.sig||null,
+          key:seed.key||false, skill:seed.skill||null
+        };
+        const effKnown=!!(seed.bonusType&&seed.bonusType!=='none');
+        if(effKnown && seed.quality!==q){ item.note='效果加成从'+(seed.quality||'?')+'档延续，未分档，待游戏内核对'; stats.flagged++; }
+        if(KNOWN_Q_EFFECT[name] && KNOWN_Q_EFFECT[name][q]!=null){ item.bonusRate=KNOWN_Q_EFFECT[name][q]; delete item.note; stats.corrected++; }
+        newLib.push(item);
+        // sel 迁移：仅把旧启用状态带到期次匹配的条目，其余默认不启用（用户按实际持有档位再勾）
+        const o=oldSel[seed.id];
+        newSel[id] = (o && seed.quality===q) ? {include:!!o.include,count:Math.max(0,o.count||0),priority:!!o.priority}
+                                            : {include:false,count:0,priority:false};
+        stats.emitted++;
+      }
+    }
+    library.length=0; newLib.forEach(t=>library.push(t));
+    Object.keys(sel).forEach(k=>delete sel[k]); Object.assign(sel,newSel);
+    saveLibrary(); renderInventory(); if(typeof renderGroups==='function') renderGroups();
+    if(btn) btn.disabled=false;
+    const flagMsg = stats.flagged? '；'+stats.flagged+' 条效果加成跨档延续、已标黄待你从游戏核对' : '';
+    const corrMsg = stats.corrected? '；已套用已知修正（流水散 Q4=100/Q3=80）'+stats.corrected+' 条' : '';
+    $('statusBox').textContent='🔢 已展开 Q 档库：'+stats.seeds+' 件种子 → '+newLib.length+' 条'+flagMsg+corrMsg+'。识别端现在会按底色自动选对应档位。';
+  }
+  $('expandQ').onclick=expandLibraryQLevels;
 
   /* ---------- 截图导入（ShotCore 本地识别） ---------- */
   const shotState={ result:null, rows:[], src:null, w:0, h:0, view:'bag', hover:-1,

@@ -2492,20 +2492,25 @@ const ShotCore = (function(){
   // 品质显示标签：Q5 → Q5-1 / Q5-2
   function qualityLabel(o){
     const it=(o&&typeof o==='object')?o:null;
+    if(it && /^5-[123]$/.test(String(it.qlevel||''))) return 'Q'+it.qlevel;   // 长老分档条自带档位标签
     const q=it? (Number(it.quality)||0) : (Number(o)||0);
     if(q!==5) return 'Q'+q;
     return ELDER_TIER_NAME[elderTierOf(it||{quality:5})||3]||'Q5';
   }
-  // 灵枢宝鉴明细的品质下拉选项（Q0–Q4 + Q5-1 + Q5-2）
+  // 灵枢宝鉴明细的品质下拉：
+  //   · 长老法宝（quality=5，库内分 Q5-1/Q5-2/Q5-3 三条独立条目）→ 只能在这三档之间选
+  //   · 普通法宝 → Q0–Q4
   function qualityOptions(o){
     const it=(o&&typeof o==='object')?o:null;
     const q=it? (Number(it.quality)||0) : (Number(o)||0);
-    const et=it? elderTierOf(it) : 0;
+    if(q===5){
+      const et=elderTierOf(it||{quality:5})||3;
+      return '<option value="5-1"'+(et===1?' selected':'')+'>Q5-1 · 长老 2 星 · 外部倍率 ×1.6</option>'+
+             '<option value="5-2"'+(et===2?' selected':'')+'>Q5-2 · 长老 4 星 · 外部倍率 ×2.0</option>'+
+             '<option value="5-3"'+(et===3?' selected':'')+'>Q5-3 · 长老 5 星 · 外部倍率 ×2.5</option>';
+    }
     let h='<option value="0"'+(q===0?' selected':'')+'>Q0 · 未定品质</option>';
     for(let v=1;v<=4;v++) h+='<option value="'+v+'"'+(q===v?' selected':'')+'>Q'+v+'</option>';
-    h+='<option value="5-1"'+(q===5&&et===1?' selected':'')+'>Q5-1 · 长老 2 星 · 外部倍率 ×1.6</option>';
-    h+='<option value="5-2"'+(q===5&&et===2?' selected':'')+'>Q5-2 · 长老 4 星 · 外部倍率 ×2.0</option>';
-    h+='<option value="5-3"'+(q===5&&et===3?' selected':'')+'>Q5-3 · 长老 5 星 · 外部倍率 ×2.5</option>';
     return h;
   }
 
@@ -2655,7 +2660,7 @@ const ShotCore = (function(){
       const g = grpId? groups.find(x=>x.id===grpId):null;
       const inc = !grpId || (g? !!g.enabled : true); // 强关联：分组法宝仅在对应组别已启用时才启用
       const base=(typeof t.base==='object'&&t.base)?{ hp:Number(t.base.hp)||0, def:Number(t.base.def)||0, atk:Number(t.base.atk)||0, dmg:Number(t.base.dmg)||0, shield:Number(t.base.shield)||0 }:{ hp:Number(t.base)||0, def:0, atk:0, dmg:0, shield:0 };
-      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, qlevel:(t.qlevel!=null?t.qlevel:null), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       const sc=Math.max(0,t.count||0);
       sel[id]={include:inc,count:sc,priority:false};
     });
@@ -2673,10 +2678,11 @@ const ShotCore = (function(){
     DEFAULT_LIBRARY.forEach(t=>{
       if(library.some(x=>x.group===t.group && x.name===t.name)) return;
       const id=uniqueName(t.name);
-      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:false, skill:null });
+      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, qlevel:(t.qlevel!=null?t.qlevel:null), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:false, skill:null });
       sel[id]={include:false,count:0,priority:false};
       added++;
     });
+    expandElderTiers();
     renderInventory(); renderGroups(); saveLibrary();
     return added;
   }
@@ -2744,10 +2750,11 @@ const ShotCore = (function(){
       library.push({ id, name:String(t.name||t.id), cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length),
         base:(t.base&&typeof t.base==='object')?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}:{hp:0,def:0,atk:0,dmg:0,shield:0},
         bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp',
-        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, qlevel:(t.qlevel!=null?t.qlevel:null), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       if(!sel[id]) sel[id]={ include:!grpOff, count:Math.max(0,Number(t.count)||0), priority:false };
     });
     tid=library.length; gidCounter=groups.length;
+    expandElderTiers();   // 云端合并后同样保证长老法宝按三档各存一条
   }
   async function pushToCloud(){
     if(!cloudReady()){ setCloudStatus('请先填写 GitHub Token 并勾选启用'); return; }
@@ -2970,7 +2977,7 @@ const ShotCore = (function(){
     reader.readAsArrayBuffer(file); // 始终按二进制读取，再按真实类型分支（修复 .csv 实为 xlsx 的乱码）
   }
 
-  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0,shield:Number(t.base&&t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, awaken:cloneAwaken(t.awaken), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill||null }; }
+  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0,shield:Number(t.base&&t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, qlevel:(t.qlevel!=null?t.qlevel:null), awaken:cloneAwaken(t.awaken), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -3003,9 +3010,44 @@ const ShotCore = (function(){
     library.push({id,name:nm,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),
       base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0,dmg:opts.dmg||0,shield:opts.shield||0},
       bonusRate:opts.bonusRate||0,bonusType:opts.bonusType||'none',bonusAttr:opts.bonusAttr||'hp',
-      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),element:(opts.element!=null?opts.element:''),awaken:cloneAwaken(opts.awaken),reson:Number(opts.reson)||0,quality:Number(opts.quality)||0,elderTier:Number(opts.elderTier)||0,sig:Array.isArray(opts.sig)?opts.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[],key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
+      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),element:(opts.element!=null?opts.element:''),awaken:cloneAwaken(opts.awaken),reson:Number(opts.reson)||0,quality:Number(opts.quality)||0,elderTier:Number(opts.elderTier)||0,qlevel:(opts.qlevel!=null?opts.qlevel:null),sig:Array.isArray(opts.sig)?opts.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[],key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
     sel[id]={include:grpEnabled,count:Math.max(0,count||0),priority:false};
+    if(Number(opts.quality)===5 && opts.qlevel==null) expandElderTiers(); // 长老法宝 → Q5-1/2/3 三条独立条目
     renderInventory(); saveLibrary();
+  }
+
+  /* ---------- 长老法宝分档：与 Q1–Q4 同一套路，库内按 Q5-1 / Q5-2 / Q5-3 各存一条 ----------
+     历史数据里的长老法宝是「一条 quality=5」的平坦条，这里就地展开成三条独立法宝：
+       id = 名称·Q5-1 / ·Q5-2 / ·Q5-3，quality=5，elderTier=1/2/3，qlevel='5-1'/'5-2'/'5-3'
+     数量与启用状态只带给「该条原本代表的档位」（defTier），另两档留 0 / 未启用。
+     幂等：已是分档条的条目原样保留；若同名已存在分档条，则丢弃冗余的平坦条。 */
+  function expandElderTiers(){
+    const oldSel=Object.assign({},sel);
+    const existId=new Set(library.map(t=>String(t.id)));
+    const out=[]; const pick={}; let changed=false;
+    for(const t of library){
+      const isElder=(Number(t.quality)===5);
+      const tagged=isElder && /^5-[123]$/.test(String(t.qlevel||''));
+      if(!isElder || tagged){ out.push(t); pick[t.id]=oldSel[t.id]; continue; }
+      const defTier=(Number(t.elderTier)>=1&&Number(t.elderTier)<=3)?Number(t.elderTier):(elderTierOf(t)||3);
+      const dup=[1,2,3].some(et=>existId.has(t.name+'·Q5-'+et));
+      changed=true;
+      if(dup) continue;                        // 同名已有分档条 → 丢弃冗余平坦条
+      for(const et of [1,2,3]){
+        const id=t.name+'·Q5-'+et;
+        out.push(Object.assign({},t,{ id:id, name:t.name, qlevel:'5-'+et, elderTier:et, quality:5,
+          count:(et===defTier?(Number(t.count)||0):0) }));
+        const cur=oldSel[t.id];
+        pick[id]=(et===defTier&&cur)?{include:!!cur.include,count:Math.max(0,cur.count||0),priority:!!cur.priority}
+                                    :{include:false,count:0,priority:false};
+        existId.add(id);
+      }
+    }
+    if(!changed) return false;
+    library.length=0; out.forEach(t=>library.push(t));
+    Object.keys(sel).forEach(k=>delete sel[k]);
+    library.forEach(t=>{ sel[t.id]=pick[t.id]||{include:false,count:Number(t.count)||0,priority:false}; });
+    return true;
   }
 
   /* ---------- 灵枢宝鉴：双栏渲染（左=法宝选择表，右=已启用法宝信息卡） ---------- */
@@ -3061,7 +3103,7 @@ const ShotCore = (function(){
     body.querySelectorAll('.ck').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const t=library[i]; if(t.group){ const g=groups.find(x=>x.id===t.group); if(g && !g.enabled){ e.target.checked=false; sel[t.id].include=false; alert('无法启用「'+t.name+'」：其组别「'+g.name+'」尚未启用。请先在「组别管理」中勾选启用该组别。'); updateSummary(); return; } } sel[t.id].include=e.target.checked; updateSummary(); });
     body.querySelectorAll('.nm').forEach(el=>{ const i=+el.dataset.i; el.dataset.orig=library[i].name;
       el.oninput=e=>{ library[i].name=e.target.value; updateSummary(); saveLibrary(); };
-      el.onchange=e=>{ const v=(e.target.value||'').trim(); if(v && library.some((t,idx)=>idx!==i && t.name===v)){ alert('法宝名称「'+v+'」已存在，名称必须唯一，已还原。'); library[i].name=el.dataset.orig; e.target.value=el.dataset.orig; } else { library[i].name=v||el.dataset.orig; el.dataset.orig=library[i].name; } updateSummary(); saveLibrary(); };
+      el.onchange=e=>{ const v=(e.target.value||'').trim(); if(v && library.some((t,idx)=>idx!==i && t.name===v && String(t.qlevel||'')===String(library[i].qlevel||''))){ alert('法宝名称「'+v+'」（同一品质档）已存在，名称必须唯一，已还原。'); library[i].name=el.dataset.orig; e.target.value=el.dataset.orig; } else { library[i].name=v||el.dataset.orig; el.dataset.orig=library[i].name; } updateSummary(); saveLibrary(); };
     });
     body.querySelectorAll('.cnum').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; const v=Math.max(0,parseInt(e.target.value)||0); library[i].count=v; sel[library[i].id].count=v; updateSummary(); saveLibrary(); });
     body.querySelectorAll('.keystar').forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const t=library[i]; t.key=!t.key; saveLibrary(); renderInventory(); });
@@ -3241,29 +3283,36 @@ const ShotCore = (function(){
       const en=byName[name];
       if(!en||!en.tiers||!en.tiers.length){ continue; } // 不可展开，第二遍处理
       for(const t of en.tiers){
-        const q=t.quality, id=name+'·'+(q===5?('Q5-'+elderTierOf(t)):('Q'+q));
-        if(seen.has(id)) continue; seen.add(id); qNames.add(name);
-        const c=catalog.find(x=>x.name===name&&x.quality===q);
-        const item={
-          id, name, qlevel:q,
-          cells:(c&&c.cells)?c.cells:(seed.cells||[[0,0]]),
-          color:seed.color||'',
-          base:{hp:t.base.hp||0,def:t.base.def||0,atk:t.base.atk||0,dmg:t.base.dmg||0,shield:t.base.shield||0},
-          bonusRate:seed.bonusRate||0, bonusType:seed.bonusType||'none', bonusAttr:seed.bonusAttr||'hp',
-          count:(seed.quality===q)?(seed.count||0):0,
-          group:seed.group||en.element||'', type:seed.type||en.type||'', element:seed.element||en.element||'',
-          reson:t.reson||0, quality:q, awaken:cloneAwaken(seed.awaken), sig:seed.sig||null,
-          key:seed.key||false, skill:seed.skill||null
-        };
-        const effKnown=!!(seed.bonusType&&seed.bonusType!=='none');
-        if(effKnown && seed.quality!==q){ item.note='效果加成从'+(seed.quality||'?')+'档延续，未分档，待游戏内核对'; stats.flagged++; }
-        if(KNOWN_Q_EFFECT[name] && KNOWN_Q_EFFECT[name][q]!=null){ item.bonusRate=KNOWN_Q_EFFECT[name][q]; delete item.note; stats.corrected++; }
-        newLib.push(item);
-        // sel 迁移：仅把旧启用状态带到期次匹配的条目，其余默认不启用（用户按实际持有档位再勾）
-        const o=oldSel[seed.id];
-        newSel[id] = (o && seed.quality===q) ? {include:!!o.include,count:Math.max(0,o.count||0),priority:!!o.priority}
-                                            : {include:false,count:0,priority:false};
-        stats.emitted++;
+        const q=t.quality;
+        // 长老法宝（Q5）与 Q1–Q4 分档同一套路：拆成 Q5-1 / Q5-2 / Q5-3 三条独立条目
+        const tiers = (q===5) ? [1,2,3] : [0];
+        for(const et of tiers){
+          const ql = (q===5) ? ('5-'+et) : q;
+          const id = name+'·Q'+ql;
+          if(seen.has(id)) continue; seen.add(id); qNames.add(name);
+          const c=catalog.find(x=>x.name===name&&x.quality===q);
+          const sameTier = (seed.quality===q) && (q!==5 || (elderTierOf(seed)||3)===et);
+          const item={
+            id, name, qlevel:ql,
+            cells:(c&&c.cells)?c.cells:(seed.cells||[[0,0]]),
+            color:seed.color||'',
+            base:{hp:t.base.hp||0,def:t.base.def||0,atk:t.base.atk||0,dmg:t.base.dmg||0,shield:t.base.shield||0},
+            bonusRate:seed.bonusRate||0, bonusType:seed.bonusType||'none', bonusAttr:seed.bonusAttr||'hp',
+            count:sameTier?(seed.count||0):0,
+            group:seed.group||en.element||'', type:seed.type||en.type||'', element:seed.element||en.element||'',
+            reson:t.reson||0, quality:q, elderTier:(q===5?et:0), awaken:cloneAwaken(seed.awaken), sig:seed.sig||null,
+            key:seed.key||false, skill:seed.skill||null
+          };
+          const effKnown=!!(seed.bonusType&&seed.bonusType!=='none');
+          if(effKnown && !sameTier){ item.note='效果加成从'+(seed.quality||'?')+'档延续，未分档，待游戏内核对'; stats.flagged++; }
+          if(KNOWN_Q_EFFECT[name] && KNOWN_Q_EFFECT[name][q]!=null){ item.bonusRate=KNOWN_Q_EFFECT[name][q]; delete item.note; stats.corrected++; }
+          newLib.push(item);
+          // sel 迁移：仅把旧启用状态带到期次匹配的条目，其余默认不启用（用户按实际持有档位再勾）
+          const o=oldSel[seed.id];
+          newSel[id] = (o && sameTier) ? {include:!!o.include,count:Math.max(0,o.count||0),priority:!!o.priority}
+                                      : {include:false,count:0,priority:false};
+          stats.emitted++;
+        }
       }
     }
     // 第二遍：保留无法展开的平坦条，但若同名已有 Q 档条则丢弃（冗余平坦条，正是"数量翻倍"的元凶）
@@ -3445,10 +3494,26 @@ const ShotCore = (function(){
     shotState.fixes=[]; // 换新图，人工修正记录清空
     let result;
     try{
-      result=ShotCore.recognize(imageData, library, { catalog:SHOT_CATALOG||[], enrich:SHOT_ENRICH||{} });
+      result=ShotCore.recognize(imageData, shotLibForRecognize(), { catalog:SHOT_CATALOG||[], enrich:SHOT_ENRICH||{} });
     }catch(err){ $('shotMsg').textContent='识别失败：'+err.message; return; }
     shotState.result=result; shotState.src=cv; shotState.w=w; shotState.h=h; shotState.imageData=imageData;
     shotRenderResult(result, Date.now()-t0);
+  }
+  // 识别用的库视图：长老法宝在库里有 Q5-1/2/3 三条完全同形的条目，
+  // 直接丢给识别引擎会把同一件法宝算成三个并列候选；这里按名称折叠成「默认档」单条。
+  // 默认档 = 官方长老星表反查（A 表→Q5-3、B 表→Q5-2），导入前可在「匹配法宝」下拉里改档。
+  function shotLibForRecognize(){
+    const byName=new Map();
+    library.forEach(t=>{ if(Number(t.quality)!==5) return; if(!byName.has(t.name)) byName.set(t.name,[]); byName.get(t.name).push(t); });
+    const out=[]; const done=new Set();
+    library.forEach(t=>{
+      if(Number(t.quality)!==5){ out.push(t); return; }
+      if(done.has(t.name)) return; done.add(t.name);
+      const arr=byName.get(t.name)||[t];
+      const defT=(elderTierOf({quality:5,name:t.name})||3);
+      out.push(arr.find(x=>Number(x.elderTier)===defT) || arr[0] || t);
+    });
+    return out;
   }
   function shotLibOptions(cell, curId){
     let h='<option value="">— 请选择 —</option>';
@@ -3806,8 +3871,8 @@ const ShotCore = (function(){
         if(!r.pick||r.pick==='__skip__') return;
         let eq=library.find(t=>t.id===r.pick);
         if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
-        if(eq && Number(eq.quality)===5){ q5.push({ name:eq.name, tier:elderTierOf(eq) }); return; }
-        if(r.pick==='__new__' && Number(r.piece&&r.piece.quality)===5){ q5.push({ name:(r.newName||'（新法宝）'), tier:3 }); }
+        if(eq && Number(eq.quality)===5){ q5.push({ name:eq.name+'（'+qualityLabel(eq)+'）', tier:elderTierOf(eq) }); return; }
+        if(r.pick==='__new__' && Number(r.piece&&r.piece.quality)===5){ q5.push({ name:(r.newName||'（新法宝）')+'（'+qualityLabel(r.piece.equip||{quality:5})+'）', tier:(r.piece.equip?elderTierOf(r.piece.equip):3) }); }
       });
       if(q5.length){
         const g1=q5.filter(x=>x.tier===1), g2=q5.filter(x=>x.tier===2), g3=q5.filter(x=>x.tier===3||x.tier>3||x.tier<1);
@@ -3816,7 +3881,8 @@ const ShotCore = (function(){
         if(g2.length) lines.push('Q5-2（长老 4 星 · ×2.0）'+g2.length+' 件：'+g2.map(x=>x.name).join('、'));
         if(g3.length) lines.push('Q5-3（长老 5 星 · ×2.5）'+g3.length+' 件：'+g3.map(x=>x.name).join('、'));
         lines.push('','长老档位直接决定评分用的外部倍率，等级选错会让结果失真。');
-        lines.push('已确认无误 → 点「确定」导入；需修改 → 点「取消」，到灵枢宝鉴明细里改「品质 / 长老档」。');
+        lines.push('要换档：直接在「匹配法宝」下拉里改选同名的 Q5-1 / Q5-2 / Q5-3 另两条（库里它们是三件独立法宝）。');
+        lines.push('已确认无误 → 点「确定」导入；需修改 → 点「取消」后重选。');
         let ok=true;
         try{ if(typeof confirm==='function'){ const rr=confirm(lines.join('\n')); if(rr===false) ok=false; } }catch(e){}
         if(!ok){ const m=$('shotMsg'); if(m) m.textContent='已取消导入：请先在灵枢宝鉴中核对长老法宝等级（Q5-1 / Q5-2 / Q5-3 对应外部倍率 ×1.6 / ×2.0 / ×2.5）。'; return; }
@@ -3885,7 +3951,9 @@ const ShotCore = (function(){
         addToLibrary(o.name, o.cells, rs.length, Object.assign({}, o.opts, {
           awaken:{level:awRow?(parseInt(awRow.aw)||0):0},
         }));
-        o.t=library[library.length-1];
+        o.t=(Number(o.opts.quality)===5)
+          ? (library.find(x=>x.name===o.name && Number(x.quality)===5 && Number(x.elderTier)===Number(o.opts.elderTier)) || library[library.length-1])
+          : library[library.length-1];
         added++;
       } else {
         updated++;
@@ -4118,10 +4186,10 @@ const ShotCore = (function(){
     t.element=$('dtElement').value||''; t.type=$('dtType').value||'';
     t.reson=Math.max(0,Number($('dtReson').value)||0);
     { const _qv=String($('dtQuality').value||'0');
-      if(_qv==='5-1'){ t.quality=5; t.elderTier=1; }
-      else if(_qv==='5-2'){ t.quality=5; t.elderTier=2; }
-      else if(_qv==='5-3'){ t.quality=5; t.elderTier=3; }
-      else { t.quality=Math.min(5,Math.max(0,Number(_qv)||0)); t.elderTier=0; } }
+      if(_qv==='5-1'){ t.quality=5; t.elderTier=1; t.qlevel='5-1'; }
+      else if(_qv==='5-2'){ t.quality=5; t.elderTier=2; t.qlevel='5-2'; }
+      else if(_qv==='5-3'){ t.quality=5; t.elderTier=3; t.qlevel='5-3'; }
+      else { t.quality=Math.min(5,Math.max(0,Number(_qv)||0)); t.elderTier=0; t.qlevel=null; } }
     t.base=t.base||{hp:0,def:0,atk:0,dmg:0};
     t.base.hp=Math.max(0,Number($('dtHp')?$('dtHp').value:0)||0);
     t.base.def=Math.max(0,Number($('dtDef')?$('dtDef').value:0)||0);
@@ -4608,6 +4676,7 @@ const ShotCore = (function(){
 
   /* ---------- 初始化 ---------- */
   const libRestored = loadLibrary();
+  expandElderTiers();   // 历史数据里的单条 Q5 长老法宝 → 展开成 Q5-1/Q5-2/Q5-3 三条独立法宝
   renderQuickShapes(); renderDraw(); renderInventory(); renderBagGrid(); renderGroups();
   $('clearLib').onclick=()=>{ if(library.length===0){ alert('宝鉴库已为空'); return; } if(confirm('确认清空本地宝鉴库？所有已保存的法宝（名称/形状/属性）将被删除且不可恢复。')){ library.length=0; Object.keys(sel).forEach(k=>delete sel[k]); tid=0; try{ localStorage.removeItem(LIB_KEY); localStorage.removeItem(GRP_KEY); localStorage.removeItem('treasurePackBase_v1'); }catch(e){} renderInventory(); renderGroups(); $('statusBox').textContent='🗑 本地宝鉴库已清空。'; } };
   $('importBase').onclick=()=>{ const n=importBaseLibrary(); $('statusBox').textContent='📥 已导入/合并基础法宝库，本次新增 '+n+' 件（共 '+library.length+' 件，7 组均默认未启用；在「组别管理」勾选需要的组别即可启用法宝，数量默认 0）。'; };

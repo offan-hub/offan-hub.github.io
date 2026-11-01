@@ -275,6 +275,51 @@
     border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.25); background:#fff5f5; }
   .shot-err-msg { color:#b91c1c; font-weight:600; }
   #shotMsg.on-err { color:#b91c1c; }
+  /* —— 手机适配（窄屏 < 600px）：放大点按区域、网格降为单列、控件全宽 —— */
+  @media (max-width:600px){
+    body { font-size:13.5px; }
+    header { padding:12px 14px; }
+    header h1 { font-size:17px; }
+    header p { font-size:11.5px; }
+    main { padding:10px; gap:10px; }
+    .card { padding:11px; margin-bottom:10px; border-radius:10px; }
+    .card h2 { font-size:15px; }
+    .space-body { gap:14px; }
+    .space-controls { grid-template-columns:1fr 1fr; gap:6px; max-width:none; }
+    .space-controls .full { grid-column:1 / -1; }
+    .add-fields { max-width:none; }
+    .add-fields>div { flex:1 1 calc(50% - 6px); }
+    .add-fields input, .add-fields select { width:100%; }
+    .weights { flex-wrap:wrap; }
+    .weights>div { flex:1 1 calc(50% - 4px); }
+    .stats { grid-template-columns:1fr 1fr; }
+    button { padding:9px 12px; font-size:14px; } /* 增大点按区域 */
+    .toolbar button { padding:7px 11px; font-size:13px; }
+    .lib-dual { flex-direction:column; }
+    .lib-left-scroll { max-height:380px; }
+    .lib-right-scroll { max-height:300px; }
+    .inv-table input[type=number]{ width:52px; }
+    .inv-table input[type=text]{ width:96px; }
+    .inv-table select { width:84px; }
+    .inv-table .mini .mc { width:12px; height:12px; }
+    .table-scroll { max-height:360px; }
+    .plans { grid-template-columns:1fr; gap:10px; }
+    .output-wrap, .result-main { grid-template-columns:1fr; gap:12px; }
+    #statusBox { min-height:54px; font-size:11.5px; }
+    .seg { flex-wrap:wrap; }
+    .modal { width:100%; }
+    .modal-bd { max-height:60vh; }
+    .shot-wrap { flex-wrap:wrap; }
+    .shot-right { flex:1 1 100%; }
+    .en-stat { grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); }
+    .row { gap:6px; }
+  }
+  @media (max-width:380px){
+    .stats { grid-template-columns:1fr; }
+    .weights>div { flex:1 1 100%; }
+    .add-fields>div { flex:1 1 100%; }
+    .space-controls { grid-template-columns:1fr; }
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -455,7 +500,7 @@
             <div class="plans" id="plans"></div>
           </div>
           <div class="embedded-solver">
-            <h3>求解设置 <span id="engineVer" style="font-size:11px;font-weight:400;color:#8a8f98">引擎 v20261028b · 爬山精修+全局抛光</span></h3>
+            <h3>求解设置 <span id="engineVer" style="font-size:11px;font-weight:400;color:#8a8f98">引擎 v20261101 · 并行Worker+退火</span></h3>
             <button id="solve" class="primary" style="width:100%">⚡ 一键生成填充方案</button>
             <div class="row mt" style="gap:8px;align-items:flex-end">
               <div style="flex:1;min-width:0">
@@ -469,14 +514,7 @@
               <button id="reshuffle" class="ghost" title="基于新随机种子继续搜索，并合并进跨批全局最优">🔄 换一批</button>
             </div>
             <div class="hint" style="margin-top:6px">候选池总数：填 2000 即自动跨批合并，直到候选池凑满 2000 套（布局去重）后直接输出该池的全局最优解；填 0 则按上方「连续批次」执行。</div>
-            <label class="mt">排序</label>
-            <select id="sortMode" style="width:100%">
-              <option value="attr" selected>按属性总分（默认：饱和率优先）</option>
-              <option value="score">按相邻法宝数</option>
-              <option value="fill">按填充率</option>
-            </select>
-            <div class="hint" style="margin-top:6px">默认规则：饱和度 100%（满填）的方案优先级最高——即使另一套方案饱和度只有 90%，只要它属性总分更高，也仍然排在其后；饱和度相同时才按属性总分排序。</div>
-            <label class="mt">属性权重占比（用于「按属性总分」排序，四者合计 100；伤害默认 0 即不计入总分）</label>
+            <label class="mt">属性权重占比（用于评分，四者合计 100；伤害默认 0 即不计入总分）</label>
             <div class="weights">
               <div><label>生命值</label><input type="number" id="wHp" min="0" max="100" value="34"></div>
               <div><label>攻击力</label><input type="number" id="wAtk" min="0" max="100" value="33"></div>
@@ -484,25 +522,9 @@
               <div><label>伤害</label><input type="number" id="wDmg" min="0" max="100" value="0"></div>
             </div>
             <div class="wmsg" id="wMsg"></div>
-            <div class="toolbar">
-              <button id="exportCfg" class="ghost">📤 复制输入配置</button>
-              <button id="saveCfg" class="ghost">💾 保存配置</button>
-              <button id="loadCfg" class="ghost">📂 读取配置</button>
-              <button id="exportResult" class="ghost" disabled>📊 导出结果JSON</button>
-            </div>
-            <input type="file" id="fileInput" accept="application/json,.json" style="display:none">
-            <div id="exportBox" style="display:none;margin-top:8px"></div>
             <div class="stats" id="statsBlock"></div>
             <div class="plan-detail" id="planDetail"><div class="pd-empty">点击左侧任意方案，此处实时显示该方案的摆放与属性详情。</div></div>
             <pre id="statusBox" style="display:none">尚未计算。</pre>
-            <details class="history-panel">
-              <summary>历史求解（最多 10 条，点击「还原」可恢复当时的法宝组合与结果）</summary>
-              <div class="row" style="margin-top:8px">
-                <button id="saveHistory" class="ghost">💾 保存当前求解到历史</button>
-                <button id="clearHistory" class="ghost">清空历史</button>
-              </div>
-              <div id="historyList" class="history-list"></div>
-            </details>
           </div>
         </div>
       </div>
@@ -550,6 +572,7 @@
 
 <script>
 /* ===================== 求解器核心（与 pack-core.js 一致，已通过 Node 测试） ===================== */
+/*__PACKCORE_BEGIN__*/
 (function (global) {
   'use strict';
   function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
@@ -677,7 +700,9 @@
          (weightedDefault, 与 UI 排序口径完全一致) 为目标，逃逸纯几何贪心易陷的局部最优（如攻击权重下的 306096 陷阱）。
          只接受更优解（单调推进全局最优点），不改变填充率（移除/重放的是同一组实例，满填不变）。 —— */
   function sameGroupAttr(a,b){ return !!(a&&b && a.group!=null && b.group!=null && a.group===b.group); }
-  function refineByWeighted(R,C,blocked,infos,w,K,seed,initUsed,deadline){
+  /* anneal>0 时启用退火接受：允许以 exp(Δ/T) 概率接受稍差解（T 随迭代线性衰减），
+     帮助跳出深局部盆地；anneal=0（默认）保持纯单调爬山，行为与历史版本完全一致（回归基线不变）。 */
+  function refineByWeighted(R,C,blocked,infos,w,K,seed,initUsed,deadline,anneal){
     const total=R*C;
     function scoreOf(used){ return weightedDefault(attrTotalsOfUsed(used,infos,R,C), w); }
     const n=initUsed.length;
@@ -711,7 +736,10 @@
         if(bj<0){ ok=false; break; }
         placeOn(pls[bj],occ2); const id=nextId++; for(const idx of pls[bj]) instAt2[idx]=id; newUsed.push({pi:u.pi,pIdx:bj});
       }
-      if(ok){ const w2=scoreOf(newUsed); if(w2>curW){ curW=w2; current=newUsed; if(w2>best.w) best={used:newUsed.slice(),w:w2}; } }
+      if(ok){ const w2=scoreOf(newUsed); const dW=w2-curW;
+        if(dW>0){ curW=w2; current=newUsed; if(w2>best.w) best={used:newUsed.slice(),w:w2}; }
+        else if(anneal>0){ const T=anneal*(1-it/K); if(T>0 && rng()<Math.exp(dW/T)){ curW=w2; current=newUsed; } }  // 退火：接受稍差解以跳出盆地，best 始终只记全局最优
+      }
     }
     return best;
   }
@@ -1047,7 +1075,7 @@
       }
       if(!ok||!used.length) continue;
       const w0=(src.weighted!=null?src.weighted:weightedDefault(attrTotalsOfUsed(used,infos,R,C),w));
-      const rf=refineByWeighted(R,C,blocked,infos,w,K,((opts.seed||20260721)^(i*0xC2B2AE35))>>>0,used,deadline);
+      const rf=refineByWeighted(R,C,blocked,infos,w,K,((opts.seed||20260721)^(i*0xC2B2AE35))>>>0,used,deadline,Math.max(0,opts.anneal||0));
       const bestUsed=rf.w>w0?rf.used:used;
       const sig=sigOfUsed(bestUsed,infos,R,C);
       if(seen.has(sig)) continue; seen.add(sig);
@@ -1067,6 +1095,7 @@
   const api={ generatePlans, polishPlans, normalizeShape, enumeratePlacements, mulberry32, shuffle, greedyFill, neighborScore };
   if(typeof module!=='undefined'&&module.exports) module.exports=api; global.PackCore=api;
 })(typeof window!=='undefined'?window:globalThis);
+/*__PACKCORE_END__*/
 
 
 /* ============================================================
@@ -2899,43 +2928,6 @@ const ShotCore = (function(){
     reader.readAsArrayBuffer(file); // 始终按二进制读取，再按真实类型分支（修复 .csv 实为 xlsx 的乱码）
   }
 
-  /* ===================== 历史求解模块（最多 10 条，可还原法宝组合） ===================== */
-  const HIST_KEY='treasurePackHistory';
-  function loadHistory(){ try{ const a=JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-  function saveHistoryList(arr){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr.slice(0,10))); }catch(e){} }
-  function captureHistory(){
-    if(!lastPlans||!lastPlans.length){ alert('请先点「一键生成填充方案」生成结果后再保存历史。'); return; }
-    const R=bagRows(),C=bagCols();
-    const selSnap={}; library.forEach(t=>{ const s=sel[t.id]; if(s) selSnap[t.id]={include:!!s.include,count:Math.max(0,s.count||0),priority:!!s.priority}; });
-    const top0=lastPlans[0];
-    const label=(R+'×'+C)+' 启用'+Object.values(selSnap).filter(s=>s.include).length+'件 填充'+top0.filled+'/'+top0.capacity;
-    const entry={ ts:Date.now(), label, backpack:{rows:R,cols:C,blocked:[...bagBlocked]}, sel:selSnap, plans:lastPlans, ms:lastMs };
-    const arr=loadHistory(); arr.unshift(entry); saveHistoryList(arr);
-    renderHistory();
-    $('statusBox').textContent='💾 已保存当前求解到历史（共 '+Math.min(arr.length,10)+' 条）。';
-  }
-  function renderHistory(){
-    const box=$('historyList'); if(!box) return; const arr=loadHistory();
-    if(arr.length===0){ box.innerHTML='<div class="empty-note">暂无历史求解。生成方案后点「保存当前求解到历史」即可记录。</div>'; return; }
-    box.innerHTML='';
-    arr.forEach((h,idx)=>{
-      const time=new Date(h.ts); const tstr=time.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-      const d=document.createElement('div'); d.className='hist-row';
-      d.innerHTML='<div class="hist-info"><b>#'+(idx+1)+'</b> '+escapeHtml(h.label)+' <span class="hist-time">'+tstr+'</span></div>';
-      const btn=document.createElement('button'); btn.className='ghost'; btn.textContent='还原';
-      btn.onclick=()=>restoreHistory(idx);
-      d.appendChild(btn); box.appendChild(d);
-    });
-  }
-  function restoreHistory(idx){
-    const arr=loadHistory(); const h=arr[idx]; if(!h) return;
-    $('rows').value=h.backpack.rows; $('cols').value=h.backpack.cols; bagBlocked=new Set((h.backpack.blocked||[]).filter(i=>i>=0)); $('preset').value='custom';
-    Object.keys(sel).forEach(k=>{ if(sel[k]) sel[k].include=false; });
-    library.forEach(t=>{ const s=h.sel[t.id]; if(s){ sel[t.id]={include:!!s.include,count:Math.max(0,s.count||0),priority:!!s.priority}; } });
-    renderInventory(); renderBagGrid();
-    if(h.plans&&h.plans.length){ renderPlans(h.plans,h.backpack,h.ms||0); $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合与结果。'; }
-    else $('statusBox').textContent='⏪ 已还原历史求解 #'+(idx+1)+' 的法宝组合。';
-  }
   function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0,shield:Number(t.base&&t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), reson:Number(t.reson)||0, quality:Number(t.quality)||0, awaken:cloneAwaken(t.awaken), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
@@ -3039,7 +3031,7 @@ const ShotCore = (function(){
   // 右栏：已启用法宝信息卡（只读展示，编辑走「详情」弹窗）
   function renderEnabledPanel(){
     const box=$('enabledList'); if(!box) return;
-    const list=library.filter(t=>{ const s=sel[t.id]; return s&&s.include; });
+    const list=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
     const onEl=$('libOnCount'); if(onEl) onEl.textContent=list.length?('共 '+list.length+' 种'):'';
     if(!list.length){ box.innerHTML='<div class="en-empty">还没有启用的法宝：在左侧勾选「启用」并填写数量（>0）后，这里会显示每件法宝的完整信息。</div>'; return; }
     list.sort((a,b)=>{
@@ -3182,27 +3174,33 @@ const ShotCore = (function(){
   /* ---------- 展开 Q 档库：依据 enrich-map 逐档数据，把每件法宝拆成 Q1–Q4 独立条目 ---------- */
   // 已知逐品质效果修正（用户从游戏确认）：流水散 Q4=100 / Q3=80
   const KNOWN_Q_EFFECT = { '流水散': { 3: 80, 4: 100 } };
-  async function expandLibraryQLevels(){
-    const btn=$('expandQ'); if(btn) btn.disabled=true;
+  async function expandLibraryQLevels(silent){
+    const isSilent = (typeof silent === 'boolean') ? silent : false;
+    const btn=$('expandQ'); if(btn && !isSilent) btn.disabled=true;
     let map=null;
     try{
       const r=await fetch('enrich-map.json?_='+Date.now(),{cache:'no-store'});
       if(!r.ok) throw new Error('HTTP '+r.status);
       map=await r.json();
-    }catch(e){ if(btn) btn.disabled=false; alert('enrich-map 加载失败：'+e.message); return; }
+    }catch(e){ if(btn && !isSilent){ btn.disabled=false; alert('enrich-map 加载失败：'+e.message); } return; }
     const byName=map.byName||{}, catalog=map.catalog||[];
     const oldSel=Object.assign({}, sel);
-    const newLib=[], newSel={}, seen=new Set();
+    const newLib=[], newSel={}, seen=new Set(), qNames=new Set();
     const stats={seeds:0, emitted:0, flagged:0, corrected:0, skipped:0};
+    // 第一遍：展开所有可展开的种子 + 保留已有 Q 档条（按 id 去重，杜绝"平坦条+Q档条共存"翻倍）
     for(const seed of library){
       stats.seeds++;
-      if(seed.qlevel){ newLib.push(seed); newSel[seed.id]=oldSel[seed.id]||{include:false,count:0,priority:false}; continue; } // 已展开则保留
       const name=(seed.name||'').trim();
+      if(seed.qlevel){
+        if(seen.has(seed.id)){ stats.skipped++; continue; } // 已来自平坦条展开，跳过
+        seen.add(seed.id); qNames.add(name);
+        newLib.push(seed); newSel[seed.id]=oldSel[seed.id]||{include:false,count:0,priority:false}; continue;
+      }
       const en=byName[name];
-      if(!en||!en.tiers||!en.tiers.length){ newLib.push(seed); newSel[seed.id]=oldSel[seed.id]||{include:false,count:0,priority:false}; continue; }
+      if(!en||!en.tiers||!en.tiers.length){ continue; } // 不可展开，第二遍处理
       for(const t of en.tiers){
         const q=t.quality, id=name+'·Q'+q;
-        if(seen.has(id)) continue; seen.add(id);
+        if(seen.has(id)) continue; seen.add(id); qNames.add(name);
         const c=catalog.find(x=>x.name===name&&x.quality===q);
         const item={
           id, name, qlevel:q,
@@ -3226,9 +3224,19 @@ const ShotCore = (function(){
         stats.emitted++;
       }
     }
+    // 第二遍：保留无法展开的平坦条，但若同名已有 Q 档条则丢弃（冗余平坦条，正是"数量翻倍"的元凶）
+    for(const seed of library){
+      if(seed.qlevel) continue;
+      const nm=(seed.name||'').trim();
+      const en=byName[nm];
+      if(en&&en.tiers&&en.tiers.length) continue; // 可展开，第一遍已处理
+      if(qNames.has(nm)){ stats.skipped++; continue; } // 同名已有 Q 档条 → 丢弃冗余平坦条
+      newLib.push(seed); newSel[seed.id]=oldSel[seed.id]||{include:false,count:0,priority:false};
+    }
     library.length=0; newLib.forEach(t=>library.push(t));
     Object.keys(sel).forEach(k=>delete sel[k]); Object.assign(sel,newSel);
     saveLibrary(); renderInventory(); if(typeof renderGroups==='function') renderGroups();
+    if(isSilent) return;
     if(btn) btn.disabled=false;
     const flagMsg = stats.flagged? '；'+stats.flagged+' 条效果加成跨档延续、已标黄待你从游戏核对' : '';
     const corrMsg = stats.corrected? '；已套用已知修正（流水散 Q4=100/Q3=80）'+stats.corrected+' 条' : '';
@@ -4089,24 +4097,64 @@ const ShotCore = (function(){
     renderPlans(poolGlobal, lastBackpack, ms);
     if(lastRecord && poolGlobal.length){ const sb=$('statusBox'); if(sb) sb.textContent='🏆 刷新纪录（跨批全局最优属性评分 '+Math.round(lastBestW)+'） · '+sb.textContent; }
   }
-  let solvingPool=false, lastPoolTarget=0;
+  let solvingPool=false, lastPoolTarget=0, abortRequested=false;
   function readPoolTarget(){ const el=$('poolTarget'); return el?Math.max(0,parseInt(el.value)||0):0; }
+
+  /* ===================== Web Worker 并行求解池 =====================
+     借鉴 eleven-tz/laozu-solver-juexing：多 Worker 真并行 + 温度梯队（冷热搭配）。
+     - 从本页面 <script> 中提取 PackCore 源码，Blob URL 内联成 Worker（保持单文件）；
+     - Worker 0 为冷 Worker（anneal=0 纯爬山，保底，行为与历史完全一致）；
+     - 其余 Worker 退火初温按 0.5~2.5 几何 spread（250 分为 1.0 基准温度），负责跳出深盆地；
+     - 任何 Worker 不可用时自动回退到原单线程路径（行为与旧版一致）。 */
+  const SolverPool={
+    workers:[], temps:[], ready:false, failed:false,
+    count(){ const hc=(typeof navigator!=='undefined'&&navigator.hardwareConcurrency)||4; return Math.max(2,Math.min(6,hc-1)); },
+    tempAt(i,n){ if(i===0) return 0; if(n<=2) return 2.5; return 0.5*Math.pow(5,(i-1)/(n-2)); },
+    annealAt(i){ return Math.round(250*this.temps[i]); },
+    init(){
+      if(this.ready||this.failed) return this.ready;
+      try{
+        if(typeof Worker==='undefined'||typeof Blob==='undefined'||typeof URL==='undefined'||!URL.createObjectURL||typeof document==='undefined'){ this.failed=true; return false; }
+        let src='';
+        const ss=document.querySelectorAll('script');
+        for(let si=0;si<ss.length;si++){ const t=ss[si].textContent||''; const a=t.indexOf('/*__PACKCORE_BEGIN__*/'); const b=t.indexOf('/*__PACKCORE_END__*/'); if(a>=0&&b>a){ src=t.slice(a,b); break; } }
+        if(!src){ this.failed=true; return false; }
+        const driver='\n;self.addEventListener("mes"+"sage",function(e){var d=e.data||{};try{'
+          +'if(d.type==="batch"){self.postMessage({type:"batchDone",workerId:d.workerId,plans:PackCore.generatePlans(d.backpack,d.pieces,d.opts)});}'
+          +'else if(d.type==="polish"){self.postMessage({type:"polishDone",workerId:d.workerId,plans:PackCore.polishPlans(d.backpack,d.pieces,d.plans,d.opts)});}'
+          +'}catch(err){self.postMessage({type:"error",workerId:d.workerId,error:String(err&&err.message||err)});}});';
+        const url=URL.createObjectURL(new Blob([src+driver],{type:'application/javascript'}));
+        const n=this.count();
+        for(let i=0;i<n;i++){ const w=new Worker(url); w._sid=i; w._idle=true; this.workers.push(w); this.temps.push(this.tempAt(i,n)); }
+        this.ready=true;
+      }catch(e){ this.failed=true; this.workers=[]; this.temps=[]; }
+      return this.ready;
+    },
+    shutdown(){ this.workers.forEach(w=>{ try{w.terminate();}catch(e){} }); this.workers=[]; this.temps=[]; this.ready=false; }
+  };
+
   function runBatches(){
-    if(solvingPool) return;
+    if(solvingPool){ abortRequested=true; return; }   // 求解中再次点击 = 请求中止
     const enabledCount=library.filter(t=>sel[t.id]&&sel[t.id].include).length;
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
     if(chosen.length===0){ $('statusBox').textContent= enabledCount>0 ? '⚠️ 已启用 '+enabledCount+' 件法宝，但数量均为 0；请至少为一件填写数量（>0）后再生成。' : '⚠️ 请先在「组别管理」勾选组别以启用法宝，并填写数量（>0）。'; return; }
     const target=readPoolTarget(); lastPoolTarget=target;
-    const N=target>0?Infinity:Math.max(1,Math.min(12, parseInt($('batches').value)||3));
     batchSeedBase=(Date.now()&0x7fffffff);
-    solvingPool=true;
-    $('solve').disabled=true; if($('reshuffle')) $('reshuffle').disabled=true;
+    abortRequested=false;
     poolGlobal=[]; sigGlobal=new Set(); lastBestW=0; lastRecord=false;
+    if(SolverPool.init()) runBatchesWorker(target);
+    else runBatchesMain(target);
+  }
+  /* —— 单线程路径（Worker 不可用时的回退，行为与旧版一致；同样支持中止） —— */
+  function runBatchesMain(target){
+    const N=target>0?Infinity:Math.max(1,Math.min(12, parseInt($('batches').value)||3));
+    solvingPool=true;
+    $('solve').textContent='⏹ 中止求解'; if($('reshuffle')) $('reshuffle').disabled=true;
     let b=0, back=null, stall=0; const t0=performance.now();
-    const prog=()=>{ $('statusBox').textContent='⏳ 生成中… 已跑 '+b+' 批 · 候选池 '+poolGlobal.length+(target>0?(' / 目标 '+target):(' / '+N+' 批')); };
+    const prog=()=>{ $('statusBox').textContent='⏳ 生成中… 已跑 '+b+' 批 · 候选池 '+poolGlobal.length+(target>0?(' / 目标 '+target):(' / '+N+' 批'))+' · 当前最优 '+Math.round(lastBestW)+'（再点「中止求解」可提前收束）'; };
     prog();
     function finish(){
-      solvingPool=false; $('solve').disabled=false; if($('reshuffle')) $('reshuffle').disabled=false;
+      solvingPool=false; $('solve').textContent='⚡ 一键生成填充方案'; if($('reshuffle')) $('reshuffle').disabled=false;
       if(back) lastBackpack=back;
       const ms=(performance.now()-t0).toFixed(0);
       renderMerged(ms);
@@ -4114,6 +4162,7 @@ const ShotCore = (function(){
       polishGlobal();
     }
     function step(){
+      if(abortRequested){ finish(); return; }
       const before=poolGlobal.length;
       const r=doSolve((batchSeedBase ^ (b*0x9E3779B1))>>>0, b>0);
       if(r.empty){ finish(); return; }
@@ -4128,6 +4177,73 @@ const ShotCore = (function(){
       setTimeout(step,0);
     }
     setTimeout(step,10);
+  }
+  /* —— Worker 并行路径：批次任务派发给温度梯队 Worker，结果回流合并，实时刷新当前最优 —— */
+  let solveGen=0;
+  function runBatchesWorker(target){
+    const N=target>0?Infinity:Math.max(1,Math.min(12, parseInt($('batches').value)||3));
+    solvingPool=true;
+    const gen=++solveGen;
+    $('solve').textContent='⏹ 中止求解'; if($('reshuffle')) $('reshuffle').disabled=true;
+    const backpack={ rows:bagRows(), cols:bagCols(), blocked:[...bagBlocked] };
+    lastBackpack=backpack;
+    const pieces=buildPieces();
+    const weights=readWeights();
+    const t0=performance.now();
+    let b=0, stall=0, dispatched=0, done=false, lastLiveRender=0;
+    const workers=SolverPool.workers;
+    const prog=()=>{ $('statusBox').textContent='⚡ 并行求解中… '+workers.length+' 路 Worker（冷热温度梯队）· 已回 '+b+' 批 · 候选池 '+poolGlobal.length+(target>0?(' / 目标 '+target):(' / '+N+' 批'))+' · 当前最优 '+Math.round(lastBestW)+'（再点「中止求解」可提前收束）'; };
+    prog();
+    const shouldStop=()=> target>0 ? (poolGlobal.length>=target || stall>=15 || b>=120) : (b>=N);
+    function finish(){
+      if(done) return; done=true;
+      solvingPool=false; $('solve').textContent='⚡ 一键生成填充方案'; if($('reshuffle')) $('reshuffle').disabled=false;
+      const ms=(performance.now()-t0).toFixed(0);
+      renderMerged(ms);
+      const sb=$('statusBox');
+      if(sb&&abortRequested) sb.textContent='⏹ 已按当前候选池提前收束 · '+sb.textContent;
+      if(sb&&target>0) sb.textContent+=' · 候选池目标 '+target+(poolGlobal.length>=target?' ✓ 已达成':'（已收敛：连续多批无新增布局）');
+      polishGlobal();
+    }
+    const tryFinish=()=>{ if(!done && (abortRequested || shouldStop()) && workers.every(w=>w._idle)) finish(); };
+    function dispatch(w){
+      if(done) return;
+      if(abortRequested || shouldStop()){ tryFinish(); return; }
+      const bi=dispatched++;
+      const seed=(batchSeedBase ^ (bi*0x9E3779B1) ^ (w._sid*0x2545F491))>>>0;
+      w._idle=false;
+      w.postMessage({type:'batch', workerId:w._sid, backpack, pieces,
+        opts:{seed, runsPerStrategy:500, timeLimitMs:1500, weights, anneal:SolverPool.annealAt(w._sid)}});
+    }
+    workers.forEach(w=>{
+      w.onmessage=e=>{ const d=e.data||{};
+        if(done) return;
+        if(d.type==='error'){
+          // 某路 Worker 运行失败：关闭并行，整体回退单线程重跑（保底正确性）
+          SolverPool.shutdown(); solvingPool=false;
+          poolGlobal=[]; sigGlobal=new Set(); lastBestW=0; lastRecord=false;
+          runBatchesMain(target); return;
+        }
+        if(d.type!=='batchDone') return;
+        b++;
+        const before=poolGlobal.length;
+        for(const p of (d.plans||[])){ const sg=sigOfPlan(p); if(!sigGlobal.has(sg)){ sigGlobal.add(sg); poolGlobal.push(p); } }
+        poolGlobal.forEach(p=>{ if(p.weighted==null) p.weighted=weightedScore(p.totals,weights); });
+        const bestNow=poolGlobal.reduce((m,p)=>Math.max(m,p.weighted||0),0);
+        if(bestNow>lastBestW+1e-6) lastRecord=true;
+        lastBestW=Math.max(lastBestW,bestNow);
+        stall=(poolGlobal.length-before)>0 ? 0 : stall+1;
+        w._idle=true;
+        prog();
+        // 实时展示当前最优：有新纪录且距上次渲染 ≥1.2s 时重渲染（避免大池下频繁全量重算）
+        const now=performance.now();
+        if(lastRecord && now-lastLiveRender>1200){ lastLiveRender=now; renderMerged((now-t0).toFixed(0)); }
+        if(abortRequested || shouldStop()){ tryFinish(); } else dispatch(w);
+      };
+      w.onerror=()=>{ if(done) return; SolverPool.shutdown(); solvingPool=false;
+        poolGlobal=[]; sigGlobal=new Set(); lastBestW=0; lastRecord=false; runBatchesMain(target); };
+    });
+    workers.forEach(w=>dispatch(w));
   }
   /* 🔥 P1 全局抛光：批次收敛后，对全池最优解继续深爬山（跨批协作封顶，不再只靠单批运气） */
   function polishGlobal(){
@@ -4152,17 +4268,6 @@ const ShotCore = (function(){
     if(poolGlobal.length===0){ runBatches(); return; }
     $('reshuffle').disabled=true;
     setTimeout(()=>{ const t0=performance.now(); const r=doSolve(((Math.random()*1e9)>>>0), true); const ms=(performance.now()-t0).toFixed(0); $('reshuffle').disabled=false; if(r.fullAchievable!=null) lastRecord=r.record; renderMerged(ms); },20);
-  };
-
-  /* ---------- 复制当前输入配置 ---------- */
-  $('exportCfg').onclick=()=>{
-    const cfg={ backpack:{ rows:bagRows(), cols:bagCols(), blocked:[...bagBlocked] }, treasures: library.map(t=>{ const s=sel[t.id]||{}; return { id:t.id, name:t.name, cells:t.cells, count:s.count||0, priority:!!s.priority, include:s.include!==false }; }) };
-    const json=JSON.stringify(cfg,null,2);
-    const box=$('exportBox'); box.style.display='block';
-    box.innerHTML='<div class="hint">已生成当前输入配置，已尝试复制到剪贴板；如未复制，请手动全选下方文本：</div><textarea id="exportJson" readonly style="width:100%;height:130px;margin-top:6px;font-family:monospace;font-size:12px;box-sizing:border-box"></textarea>';
-    const ta=$('exportJson'); ta.value=json; ta.focus(); ta.select();
-    try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(json); }catch(e){}
-    $('statusBox').textContent='📤 当前输入配置已生成（见上方文本框，可直接复制粘贴给开发同学）。';
   };
 
   /* ===================== 计算器：整体属性（生命/防御/攻击/伤害，全部加成「加算」） =====================
@@ -4252,34 +4357,7 @@ const ShotCore = (function(){
     return { per: items.map((it,ii)=>({id:it.name, hp:finalAttrs[ii].hp, def:finalAttrs[ii].def, atk:finalAttrs[ii].atk, dmg:finalAttrs[ii].dmg, shield:finalAttrs[ii].shield})), totals };
   }
 
-  /* ===================== 配置保存 / 读取 ===================== */
-  function serializeConfig(){ return { library: library.map(t=>{ const s=sel[t.id]||{}; return {id:t.id,name:t.name,cells:t.cells,base:{hp:t.base&&t.base.hp||0,def:t.base&&t.base.def||0,atk:t.base&&t.base.atk||0,dmg:t.base&&t.base.dmg||0},bonusRate:t.bonusRate||0,bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',group:t.group||null,type:(t.type!=null?t.type:''),awaken:cloneAwaken(t.awaken),count:s.count||0,priority:!!s.priority,include:s.include!==false}; }), backpack:{rows:bagRows(),cols:bagCols(),blocked:[...bagBlocked]} }; }
-  function saveConfig(){
-    const cfg=serializeConfig();
-    try{ localStorage.setItem('treasurePackConfig',JSON.stringify(cfg)); }catch(e){}
-    const blob=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='法宝背包配置.json'; a.click(); URL.revokeObjectURL(a.href);
-    $('statusBox').textContent='💾 配置已保存到浏览器(localStorage)并下载 JSON 文件。';
-  }
-  function loadConfig(cfg){
-    if(!cfg||!Array.isArray(cfg.library)) return false;
-    library.length=0; Object.keys(sel).forEach(k=>delete sel[k]); tid=0;
-    cfg.library.forEach(t=>{ tid++; const nm=String(t.name||t.id||('法宝'+tid)); const id=nm; const base=(typeof t.base==='object'&&t.base)?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0}:{hp:Number(t.base)||0,def:0,atk:0,dmg:0}; library.push({id,name:nm,cells:PackCore.normalizeShape(t.cells||[[0,0]]),color:colorOf(library.length),base,bonusRate:Number(t.bonusRate)||0,bonusType:t.bonusType||'none',bonusAttr:t.bonusAttr||'hp',group:t.group||null,type:(t.type!=null?t.type:''),awaken:cloneAwaken(t.awaken),count:Math.max(0,t.count||0)}); sel[id]={include:t.include!==false,count:Math.max(0,t.count||0),priority:!!t.priority}; });
-    if(cfg.backpack){ $('rows').value=cfg.backpack.rows; $('cols').value=cfg.backpack.cols; bagBlocked=new Set((cfg.backpack.blocked||[]).filter(i=>i>=0)); }
-    $('preset').value='custom'; renderInventory(); renderBagGrid(); saveLibrary(); return true;
-  }
-  function exportResult(){
-    if(!lastPlans||!lastPlans.length){ alert('请先生成方案'); return; }
-    const data={ backpack:lastBackpack, plans:lastPlans };
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='法宝背包方案.json'; a.click(); URL.revokeObjectURL(a.href);
-  }
   let lastPlans=null,lastBackpack=null,lastMs=0;
-  $('saveCfg').onclick=saveConfig;
-  $('loadCfg').onclick=()=>$('fileInput').click();
-  $('fileInput').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ if(loadConfig(JSON.parse(rd.result))) $('statusBox').textContent='📂 配置已载入。'; else $('statusBox').textContent='⚠️ 配置文件格式不正确。'; }catch(err){ $('statusBox').textContent='⚠️ JSON 解析失败：'+err.message; } }; rd.readAsText(f); e.target.value=''; };
-  $('exportResult').onclick=exportResult;
-  $('sortMode').onchange=()=>{ if(lastPlans) renderPlans(lastPlans,lastBackpack,lastMs); };
 
   /* ===================== 渲染方案（含计算器结果） ===================== */
   /* ---------- 属性格式化 / 权重读取 / 加权评分 ---------- */
@@ -4328,7 +4406,6 @@ const ShotCore = (function(){
 
   function renderPlans(plans,backpack,ms){
     lastPlans=plans; lastBackpack=backpack; lastMs=ms;
-    $('exportResult').disabled = !(plans&&plans.length);
     const R=backpack.rows,C=backpack.cols;
     const colorById={}; const idName={}; const libMap={};
     library.forEach(t=>{ colorById[t.id]=t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:(t.awaken||null) }; });
@@ -4341,7 +4418,7 @@ const ShotCore = (function(){
     else sorted.sort((a,b)=>(b.filled-a.filled)||(b.weighted-a.weighted)||(b.keyContact-a.keyContact));  // attr / 默认：饱和率第一键（100% 满填优先），同饱和率下按属性总分，再按 1 格法宝贴重点法宝更多
     const hasPrio=library.some(t=>sel[t.id]&&sel[t.id].priority);
     const hasOneCell=library.some(t=>sel[t.id]&&(sel[t.id].count||0)>0&&t.cells.length===1);
-    const needN=hasPrio?5:10;
+    const needN=3;
     const view=sorted.slice(0,needN);
     // 注意：usedOf 在每个方案卡片内部单独计算（按单方案统计），不跨方案累加
     const top0=sorted.length?sorted[0]:null;
@@ -4464,9 +4541,6 @@ const ShotCore = (function(){
   $('importBase').onclick=()=>{ const n=importBaseLibrary(); $('statusBox').textContent='📥 已导入/合并基础法宝库，本次新增 '+n+' 件（共 '+library.length+' 件，7 组均默认未启用；在「组别管理」勾选需要的组别即可启用法宝，数量默认 0）。'; };
   $('importFile').onclick=()=>$('fileImport').click();
   $('fileImport').onchange=e=>{ const f=e.target.files[0]; if(f) importTreasureFile(f); e.target.value=''; };
-  $('saveHistory').onclick=captureHistory;
-  $('clearHistory').onclick=()=>{ if(confirm('确认清空全部历史求解记录？')){ try{ localStorage.removeItem(HIST_KEY); }catch(e){} renderHistory(); $('statusBox').textContent='🗑 历史求解记录已清空。'; } };
-  renderHistory();
   // 首次打开（无本机数据 或 尚未导入过基础库）自动导入工作簿中的 7 组基础法宝库
   const baseFlag = (localStorage.getItem('treasurePackBase_v1')==='1');
   if(!libRestored || !baseFlag){
@@ -4478,7 +4552,11 @@ const ShotCore = (function(){
   }
 
   setupCloudUI();
-  if(gistPullReady()){ setCloudStatus('正在从 Gist 拉取…'); pullFromCloud().then(()=>{ renderInventory(); renderGroups(); }); }
+  // 默认展开 Q 档库：若库中含未展开（无 qlevel）的平坦条，静默展开并按档去重，
+  // 根治"网页默认打开后数量翻倍，要点开 Q 档库才正常"的问题（含云端拉取后的去重）。
+  const maybeAutoExpandQ = ()=>{ if(library.some(t=>!t.qlevel)) expandLibraryQLevels(true); };
+  if(gistPullReady()){ setCloudStatus('正在从 Gist 拉取…'); pullFromCloud().then(()=>{ renderInventory(); renderGroups(); maybeAutoExpandQ(); }); }
+  else { maybeAutoExpandQ(); }
 })();
 </script>
 </body>

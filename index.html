@@ -873,10 +873,10 @@
       }
     }
     const totals={hp:0,def:0,atk:0,dmg:0,shield:0};
-    for(let ii=0;ii<N;ii++){ const m=attrOf(ii);
-      totals.hp+= (Number(m.hp)||0)*(1+bonus[ii].hp);
-      totals.def+=(Number(m.def)||0)*(1+bonus[ii].def);
-      totals.atk+=(Number(m.atk)||0)*(1+bonus[ii].atk);
+    for(let ii=0;ii<N;ii++){ const m=attrOf(ii); const _sm=Number(m.starMult)||1;
+      totals.hp+= Math.floor((Number(m.hp)||0)*_sm)*(1+bonus[ii].hp);
+      totals.def+=Math.floor((Number(m.def)||0)*_sm)*(1+bonus[ii].def);
+      totals.atk+=Math.floor((Number(m.atk)||0)*_sm)*(1+bonus[ii].atk);
       totals.dmg+=(Number(m.dmg)||0)*(1+bonus[ii].dmg);
       totals.shield+=(Number(m.shield)||0)*(1+(bonus[ii].shield||0));
     }
@@ -939,7 +939,7 @@
   /* ===================== 生成-筛选分离总入口（满填充前提 + 按属性总分排序 + 多策略多样性） ===================== */
   /* —— 由 pieces 构建求解 infos（generatePlans 与 polishPlans 共用，防两处漂移） —— */
   function buildInfos(pieces,R,C,blocked){
-    return pieces.map(p=>({ name:p.name, size:normalizeShape(p.cells).length, count:Math.max(1,p.count||1), priority:p.priority?1:0, key:p.key?1:0, placements:enumeratePlacements(R,C,normalizeShape(p.cells),blocked), attr:{ hp:Number(p.hp)||0, def:Number(p.def)||0, atk:Number(p.atk)||0, dmg:Number(p.dmg)||0, bonusRate:Number(p.bonusRate)||0, bonusType:p.bonusType||'none', bonusAttr:p.bonusAttr||'hp', group:(p.group!=null?p.group:null), type:(p.type!=null?p.type:null), awaken:(p.awaken||null) } })).filter(p=>p.placements.length>0);
+    return pieces.map(p=>({ name:p.name, size:normalizeShape(p.cells).length, count:Math.max(1,p.count||1), priority:p.priority?1:0, key:p.key?1:0, placements:enumeratePlacements(R,C,normalizeShape(p.cells),blocked), attr:{ hp:Number(p.hp)||0, def:Number(p.def)||0, atk:Number(p.atk)||0, dmg:Number(p.dmg)||0, bonusRate:Number(p.bonusRate)||0, bonusType:p.bonusType||'none', bonusAttr:p.bonusAttr||'hp', group:(p.group!=null?p.group:null), type:(p.type!=null?p.type:null), awaken:(p.awaken||null), starMult:(Number(p.starMult)||1) } })).filter(p=>p.placements.length>0);
   }
   function generatePlans(backpack,pieces,opts){
     opts=opts||{};
@@ -2469,6 +2469,46 @@ const ShotCore = (function(){
   const $ = id => document.getElementById(id);
   const PALETTE = ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#46c0c0','#f0329e','#9a6324','#008080','#bc8000','#5a3ec8','#1f9d55','#c0392b','#2f7ed8','#d97706','#16a085'];
   let tid = 0;
+  // ===== 外部倍率：长老法宝分两档 =====
+  // Q5-1 → ×1.6（长老 2 星）| Q5-2 → ×2.0（4 星）| Q5-3 → ×2.5（5 星）| Q0–Q4 无外部倍率（恒 ×1）
+  // 档位来源优先级：条目自带 elderTier → 官方长老星表 STAR_BONUS 反查 → 默认 Q5-3（最高档）
+  const ELDER_TIER_MULT = { 1: 1.6, 2: 2.0, 3: 2.5 };
+  const ELDER_TIER_NAME = { 1: 'Q5-1', 2: 'Q5-2', 3: 'Q5-3' };
+  const STAR_BONUS={"金辉裂穹":[[2,6000],[4,10000],[5,15000]],"三尖两刃":[[2,6000],[4,10000],[5,15000]],"残虹断影":[[2,6000],[4,10000],[5,15000]],"龙渊七星":[[2,6000],[4,10000],[5,15000]],"朔气飞星":[[2,6000],[4,10000],[5,15000]],"金锋无影":[[2,6000],[4,10000],[5,15000]],"金翎荡云":[[2,4000],[4,6000],[5,10000]],"亢金贯甲":[[2,4000],[4,6000],[5,10000]],"蕴剑葫芦":[[2,6000],[4,10000],[5,15000]],"青阳唤春":[[2,6000],[4,10000],[5,15000]],"掌天奇韵":[[2,6000],[4,10000],[5,15000]],"五毒俱全":[[2,6000],[4,10000],[5,15000]],"灵泽衔瑞":[[2,6000],[4,10000],[5,15000]],"通幽震魄":[[2,6000],[4,10000],[5,15000]],"唤生吴钩":[[2,4000],[4,6000],[5,10000]],"引仙破道":[[2,4000],[4,6000],[5,10000]],"凌波惊鸿":[[2,6000],[4,10000],[5,15000]],"月华清影":[[2,6000],[4,10000],[5,15000]],"玄水护心":[[2,6000],[4,10000],[5,15000]],"封神奇卷":[[2,6000],[4,10000],[5,15000]],"沧溟凝冰":[[2,6000],[4,10000],[5,15000]],"玄冥坠星":[[2,6000],[4,10000],[5,15000]],"断流绝响":[[2,4000],[4,6000],[5,10000]],"逆流河珠":[[2,4000],[4,6000],[5,10000]],"燧火传薪":[[2,6000],[4,10000],[5,15000]],"燃欲燎魂":[[2,6000],[4,10000],[5,15000]],"日巡灼恶":[[2,6000],[4,10000],[5,15000]],"烈阳灼心":[[2,6000],[4,10000],[5,15000]],"祭火律令":[[2,6000],[4,10000],[5,15000]],"南明离炎":[[2,6000],[4,10000],[5,15000]],"炎驹驰天":[[2,4000],[4,6000],[5,10000]],"赤霄斩浪":[[2,4000],[4,6000],[5,10000]],"灵獐啸岩":[[2,6000],[4,10000],[5,15000]],"十方大山":[[2,6000],[4,10000],[5,15000]],"遁地奇行":[[2,6000],[4,10000],[5,15000]],"五色炼天":[[2,6000],[4,10000],[5,15000]],"逐日镇岳":[[2,6000],[4,10000],[5,15000]],"泰山压顶":[[2,6000],[4,10000],[5,15000]],"萱花裂地":[[2,4000],[4,6000],[5,10000]],"石钟灵佑":[[2,4000],[4,6000],[5,10000]],"惊雷兽吼":[[2,6000],[4,10000],[5,15000]],"阳雷裂空":[[2,6000],[4,10000],[5,15000]],"截雷断运":[[2,6000],[4,10000],[5,15000]],"阴雷回响":[[2,6000],[4,10000],[5,15000]],"九霄镇魔":[[2,6000],[4,10000],[5,15000]],"五雷号令":[[2,6000],[4,10000],[5,15000]],"神谕裁罪":[[2,4000],[4,6000],[5,10000]],"妙音止戈":[[2,4000],[4,6000],[5,10000]],"煞魔血叉":[[2,6000],[4,10000],[5,15000]],"凶神戮世":[[2,6000],[4,10000],[5,15000]],"剖心夺爱":[[2,6000],[4,10000],[5,15000]],"合欢极乐":[[2,6000],[4,10000],[5,15000]],"勾魂索命":[[2,6000],[4,10000],[5,15000]],"酆都帝律":[[2,6000],[4,10000],[5,15000]],"恶鬼喋血":[[2,4000],[4,6000],[5,10000]],"花妖魅匕":[[2,4000],[4,6000],[5,10000]],"天骄伟冠":[[2,6000],[4,10000],[5,15000]],"真武神镯":[[2,6000],[4,10000],[5,15000]],"丑将破阵":[[2,6000],[4,10000],[5,15000]],"巨灵擎天":[[2,6000],[4,10000],[5,15000]],"酒祖酿厄":[[2,6000],[4,10000],[5,15000]],"佛门宝杵":[[2,6000],[4,10000],[5,15000]],"叱咤玉革":[[2,4000],[4,6000],[5,10000]],"叱咤玉锤":[[2,4000],[4,6000],[5,10000]],"北斗天罡枪":[[2,6000],[4,10000],[5,15000]],"如意金箍棒":[[2,6000],[4,10000],[5,15000]],"青枝栖日":[[2,6000],[4,10000],[5,15000]],"太昊司春":[[2,6000],[4,10000],[5,15000]],"晴水华盖":[[2,6000],[4,10000],[5,15000]],"弱水涓扇":[[2,6000],[4,10000],[5,15000]],"冰魄华盖":[[2,6000],[4,10000],[5,15000]],"万载玄冰":[[2,6000],[4,10000],[5,15000]],"食为天鼎":[[2,6000],[4,10000],[5,15000]],"乾坤浑天":[[2,6000],[4,10000],[5,15000]],"九州定海":[[2,6000],[4,10000],[5,15000]],"庚辰龙脉":[[2,6000],[4,10000],[5,15000]],"免罪阳雷":[[2,6000],[4,10000],[5,15000]],"纠罚神雷":[[2,6000],[4,10000],[5,15000]],"鸣玉无极":[[2,6000],[4,10000],[5,15000]],"无相无我":[[2,6000],[4,10000],[5,15000]],"八风箕伯":[[2,6000],[4,10000],[5,15000]],"九黎兵主":[[2,6000],[4,10000],[5,15000]]};
+  // 返回长老档位：0=非长老；1=Q5-1(×1.6)；2=Q5-2(×2.5)
+  function elderTierOf(o){
+    const it=(o&&typeof o==='object')?o:null;
+    const q=it? (Number(it.quality)||0) : (Number(o)||0);
+    if(q!==5) return 0;
+    const et=it? (Number(it.elderTier)||0) : 0;
+    if(et===1||et===2||et===3) return et;
+    // 老数据没有 elderTier：按官方长老星表反查（最高档 15000 = Q5-2，10000 = Q5-1）
+    const tb=(it&&it.name)? STAR_BONUS[it.name] : null;
+    // A 表(…/10000/15000) → Q5-3；B 表(…/6000/10000) → Q5-2；未收录 → Q5-3
+    if(tb){ let _mx=0; for(const [a,n] of tb){ if(n>_mx) _mx=n; } return _mx>=15000?3:(_mx>=10000?2:1); }
+    return 3;
+  }
+  function starMultOf(o){ const et=elderTierOf(o); return et? (ELDER_TIER_MULT[et]||1) : 1; }
+  // 品质显示标签：Q5 → Q5-1 / Q5-2
+  function qualityLabel(o){
+    const it=(o&&typeof o==='object')?o:null;
+    const q=it? (Number(it.quality)||0) : (Number(o)||0);
+    if(q!==5) return 'Q'+q;
+    return ELDER_TIER_NAME[elderTierOf(it||{quality:5})||3]||'Q5';
+  }
+  // 灵枢宝鉴明细的品质下拉选项（Q0–Q4 + Q5-1 + Q5-2）
+  function qualityOptions(o){
+    const it=(o&&typeof o==='object')?o:null;
+    const q=it? (Number(it.quality)||0) : (Number(o)||0);
+    const et=it? elderTierOf(it) : 0;
+    let h='<option value="0"'+(q===0?' selected':'')+'>Q0 · 未定品质</option>';
+    for(let v=1;v<=4;v++) h+='<option value="'+v+'"'+(q===v?' selected':'')+'>Q'+v+'</option>';
+    h+='<option value="5-1"'+(q===5&&et===1?' selected':'')+'>Q5-1 · 长老 2 星 · 外部倍率 ×1.6</option>';
+    h+='<option value="5-2"'+(q===5&&et===2?' selected':'')+'>Q5-2 · 长老 4 星 · 外部倍率 ×2.0</option>';
+    h+='<option value="5-3"'+(q===5&&et===3?' selected':'')+'>Q5-3 · 长老 5 星 · 外部倍率 ×2.5</option>';
+    return h;
+  }
+
   const library = [];               // 灵枢宝鉴：{id,name,cells,color,base:{hp,def,atk},bonusRate,bonusType,bonusAttr,count,group}
   const sel = {};                  // 选宝状态：{id:{include,count,priority}}
   const groups = [];               // 组别：{id,name,enabled}
@@ -2615,10 +2655,12 @@ const ShotCore = (function(){
       const g = grpId? groups.find(x=>x.id===grpId):null;
       const inc = !grpId || (g? !!g.enabled : true); // 强关联：分组法宝仅在对应组别已启用时才启用
       const base=(typeof t.base==='object'&&t.base)?{ hp:Number(t.base.hp)||0, def:Number(t.base.def)||0, atk:Number(t.base.atk)||0, dmg:Number(t.base.dmg)||0, shield:Number(t.base.shield)||0 }:{ hp:Number(t.base)||0, def:0, atk:0, dmg:0, shield:0 };
-      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+      library.push({ id, name:nm, cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length), base, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       const sc=Math.max(0,t.count||0);
       sel[id]={include:inc,count:sc,priority:false};
     });
+    // 长老档位回填：Q5 但缺 elderTier 的老数据 → 按官方长老星表反查（Q5-1 / Q5-2）
+    library.forEach(t=>{ if(Number(t.quality)===5 && !(Number(t.elderTier)>=1&&Number(t.elderTier)<=3)) t.elderTier=elderTierOf({quality:5,name:t.name}); });
   }
   /* 导入/恢复工作簿中的 7 组基础法宝库（按 组别+名称 去重，不覆盖用户自定义法宝） */
   function importBaseLibrary(){
@@ -2631,7 +2673,7 @@ const ShotCore = (function(){
     DEFAULT_LIBRARY.forEach(t=>{
       if(library.some(x=>x.group===t.group && x.name===t.name)) return;
       const id=uniqueName(t.name);
-      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:false, skill:null });
+      library.push({ id, name:t.name, cells:PackCore.normalizeShape(t.cells), color:colorOf(library.length), base:{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:0, group:t.group, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:false, skill:null });
       sel[id]={include:false,count:0,priority:false};
       added++;
     });
@@ -2702,7 +2744,7 @@ const ShotCore = (function(){
       library.push({ id, name:String(t.name||t.id), cells:PackCore.normalizeShape(t.cells||[[0,0]]), color:t.color||colorOf(library.length),
         base:(t.base&&typeof t.base==='object')?{hp:Number(t.base.hp)||0,def:Number(t.base.def)||0,atk:Number(t.base.atk)||0,dmg:Number(t.base.dmg)||0,shield:Number(t.base.shield)||0}:{hp:0,def:0,atk:0,dmg:0,shield:0},
         bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp',
-        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
+        count:Math.max(0,Number(t.count)||0), group:grpId, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), awaken:cloneAwaken(t.awaken), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill?normalizeSkill(t.skill):null });
       if(!sel[id]) sel[id]={ include:!grpOff, count:Math.max(0,Number(t.count)||0), priority:false };
     });
     tid=library.length; gidCounter=groups.length;
@@ -2928,7 +2970,7 @@ const ShotCore = (function(){
     reader.readAsArrayBuffer(file); // 始终按二进制读取，再按真实类型分支（修复 .csv 实为 xlsx 的乱码）
   }
 
-  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0,shield:Number(t.base&&t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), reson:Number(t.reson)||0, quality:Number(t.quality)||0, awaken:cloneAwaken(t.awaken), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill||null }; }
+  function serializeLibItem(t){ return { id:t.id, name:t.name, cells:t.cells, color:t.color, base:{hp:Number(t.base&&t.base.hp)||0,def:Number(t.base&&t.base.def)||0,atk:Number(t.base&&t.base.atk)||0,dmg:Number(t.base&&t.base.dmg)||0,shield:Number(t.base&&t.base.shield)||0}, bonusRate:Number(t.bonusRate)||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', count:Math.max(0,t.count||0), group:t.group||null, type:(t.type!=null?String(t.type):''), element:(t.element!=null?String(t.element):''), reson:Number(t.reson)||0, quality:Number(t.quality)||0, elderTier:Number(t.elderTier)||0, awaken:cloneAwaken(t.awaken), sig:Array.isArray(t.sig)?t.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[], key:!!t.key, skill:t.skill||null }; }
   /* ---------- 工具函数 ---------- */
   function colorOf(i){ return PALETTE[i % PALETTE.length]; }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -2961,7 +3003,7 @@ const ShotCore = (function(){
     library.push({id,name:nm,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),
       base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0,dmg:opts.dmg||0,shield:opts.shield||0},
       bonusRate:opts.bonusRate||0,bonusType:opts.bonusType||'none',bonusAttr:opts.bonusAttr||'hp',
-      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),element:(opts.element!=null?opts.element:''),awaken:cloneAwaken(opts.awaken),reson:Number(opts.reson)||0,quality:Number(opts.quality)||0,sig:Array.isArray(opts.sig)?opts.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[],key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
+      count:Math.max(0,count||0),group:grp,type:(opts.type!=null?opts.type:''),element:(opts.element!=null?opts.element:''),awaken:cloneAwaken(opts.awaken),reson:Number(opts.reson)||0,quality:Number(opts.quality)||0,elderTier:Number(opts.elderTier)||0,sig:Array.isArray(opts.sig)?opts.sig.map(s=>Array.isArray(s)?s.map(Number):[]).filter(s=>s.length===48):[],key:!!opts.key,skill:opts.skill?normalizeSkill(opts.skill):null});
     sel[id]={include:grpEnabled,count:Math.max(0,count||0),priority:false};
     renderInventory(); saveLibrary();
   }
@@ -3048,7 +3090,7 @@ const ShotCore = (function(){
       if(t.element) meta.push('<span class="en-badge">元素 · '+escapeHtml(t.element)+'</span>');
       if(t.type) meta.push('<span class="en-badge">类型 · '+escapeHtml(t.type)+'</span>');
       if(t.reson) meta.push('<span class="en-badge">共鸣 '+t.reson+'</span>');
-      if(t.quality) meta.push('<span class="en-badge">Q'+t.quality+'</span>');
+      if(t.quality) meta.push('<span class="en-badge">'+qualityLabel(t)+'</span>');
       meta.push('<span class="en-badge">'+escapeHtml(g?g.name:'未分组')+'</span>');
       const attrs=[];
       attrs.push('生命 <b>'+Math.round(b.hp||0).toLocaleString('en-US')+'</b>');
@@ -3199,7 +3241,7 @@ const ShotCore = (function(){
       const en=byName[name];
       if(!en||!en.tiers||!en.tiers.length){ continue; } // 不可展开，第二遍处理
       for(const t of en.tiers){
-        const q=t.quality, id=name+'·Q'+q;
+        const q=t.quality, id=name+'·'+(q===5?('Q5-'+elderTierOf(t)):('Q'+q));
         if(seen.has(id)) continue; seen.add(id); qNames.add(name);
         const c=catalog.find(x=>x.name===name&&x.quality===q);
         const item={
@@ -3412,7 +3454,7 @@ const ShotCore = (function(){
     let h='<option value="">— 请选择 —</option>';
     // 库内法宝用自己的 id；云端目录法宝的 id 形如 cat:12（ShotCore 里加的前缀）
     const val=function(t){ return String(t.id||''); };
-    const opt=function(t){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · Q'+t.quality+' · 共鸣'+t.reson:'')+'</option>'; };
+    const opt=function(t){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · '+qualityLabel(t)+' · 共鸣'+t.reson:'')+'</option>'; };
     const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(opt).join('')+'</optgroup>'; };
     // 识别推荐（可能是库内法宝，也可能是云端目录里的新法宝）
     if(cell.equip){
@@ -3486,7 +3528,7 @@ const ShotCore = (function(){
       const info='<b>'+escapeHtml(el)+'</b>系'+(p.form?' · '+escapeHtml(p.form):'')+
         ' · '+shotShapeOf(p).split(' ').length+'格 @('+p.row+','+p.col+')'+
         (p.quality?' · 底色Q'+p.quality:'')+
-        (p.equip?' · 共鸣'+p.equip.reson+' · Q'+p.equip.quality:'');
+        (p.equip?' · 共鸣'+p.equip.reson+' · '+qualityLabel(p.equip):'');
       let status, cls;
       if(p.status==='ok'){ status='已匹配'; cls='ok'; }
       else if(p.status==='ambiguous'){ status='多候选：'+(p.candidates||[]).map(c=>escapeHtml(c.name)).join(' / '); cls='warn'; }
@@ -3622,7 +3664,7 @@ const ShotCore = (function(){
       if(fc.list.length){
         h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">'+
           '<select id="shotFixPick" style="max-width:360px">'+fc.list.map((x,i)=>
-            '<option value="'+i+'">'+(x.src==='cat'?'[云端] ':'')+escapeHtml(x.t.name)+' · Q'+(x.t.quality||0)+' · 共鸣'+(x.t.reson||0)+'</option>').join('')+'</select>'+
+            '<option value="'+i+'">'+(x.src==='cat'?'[云端] ':'')+escapeHtml(x.t.name)+' · '+qualityLabel(x.t)+' · 共鸣'+(x.t.reson||0)+'</option>').join('')+'</select>'+
           '<button type="button" class="primary" id="shotFixApply" style="padding:4px 12px">✓ 应用修正</button>'+
           '<button type="button" class="ghost" id="shotFixClear" style="padding:4px 12px">清除选区</button></div>';
       } else {
@@ -3757,6 +3799,29 @@ const ShotCore = (function(){
     // 校验通过：清掉可能的红框残留
     if(typeof document!=='undefined') document.querySelectorAll('.shot-err').forEach(el=>el.classList.remove('shot-err'));
     { const m=$('shotMsg'); if(m&&m.classList&&m.classList.remove) m.classList.remove('on-err'); }
+    // —— 长老法宝等级二次确认：Q5-1 外部倍率 ×1.6 / Q5-2 ×2.5，选错会直接算错评分 ——
+    {
+      const q5=[];
+      rows.forEach(r=>{
+        if(!r.pick||r.pick==='__skip__') return;
+        let eq=library.find(t=>t.id===r.pick);
+        if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
+        if(eq && Number(eq.quality)===5){ q5.push({ name:eq.name, tier:elderTierOf(eq) }); return; }
+        if(r.pick==='__new__' && Number(r.piece&&r.piece.quality)===5){ q5.push({ name:(r.newName||'（新法宝）'), tier:3 }); }
+      });
+      if(q5.length){
+        const g1=q5.filter(x=>x.tier===1), g2=q5.filter(x=>x.tier===2), g3=q5.filter(x=>x.tier===3||x.tier>3||x.tier<1);
+        const lines=['⚠️ 请确认长老法宝（Q5）等级',''];
+        if(g1.length) lines.push('Q5-1（长老 2 星 · ×1.6）'+g1.length+' 件：'+g1.map(x=>x.name).join('、'));
+        if(g2.length) lines.push('Q5-2（长老 4 星 · ×2.0）'+g2.length+' 件：'+g2.map(x=>x.name).join('、'));
+        if(g3.length) lines.push('Q5-3（长老 5 星 · ×2.5）'+g3.length+' 件：'+g3.map(x=>x.name).join('、'));
+        lines.push('','长老档位直接决定评分用的外部倍率，等级选错会让结果失真。');
+        lines.push('已确认无误 → 点「确定」导入；需修改 → 点「取消」，到灵枢宝鉴明细里改「品质 / 长老档」。');
+        let ok=true;
+        try{ if(typeof confirm==='function'){ const rr=confirm(lines.join('\n')); if(rr===false) ok=false; } }catch(e){}
+        if(!ok){ const m=$('shotMsg'); if(m) m.textContent='已取消导入：请先在灵枢宝鉴中核对长老法宝等级（Q5-1 / Q5-2 / Q5-3 对应外部倍率 ×1.6 / ×2.0 / ×2.5）。'; return; }
+      }
+    }
     // 若导入前已存在启用的法宝，先清空法宝队列（重置全部启用与数量、取消组别启用），
     // 再导入则只保留本次截图识别到的法宝数据（替换而非追加）
     const hadEnabled=library.some(t=>{ const s=sel[t.id]; return s&&s.include; });
@@ -3785,7 +3850,7 @@ const ShotCore = (function(){
         if(!targets.has(key)){
           targets.set(key, exist?{ t:exist, isNew:false, rows:[] }
             :{ t:null, isNew:true, name:nm, cells:shapeCells(p), rows:[],
-              opts:{ element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.quality||(p.equip?p.equip.quality:0) } });
+              opts:{ element:p.element, type:(p.form||''), reson:p.equip?p.equip.reson:0, quality:p.quality||(p.equip?p.equip.quality:0), elderTier:(Number(p.quality||(p.equip?p.equip.quality:0))===5)?(p.equip?elderTierOf(p.equip):3):0 } });
         }
         return targets.get(key);
       }
@@ -3796,7 +3861,7 @@ const ShotCore = (function(){
         if(!targets.has(key)){
           targets.set(key, exist?{ t:exist, isNew:false, rows:[] }
             :{ t:null, isNew:true, name:c.name, cells:(c.cells&&c.cells.length)?c.cells.map(x=>x.slice()):shapeCells(p), rows:[],
-              opts:{ element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0 } });
+              opts:{ element:c.element||p.element, type:c.type||'', reson:c.reson||0, quality:c.quality||0, elderTier:(Number(c.quality)===5?elderTierOf(c):0) } });
         }
         return targets.get(key);
       }
@@ -3826,6 +3891,7 @@ const ShotCore = (function(){
         updated++;
       }
       const t=o.t;
+      if(Number(t.quality)===5 && !(Number(t.elderTier)>=1&&Number(t.elderTier)<=3)) t.elderTier=elderTierOf({quality:5,name:t.name});
       rs.forEach(r=>{
         const p=r.piece;
         if(r.aw!=='') t.awaken=cloneAwaken(Object.assign({}, t.awaken, {level:parseInt(r.aw)||0}));
@@ -3993,7 +4059,8 @@ const ShotCore = (function(){
       '<div class="dt-edit"><label>法宝元素</label><select id="dtElement">'+elementOptions(t.element)+'</select></div>'+
       '<div class="dt-edit"><label>法宝类型</label><select id="dtType">'+typeOptions(t.type)+'</select></div>'+
       '<div class="dt-edit"><label>共鸣值</label><input type="number" id="dtReson" min="0" value="'+(t.reson||0)+'"></div>'+
-      '<div class="dt-edit"><label>品质(1-5)</label><input type="number" id="dtQuality" min="1" max="5" value="'+(t.quality||0)+'"></div>'+
+      '<div class="dt-edit"><label>品质 / 长老档</label><select id="dtQuality">'+qualityOptions(t)+'</select></div>'+
+      '<div class="dt-edit"><label>外部倍率</label><span style="font-size:13px;font-weight:700;color:'+(Number(t.quality)===5?'#b45309':'var(--muted)')+'">×'+starMultOf(t)+(Number(t.quality)===5?'　（长老法宝，计入评分）':'　（非长老无法宝倍率）')+'</span></div>'+
       '<div class="dt-edit"><label>护盾值</label><input type="number" id="dtShield" min="0" value="'+((t.base&&t.base.shield)||0)+'"></div>';
     /* --- 觉醒效果（卡片展示 + 编辑一体） --- */
     const awAttrOpts=(cur)=>{ const arr=[['hp','生命值'],['def','防御力'],['atk','攻击力'],['dmg','伤害'],['shield','护盾值']]; let h=''; arr.forEach(([v,n])=>{ h+='<option value="'+v+'"'+(cur===v?' selected':'')+'>'+n+'</option>'; }); return h; };
@@ -4049,7 +4116,12 @@ const ShotCore = (function(){
   $('dtMask').onclick=e=>{ if(e.target===$('dtMask')) closeDetail(); };
   $('dtSave').onclick=()=>{ const i=dtIdx; const t=library[i]; if(t){
     t.element=$('dtElement').value||''; t.type=$('dtType').value||'';
-    t.reson=Math.max(0,Number($('dtReson').value)||0); t.quality=Math.min(5,Math.max(0,Number($('dtQuality').value)||0));
+    t.reson=Math.max(0,Number($('dtReson').value)||0);
+    { const _qv=String($('dtQuality').value||'0');
+      if(_qv==='5-1'){ t.quality=5; t.elderTier=1; }
+      else if(_qv==='5-2'){ t.quality=5; t.elderTier=2; }
+      else if(_qv==='5-3'){ t.quality=5; t.elderTier=3; }
+      else { t.quality=Math.min(5,Math.max(0,Number(_qv)||0)); t.elderTier=0; } }
     t.base=t.base||{hp:0,def:0,atk:0,dmg:0};
     t.base.hp=Math.max(0,Number($('dtHp')?$('dtHp').value:0)||0);
     t.base.def=Math.max(0,Number($('dtDef')?$('dtDef').value:0)||0);
@@ -4077,7 +4149,7 @@ const ShotCore = (function(){
   function sigOfPlan(p){ return p.placements.map(pl=>pl.name+':'+pl.cells.map(c=>c.join(',')).join(';')).sort().join('|'); }
   function buildPieces(){
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
-    return chosen.map(t=>{ const s=sel[t.id]; return { name:t.id, cells:t.cells, count:s.count, priority:s.priority, key:t.key, hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, shield:t.base&&t.base.shield||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:cloneAwaken(t.awaken) }; });
+    return chosen.map(t=>{ const s=sel[t.id]; return { name:t.id, cells:t.cells, count:s.count, priority:s.priority, key:t.key, hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, shield:t.base&&t.base.shield||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:cloneAwaken(t.awaken), starMult:(t.starMult!=null?Number(t.starMult):starMultOf(t)) }; });
   }
   function doSolve(seed, accumulate){
     const chosen=library.filter(t=>{ const s=sel[t.id]; return s&&s.include&&(s.count||0)>0; });
@@ -4342,10 +4414,10 @@ const ShotCore = (function(){
       }
     }
     for(let ii=0; ii<N; ii++){
-      const m = items[ii].m;
-      finalAttrs[ii].hp = (Number(m.hp)||0)*(1+bonus[ii].hp);
-      finalAttrs[ii].def = (Number(m.def)||0)*(1+bonus[ii].def);
-      finalAttrs[ii].atk = (Number(m.atk)||0)*(1+bonus[ii].atk);
+      const m = items[ii].m; const _sm = Number(m.starMult)||1;
+      finalAttrs[ii].hp = Math.floor((Number(m.hp)||0)*_sm)*(1+bonus[ii].hp);
+      finalAttrs[ii].def = Math.floor((Number(m.def)||0)*_sm)*(1+bonus[ii].def);
+      finalAttrs[ii].atk = Math.floor((Number(m.atk)||0)*_sm)*(1+bonus[ii].atk);
       finalAttrs[ii].dmg = (Number(m.dmg)||0)*(1+bonus[ii].dmg);
       finalAttrs[ii].shield = (Number(m.shield)||0)*(1+(bonus[ii].shield||0));
       totals.hp += finalAttrs[ii].hp;
@@ -4408,7 +4480,7 @@ const ShotCore = (function(){
     lastPlans=plans; lastBackpack=backpack; lastMs=ms;
     const R=backpack.rows,C=backpack.cols;
     const colorById={}; const idName={}; const libMap={};
-    library.forEach(t=>{ colorById[t.id]=t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:(t.awaken||null) }; });
+    library.forEach(t=>{ colorById[t.id]=t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:(t.awaken||null), starMult:(t.starMult!=null?Number(t.starMult):starMultOf(t)) }; });
     const weights=readWeights();
     plans.forEach(p=>{ const a=computeAttributes(p,libMap,R,C); p.totals=a.totals; p.perAttrs=a.per; p.weighted=weightedScore(a.totals,weights); });
     const mode=$('sortMode')?$('sortMode').value:'attr';

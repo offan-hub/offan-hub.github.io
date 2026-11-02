@@ -500,12 +500,12 @@
             <div class="plans" id="plans"></div>
           </div>
           <div class="embedded-solver">
-            <h3>求解设置 <span id="engineVer" style="font-size:11px;font-weight:400;color:#8a8f98">引擎 v20261101 · 并行Worker+退火</span></h3>
+            <h3>求解设置 <span id="engineVer" style="font-size:11px;font-weight:400;color:#8a8f98">引擎 v20261103 · 统一量纲评分 + 确定性抛光</span></h3>
             <button id="solve" class="primary" style="width:100%">⚡ 一键生成填充方案</button>
             <div class="row mt" style="gap:8px;align-items:flex-end">
               <div style="flex:1;min-width:0">
                 <label>连续批次（1–12，多批合并取全局最优）</label>
-                <input type="number" id="batches" min="1" max="12" value="3" style="width:100%">
+                <input type="number" id="batches" min="1" max="12" value="6" style="width:100%">
               </div>
               <div style="flex:1;min-width:0">
                 <label>候选池总数（0=按批次）</label>
@@ -515,6 +515,14 @@
             </div>
             <div class="hint" style="margin-top:6px">候选池总数：填 2000 即自动跨批合并，直到候选池凑满 2000 套（布局去重）后直接输出该池的全局最优解；填 0 则按上方「连续批次」执行。</div>
             <label class="mt">属性权重占比（用于评分，四者合计 100；伤害默认 0 即不计入总分）</label>
+            <select id="wPreset" style="width:100%;margin-bottom:6px" title="快速切换优化目标：权重已统一量纲，三属性真正可比（100% 防御时评分仍=防御值×100）">
+              <option value="def">🎯 纯防御（面板防御最大化）</option>
+              <option value="balance" selected>⚖️ 均衡推荐（生命/攻击/防御同权重，避免防御饱和浪费）</option>
+              <option value="tank">🛡 血防兼顾（生命 50 / 防御 50）</option>
+              <option value="atk">⚔️ 攻击优先（攻击 100%）</option>
+              <option value="hp">❤️ 生命优先（生命 100%）</option>
+              <option value="custom">✏️ 自定义（手填下方四项）</option>
+            </select>
             <div class="weights">
               <div><label>生命值</label><input type="number" id="wHp" min="0" max="100" value="34"></div>
               <div><label>攻击力</label><input type="number" id="wAtk" min="0" max="100" value="33"></div>
@@ -522,6 +530,7 @@
               <div><label>伤害</label><input type="number" id="wDmg" min="0" max="100" value="0"></div>
             </div>
             <div class="wmsg" id="wMsg"></div>
+            <div class="hint" style="margin-top:2px">实测：游戏面板的「防御总量」会饱和——引擎防御之和超过约 3450 后，再堆防御几乎不转化为面板防御（17 件水系实测：均衡摆放 vs 纯防御摆放，面板防御只差 6，但多 6516 生命、290 攻击）。所以除非只要防御数字，建议用「均衡」。</div>
             <div class="stats" id="statsBlock"></div>
             <div class="plan-detail" id="planDetail"><div class="pd-empty">点击左侧任意方案，此处实时显示该方案的摆放与属性详情。</div></div>
             <pre id="statusBox" style="display:none">尚未计算。</pre>
@@ -743,6 +752,54 @@
     }
     return best;
   }
+  /* —— 确定性局部最优抛光：单件重放 + 同形互换 ——
+     补足随机 ruin-recreate 的盲区（随机移除是抽样，可能永远抽不到某一步）。
+     ① 单件重放：把一件拎起来，穷尽试遍它所有合法落点（不随机、不抽样）；
+     ② 同形互换：两块形状相同时交换「身份」（占格不变，只改变加成归属，能救回标签错位）。
+     只接受严格更优解，迭代到无改进或到 deadline，因此输出一定「再无单步可改进」。 —— */
+  function localOpt(R,C,blocked,infos,w,used0,deadline){
+    const total=R*C;
+    const used=(used0||[]).map(u=>({pi:u.pi,pIdx:u.pIdx}));
+    if(!used.length) return {used,w:0};
+    const occ=Uint8Array.from(blocked); const instAt=new Array(total).fill(-1);
+    used.forEach((u,i)=>{ for(const idx of infos[u.pi].placements[u.pIdx]){ occ[idx]=1; instAt[idx]=i; } });
+    const score=()=>weightedDefault(attrTotalsOfUsed(used,infos,R,C),w);
+    const fits=pl=>{ for(const idx of pl){ if(occ[idx]||blocked[idx]) return false; } return true; };
+    let best=score(), improved=true, round=0;
+    while(improved && round++<64){
+      improved=false;
+      for(let i=0;i<used.length;i++){
+        if(deadline && Date.now()>deadline) return {used,w:best};
+        const u=used[i], pls=infos[u.pi].placements, old=u.pIdx;
+        for(const idx of pls[old]){ occ[idx]=0; instAt[idx]=-1; }
+        let bj=-1, bw=best;
+        for(let j=0;j<pls.length;j++){
+          if(j===old || !fits(pls[j])) continue;
+          for(const idx of pls[j]){ occ[idx]=1; instAt[idx]=i; }
+          const sc=score();
+          for(const idx of pls[j]){ occ[idx]=0; instAt[idx]=-1; }
+          if(sc>bw+1e-9){ bw=sc; bj=j; }
+        }
+        if(bj>=0){ used[i].pIdx=bj; for(const idx of pls[bj]){ occ[idx]=1; instAt[idx]=i; } best=bw; improved=true; }
+        else { for(const idx of pls[old]){ occ[idx]=1; instAt[idx]=i; } }
+      }
+      for(let i=0;i<used.length;i++){
+        if(deadline && Date.now()>deadline) return {used,w:best};
+        const a=used[i], pa=infos[a.pi].placements;
+        for(let j=i+1;j<used.length;j++){
+          const b=used[j]; if(a.pi===b.pi) continue;
+          const pb=infos[b.pi].placements;
+          if(pa.length!==pb.length || pa[0].join(',')!==pb[0].join(',')) continue;  // 形状不同不能换
+          const ta=a.pIdx, tb=b.pIdx;
+          a.pIdx=tb; b.pIdx=ta;
+          const sc=score();
+          if(sc>best+1e-9){ best=sc; improved=true; }
+          else { a.pIdx=ta; b.pIdx=tb; }
+        }
+      }
+    }
+    return {used,w:best};
+  }
   // 按“每件法宝的摆放（类型+具体位置）”生成签名：满填充方案彼此占用格相同，必须用摆放区分，否则会被错误合并
   function sigOfUsed(used,infos,R,C){ const owner=new Array(R*C).fill('.'); used.forEach((u,instId)=>{ const lab=infos[u.pi].name+'#'+(u.pIdx); for(const idx of infos[u.pi].placements[u.pIdx]) owner[idx]=lab; }); return owner.join(','); }
 
@@ -882,7 +939,60 @@
     }
     return totals;
   }
-  function weightedDefault(t,w){ w=w||{hp:34,atk:33,def:33,dmg:0}; return t.hp*(w.hp/100) + t.atk*w.atk + t.def*w.def + (t.dmg||0)*(w.dmg||0); }
+  /* —— 属性潜力基准（统一量纲用）——
+     三属性的绝对量级差一个数量级（生命 ~8万 / 防御 ~3.5千 / 攻击 ~1.3千），直接乘权重等于没权重。
+     基准取「本组合实际能达成的总量」：先用一次确定性贪心铺满，量出三属性各自能到的刻度
+     （不能用白值总量——防御能吃 7 倍加成、生命只有 1.2 倍，用白值会让防御一项独大）。 —— */
+  let _refCache={key:'',val:null};
+  function scoreRefs(pieces,R,C,blocked,infosOpt){
+    R=R||6; C=C||7;
+    const key=(R+'x'+C)+'#'+(pieces||[]).map(p=>[p.name,p.count,p.hp,p.def,p.atk,p.starMult].join('|')).join(';');
+    if(_refCache.key===key && _refCache.val) return _refCache.val;
+    let hp=0,def=0,atk=0,dmg=0;
+    for(const p of (pieces||[])){
+      const c=Math.max(1,Number(p.count)||1), s=Number(p.starMult)||1;
+      hp +=Math.floor((Number(p.hp)||0)*s)*c; def+=Math.floor((Number(p.def)||0)*s)*c;
+      atk+=Math.floor((Number(p.atk)||0)*s)*c; dmg+=(Number(p.dmg)||0)*c;
+    }
+    const floors={hp:hp||1,def:def||1,atk:atk||1,dmg:dmg||1};
+    let out=floors;
+    try{
+      const blk=blocked||new Uint8Array(R*C);
+      const infos=infosOpt||buildInfos(pieces||[],R,C,blk);
+      if(infos&&infos.length){
+        // 多种贪心策略各铺一次，按属性取分量最大值 —— 得到「三属性各自大概能到多高」的可靠刻度
+        let t={hp:0,def:0,atk:0,dmg:0};
+        for(const st of ['topleft','corners','diagonal','center','random']){
+          const g=greedyFill(R,C,blk,infos,st,mulberry32(0x5EED));
+          if(!g||!g.used||!g.used.length) continue;
+          const x=attrTotalsOfUsed(g.used,infos,R,C);
+          if((x.hp||0)>t.hp) t.hp=x.hp||0;
+          if((x.def||0)>t.def) t.def=x.def||0;
+          if((x.atk||0)>t.atk) t.atk=x.atk||0;
+          if((x.dmg||0)>t.dmg) t.dmg=x.dmg||0;
+        }
+        out={hp:Math.max(t.hp,floors.hp), def:Math.max(t.def,floors.def), atk:Math.max(t.atk,floors.atk), dmg:Math.max(t.dmg,floors.dmg)};
+      }
+    }catch(e){ out=floors; }
+    _refCache={key,val:out};
+    return out;
+  }
+  /* —— 加权评分（统一量纲版）——
+     权重语义 = 「愿意把多少比例的布局预算押在该属性上」，四者合计 100。
+     内部按潜力基准归一后再乘回防御刻度，使：
+       · 100% 防御权重 ⇒ 评分 = 防御值 × 100（历史显示口径不变，回归可比）
+       · 100% 生命 / 100% 攻击 ⇒ 与 100% 防御 同量级，三属性权重从此真正可比
+     没有 _ref 时退回旧公式（兼容旧调用与旧测试）。 —— */
+  function weightedDefault(t,w){
+    w=w||{hp:34,atk:33,def:33,dmg:0};
+    const r=w._ref;
+    if(!r) return t.hp*(w.hp/100) + t.atk*w.atk + t.def*w.def + (t.dmg||0)*(w.dmg||0);
+    const base=100*(Number(r.def)||1);
+    return t.hp*(w.hp/100)*base/(Number(r.hp)||1)
+         + t.atk*(w.atk/100)*base/(Number(r.atk)||1)
+         + t.def*(w.def/100)*base/(Number(r.def)||1)
+         + (t.dmg||0)*(w.dmg/100)*base/(Number(r.dmg)||1);
+  }
   /* —— 统一输出构造 —— */
   function buildOutput(plans,infos,R,C,blocked,capacity,blockedCount,runs,poolSize,bestFill,fullAchievable){
     return plans.map(c=>({
@@ -949,7 +1059,7 @@
     if(infos.length===0) return [];
     const prioritySet=new Set(infos.filter(p=>p.priority).map(p=>p.name));
     const priorityExists=prioritySet.size>0;
-    const w = opts.weights || {hp:34,atk:33,def:33};
+    const w = Object.assign({}, (opts.weights || {hp:34,atk:33,def:33}), {_ref: scoreRefs(pieces,R,C,blocked,infos)});   // 统一量纲：基准按本次组合可达总量现算（与界面 readWeights 同源）
     const keySet=new Set(infos.filter(p=>p.key).map(p=>p.name));
     const oneCellSet=new Set(infos.filter(p=>p.size===1).map(p=>p.name));
     const hasOneCell=oneCellSet.size>0;
@@ -1028,6 +1138,15 @@
       if(rf2.w>topBest.weighted) addCandidate(rf2.used,0);
     }
 
+    /* ---------- 确定性收尾：对当前最优做「单件重放」穷尽邻域抛光，杜绝随机抽样漏掉的一步改进 ---------- */
+    try{
+      const cur=[...map.values()].sort((a,b)=> (b.fill-a.fill) || (b.weighted-a.weighted))[0];
+      if(cur){
+        const lo=localOpt(R,C,blocked,infos,w,cur.used,Date.now()+Math.min(500,Math.max(120,Math.floor(timeBudget*0.2))));
+        if(lo.w>(cur.weighted||0)+1e-9) addCandidate(lo.used,0);
+      }
+    }catch(e){}
+
     let pool=[...map.values()];
     const fullAchievable = bestFill===capacity;
     if(fullAchievable){ const full=pool.filter(p=>p.fill===capacity); if(full.length) pool=full; }  // 满填充前提：本批能满填则只留满填方案
@@ -1044,7 +1163,7 @@
     const blocked=new Uint8Array(total); if(backpack.blocked) for(const i of backpack.blocked) if(i>=0&&i<total) blocked[i]=1;
     const infos=buildInfos(pieces,R,C,blocked);
     if(infos.length===0) return [];
-    const w=opts.weights||{hp:34,atk:33,def:33};
+    const w = Object.assign({}, (opts.weights || {hp:34,atk:33,def:33}), {_ref: scoreRefs(pieces,R,C,blocked,infos)});   // 统一量纲（与界面 readWeights 同源）
     const K=opts.refineK||3000;
     const budget=opts.timeLimitMs||8000;
     const seeds=Math.min(opts.seeds||40, plans.length);
@@ -1090,9 +1209,33 @@
         totals, weighted:weightedDefault(totals,w), fullAchievable: filled===capacity?true:(src.fullAchievable!==false) });
     }
     out.sort((a,b)=>(b.filled-a.filled)||(b.weighted-a.weighted)||(b.keyContact-a.keyContact));
+    /* —— 确定性收尾：对池内最优 3 套各做一次「单件重放」穷尽邻域抛光 ——
+       保证最终交付的解在「任取一件换任何位置」这个邻域内已无更优解（随机搜不到的一步也补齐）。 —— */
+    if(out.length){
+      const dOpt=Date.now()+1500;
+      const topN=Math.min(3,out.length);
+      for(let i=0;i<topN;i++){
+        if(Date.now()>dOpt) break;
+        const src=out[i]; const used=[]; let ok=true;
+        for(const pl of src.placements){
+          const pi=nameIdx.get(pl.name); if(pi==null){ ok=false; break; }
+          const pIdx=plLookup[pi].get(pl.cells.map(c=>c[0]*C+c[1]).sort((a,b)=>a-b).join(','));
+          if(pIdx==null){ ok=false; break; }
+          used.push({pi,pIdx});
+        }
+        if(!ok||!used.length) continue;
+        const lo=localOpt(R,C,blocked,infos,w,used,dOpt);
+        if(!(lo.w>(src.weighted||0)+1e-9)) continue;
+        const totals=attrTotalsOfUsed(lo.used,infos,R,C);
+        src.placements=lo.used.map(u=>{ const info=infos[u.pi]; const idxs=info.placements[u.pIdx]; const cells=idxs.map(idx=>[((idx/C)|0),idx%C]); const minR=Math.min(...cells.map(x=>x[0])),minC=Math.min(...cells.map(x=>x[1])); return {name:info.name,size:info.size,anchor:[minR,minC],cells}; });
+        src.totals=totals; src.weighted=weightedDefault(totals,w);
+      }
+      out.sort((a,b)=>(b.filled-a.filled)||(b.weighted-a.weighted)||(b.keyContact-a.keyContact));
+    }
     return out;
   }
-  const api={ generatePlans, polishPlans, normalizeShape, enumeratePlacements, mulberry32, shuffle, greedyFill, neighborScore };
+  const api={ generatePlans, polishPlans, normalizeShape, enumeratePlacements, mulberry32, shuffle, greedyFill, neighborScore,
+              localOpt, scoreRefs, buildInfos, attrTotalsOfUsed, weightedScore: weightedDefault };
   if(typeof module!=='undefined'&&module.exports) module.exports=api; global.PackCore=api;
 })(typeof window!=='undefined'?window:globalThis);
 /*__PACKCORE_END__*/
@@ -3270,8 +3413,21 @@ const ShotCore = (function(){
   $('enMask').onclick=e=>{ if(e.target===$('enMask')) $('enMask').classList.remove('on'); };
 
   /* ---------- 展开 Q 档库：依据 enrich-map 逐档数据，把每件法宝拆成 Q1–Q4 独立条目 ---------- */
-  // 已知逐品质效果修正（用户从游戏确认）：流水散 Q4=100 / Q3=80
-  const KNOWN_Q_EFFECT = { '流水散': { 3: 80, 4: 100 } };
+  // 已知逐品质效果修正（用户从游戏详情页逐档确认）：流水散 Q2=60% / Q3=80% / Q4=100%
+  const KNOWN_Q_EFFECT = { '流水散': { 2: 60, 3: 80, 4: 100 } };
+  /* —— 把「已入库」条目里的已知错误加成率一次性回修（展开只影响新生成的条，历史条要单独修）——
+     幂等、只改 bonusRate；有改动才落盘（会顺带触发云端推送）。 —— */
+  function applyKnownQEffects(){
+    let fixed=0;
+    for(const t of library){
+      const tbl=KNOWN_Q_EFFECT[String(t.name||'').trim()]; if(!tbl) continue;
+      const q=(t.qlevel!=null&&t.qlevel!=='')?parseInt(String(t.qlevel).split('-')[0],10):(Number(t.quality)||0);
+      const want=tbl[q]; if(want==null) continue;
+      if(Number(t.bonusRate)!==want && t.bonusType && t.bonusType!=='none'){ t.bonusRate=want; fixed++; }
+    }
+    if(fixed){ saveLibrary(); try{ renderInventory(); }catch(e){} }
+    return fixed;
+  }
   async function expandLibraryQLevels(silent){
     const isSilent = (typeof silent === 'boolean') ? silent : false;
     const btn=$('expandQ'); if(btn && !isSilent) btn.disabled=true;
@@ -4572,10 +4728,31 @@ const ShotCore = (function(){
     if(rawSum<=0){ hp=34; atk=33; def=33; dmg=0; }
     const sum=hp+atk+def+dmg||1;
     const w={hp:hp/sum*100, atk:atk/sum*100, def:def/sum*100, dmg:dmg/sum*100};
+    // 统一量纲：按本次启用组合的「可达总量」算基准，使三属性权重真正可比（与求解器 scoreRefs 完全同源）
+    try{
+      const ps=buildPieces();
+      if(ps&&ps.length&&PackCore.scoreRefs){
+        const R=bagRows(), Cc=bagCols(); const blk=new Uint8Array(R*Cc);
+        for(const i of bagBlocked){ if(i>=0&&i<R*Cc) blk[i]=1; }
+        w._ref=PackCore.scoreRefs(ps,R,Cc,blk);
+      } else { w._ref={hp:1,atk:1,def:1,dmg:1}; }
+    }catch(e){ w._ref={hp:1,atk:1,def:1,dmg:1}; }
     if(msg){ msg.textContent = (Math.round(rawSum)===100)?'权重合计 100 ✓（按此加权）':'权重合计 '+Math.round(rawSum)+'，已自动按比例归一化'; }
     return w;
   }
-  function weightedScore(totals,w){ return totals.hp*(w.hp/100) + totals.atk*w.atk + totals.def*w.def + (totals.dmg||0)*(w.dmg||0); }
+  /* 与求解器 weightDefault 同源的三属性加权（统一量纲；100% 防御时 = 防御值×100） */
+  function weightedScore(totals,w){ return (typeof PackCore!=='undefined'&&PackCore.weightedScore)?PackCore.weightedScore(totals,w):(totals.hp*(w.hp/100)+totals.atk*w.atk+totals.def*w.def+(totals.dmg||0)*(w.dmg||0)); }
+  /* —— 优化目标预设（权重统一量纲后才有意义：34/33/33 = 三项各押三分之一预算） —— */
+  const W_PRESETS={ def:[0,0,100,0], balance:[34,33,33,0], tank:[50,0,50,0], atk:[0,100,0,0], hp:[100,0,0,0] };
+  function applyWPreset(){
+    const el=$('wPreset'); if(!el) return; const p=W_PRESETS[el.value]; if(!p) return;
+    if($('wHp')) $('wHp').value=p[0]; if($('wAtk')) $('wAtk').value=p[1];
+    if($('wDef')) $('wDef').value=p[2]; if($('wDmg')) $('wDmg').value=p[3];
+    readWeights();
+    if(lastPlans&&lastPlans.length) renderMerged(lastMs);   // 立即按新目标重排，无需重算
+  }
+  if($('wPreset')) $('wPreset').onchange=applyWPreset;
+  ['wHp','wAtk','wDef','wDmg'].forEach(id=>{ const el=$(id); if(el) el.oninput=()=>{ const s=$('wPreset'); if(s) s.value='custom'; readWeights(); }; });
 
   /* —— 方案网格渲染：沿用原小格子，仅给每件法宝加粗边缘线 + 内部左上角编号 —— */
   function renderPieceGrid(plan,R,C,cellSize,colorById){
@@ -4760,7 +4937,7 @@ const ShotCore = (function(){
   // 默认展开 Q 档库：若库中含未展开（无 qlevel）的平坦条，静默展开并按档去重，
   // 根治"网页默认打开后数量翻倍，要点开 Q 档库才正常"的问题（含云端拉取后的去重）。
   const maybeAutoExpandQ = ()=>{ if(library.some(t=>!t.qlevel)) expandLibraryQLevels(true); };
-  const healThenAutoExpand = ()=>{ repairCollapsedTiers().then(()=>maybeAutoExpandQ()).catch(()=>maybeAutoExpandQ()); };
+  const healThenAutoExpand = ()=>{ repairCollapsedTiers().then(()=>maybeAutoExpandQ()).then(()=>{ const n=applyKnownQEffects(); if(n) $('statusBox').textContent='🛠 已按游戏实测修正 '+n+' 条法宝的效果加成率（如 流水散·Q2 80%→60%），已保存。'; }).catch(()=>maybeAutoExpandQ()); };
   if(gistPullReady()){ setCloudStatus('正在从 Gist 拉取…'); pullFromCloud().then(()=>{ renderInventory(); renderGroups(); healThenAutoExpand(); }).catch(()=>healThenAutoExpand()); }
   else { healThenAutoExpand(); }
 })();

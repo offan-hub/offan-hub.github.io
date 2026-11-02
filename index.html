@@ -2654,7 +2654,9 @@ const ShotCore = (function(){
     (grpArr||[]).forEach(g=>{ const gid=String(g.name||g.id||('组别'+(gidCounter+1))); grpRemap[String(g.id||gid)]=gid; gidCounter++; groups.push({id:gid, name:gid, enabled:!!g.enabled}); });
     (arr||[]).forEach(t=>{ tid++;
       const nm=String(t.name||t.id||('法宝'+tid));
-      const id=nm;
+      // 分档条（id 形如「名称·Q3」/「名称·Q5-1」）必须保留自身 id：同名多档若都以名称作主键，
+      // sel 会互相覆盖，且任何「按 id 去重」的路径都会只留第一条 → 整个库被压成 Q1（2026-11-02 事故根因）。
+      const id=(t.id!=null && /·Q[0-9]/.test(String(t.id))) ? String(t.id) : nm;
       const rawGrp=t.group||null;
       const grpId = rawGrp? (grpRemap[String(rawGrp)]||String(rawGrp)) : null;
       const g = grpId? groups.find(x=>x.id===grpId):null;
@@ -2722,6 +2724,12 @@ const ShotCore = (function(){
   }
   // 按名称主键做「并集合并」：同名法宝取 one 方（胜方）覆盖，其余并集。
   // 这是跨设备离线编辑后能互相补全、互不覆盖的关键。
+  // 同名「扁平条 + 分档条」共存时丢弃扁平条：分档条才是权威表示（分档后遗留的裸条目会与 Q 档重复）
+  function dropFlatTierDuplicates(lib){
+    const tiered=new Set((lib||[]).filter(t=>/·Q[0-9]/.test(String(t.id))).map(t=>String(t.name)));
+    if(!tiered.size) return lib||[];
+    return (lib||[]).filter(t=>!(String(t.id)===String(t.name) && tiered.has(String(t.name))));
+  }
   function mergeItems(a, b){
     const map=new Map();
     (a||[]).forEach(t=>{ if(t&&(t.id||t.name)!=null) map.set(String(t.id||t.name), t); });
@@ -2773,7 +2781,7 @@ const ShotCore = (function(){
       const del=new Set([...(base.deleted||[]), ...deletedNames]);
       const delG=new Set([...(base.deletedGroups||[]), ...deletedGroupNames]);
       // 合并法宝：本地覆盖 Gist 中同名项（不会丢失对方已上传的法宝），再剔除墓碑项
-      const mergedLib=mergeItems(base.library, local.library).filter(t=>!del.has(String(t.id||t.name)));
+      const mergedLib=dropFlatTierDuplicates(mergeItems(base.library, local.library)).filter(t=>!del.has(String(t.id||t.name)));
       const mergedGrp=mergeGroups(base.groups, local.groups).filter(g=>!delG.has(String(g.id||g.name)));
       deletedNames=del; saveDeleted(del); deletedGroupNames=delG; saveDeletedGroups(delG);
       const content=JSON.stringify({ version:2, library:mergedLib, groups:mergedGrp, deleted:[...del], deletedGroups:[...delG] }, null, 2);
@@ -2803,7 +2811,7 @@ const ShotCore = (function(){
       const delG=new Set([...(data.deletedGroups||[]), ...deletedGroupNames]);
       deletedNames=del; saveDeleted(del); deletedGroupNames=delG; saveDeletedGroups(delG);
       // 合并：Gist 覆盖本地同名项，其余并集，再剔除墓碑项（法宝 + 组别）
-      const mergedLib=mergeItems(library.map(serializeLibItem), data.library||[]).filter(t=>!del.has(String(t.id||t.name)));
+      const mergedLib=dropFlatTierDuplicates(mergeItems(library.map(serializeLibItem), data.library||[])).filter(t=>!del.has(String(t.id||t.name)));
       const mergedGrp=mergeGroups(groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), data.groups||[]).filter(g=>!delG.has(String(g.id||g.name)));
       if(mergedLib.length===0 && mergedGrp.length===0){ setCloudStatus('Gist 为空（或所法宝均已被删除）'); renderInventory(); renderGroups(); renderQuickShapes(); return; }
       rebuildFromMerged(mergedLib, mergedGrp);
@@ -2816,7 +2824,7 @@ const ShotCore = (function(){
     const c=cloudCfg();
     try{
       const local=gistPayload();
-      const content=JSON.stringify({ version:2, library:local.library, groups:local.groups, deleted:[], deletedGroups:[] }, null, 2);
+      const content=JSON.stringify({ version:2, library:dropFlatTierDuplicates(local.library), groups:local.groups, deleted:[], deletedGroups:[] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -2999,14 +3007,20 @@ const ShotCore = (function(){
   const DRAW=5; let drawSel=new Set();
   function renderDraw(){ const g=$('drawGrid'); g.style.gridTemplateColumns=`repeat(${DRAW},18px)`; g.innerHTML=''; for(let r=0;r<DRAW;r++) for(let c=0;c<DRAW;c++){ const k=r+','+c; const d=document.createElement('div'); d.className='cell tiny click'+(drawSel.has(k)?' sel':''); d.onclick=()=>{ if(drawSel.has(k)) drawSel.delete(k); else drawSel.add(k); d.classList.toggle('sel'); }; g.appendChild(d); } }
   $('addDraw').onclick=()=>{ if(drawSel.size===0){ alert('请先在手绘网格中点击组成法宝形状'); return; } const cells=[]; drawSel.forEach(k=>{ const [r,c]=k.split(',').map(Number); cells.push([r,c]); }); const name=$('drawName').value.trim()||('法宝'+(tid+1)); const count=Math.max(0,parseInt($('drawCount').value)||0); const aLvl=parseInt($('drawALevel').value)||0; const aL1r=Number($('drawAL1Rate').value)||0; const aL1a=$('drawAL1Attr').value||'atk'; const aL2r=Number($('drawAL2Rate').value)||0; const aL3r=Number($('drawAL3Rate').value)||0; const aL3m=$('drawAL3Mode').value||'global'; const aL3s=$('drawAL3Series').value||'group'; const aL4r=Number($('drawAL4Rate').value)||0; const aL5r=Number($('drawAL5Rate').value)||0; const aL5m=$('drawAL5Mode').value||'global'; const aL5s=$('drawAL5Series').value||'group'; const awaken={ level:aLvl, l1:{rate:aL1r,attr:aL1a}, l2:{rate:aL2r}, l3:{rate:aL3r,mode:aL3m,series:aL3s}, l4:{rate:aL4r}, l5:{rate:aL5r,mode:aL5m,series:aL5s} }; const opts={ group:($('drawGroup').value||'')||null, element:($('drawElement').value||''), type:($('drawType').value||''), reson:Math.max(0,Number($('drawReson').value)||0), quality:Math.min(5,Math.max(0,parseInt($('drawQuality').value)||0)), hp:Number($('drawHp').value)||0, def:Number($('drawDef').value)||0, atk:Number($('drawAtk').value)||0, dmg:Number($('drawDmg').value)||0, shield:Number($('drawShield').value)||0, bonusRate:Number($('drawBRate').value)||0, bonusType:$('drawBType').value||'none', bonusAttr:$('drawBAttr').value||'hp', awaken:awaken }; addToLibrary(name,cells,count,opts); drawSel.clear(); renderDraw(); $('drawName').value=''; $('drawCount').value=1; $('drawHp').value=0; $('drawDef').value=0; $('drawAtk').value=0; $('drawDmg').value=0; $('drawShield').value=0; $('drawBRate').value=0; $('drawBType').value='none'; $('drawBAttr').value='hp'; $('drawType').value=''; $('drawElement').value=''; $('drawReson').value=0; $('drawQuality').value=0; $('drawALevel').value=0; $('drawAL1Rate').value=0; $('drawAL2Rate').value=20; $('drawAL3Rate').value=0; $('drawAL3Series').value='group'; $('drawAL4Rate').value=0; $('drawAL5Rate').value=0; $('drawAL5Series').value='group'; };
-  function uniqueName(name){ let base=(name||'法宝').trim()||'法宝'; let nm=base, k=2; while(library.some(t=>t.name===nm)){ nm=base+' #'+k; k++; } return nm; }
+  function uniqueName(name, qlevel){
+    let base=(name||'法宝').trim()||'法宝'; let nm=base, k=2;
+    const qs=String(qlevel==null?'':qlevel);
+    while(library.some(t=>t.name===nm && String(t.qlevel==null?'':t.qlevel)===qs)){ nm=base+' #'+k; k++; }
+    return nm;
+  }
   function addToLibrary(name,cells,count,opts){
     opts=opts||{};
     const grp = opts.group||null;
     // 强关联校验：带组别的法宝，仅当该组别已启用时才默认启用；未分组法宝默认可用。
     const g = grp? groups.find(x=>x.id===grp):null;
     const grpEnabled = !grp || (g? !!g.enabled : true);
-    const nm=uniqueName(name); const id=nm;
+    const nm=uniqueName(name, opts.qlevel);
+    const id=(opts.qlevel!=null && String(opts.qlevel)!=='')? (nm+'·Q'+opts.qlevel) : nm;
     library.push({id,name:nm,cells:PackCore.normalizeShape(cells),color:colorOf(library.length),
       base:{hp:opts.hp||0,def:opts.def||0,atk:opts.atk||0,dmg:opts.dmg||0,shield:opts.shield||0},
       bonusRate:opts.bonusRate||0,bonusType:opts.bonusType||'none',bonusAttr:opts.bonusAttr||'hp',
@@ -3109,7 +3123,7 @@ const ShotCore = (function(){
     body.querySelectorAll('.keystar').forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const t=library[i]; t.key=!t.key; saveLibrary(); renderInventory(); });
     body.querySelectorAll('.grp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const newG=e.target.value||null; library[i].group=newG; const g=newG?groups.find(x=>x.id===newG):null; if(g && !g.enabled) sel[library[i].id].include=false; renderInventory(); saveLibrary(); });
     body.querySelectorAll('.dt').forEach(el=>el.onclick=()=>openDetail(+el.dataset.i));
-    body.querySelectorAll('.del').forEach(el=>el.onclick=e=>{ const i=+el.dataset.i; const nm=library[i]?library[i].name:null; delete sel[library[i].id]; library.splice(i,1); if(nm){ deletedNames.add(nm); saveDeleted(deletedNames); } renderInventory(); saveLibrary(); });
+    body.querySelectorAll('.del').forEach(el=>el.onclick=e=>{ const i=+el.dataset.i; const nm=library[i]?library[i].name:null; const did=library[i]?String(library[i].id||nm):null; delete sel[library[i].id]; library.splice(i,1); if(did){ deletedNames.add(did); saveDeleted(deletedNames); } renderInventory(); saveLibrary(); });
     updateSummary();
   }
   // 右栏：已启用法宝信息卡（只读展示，编辑走「详情」弹窗）
@@ -3332,6 +3346,56 @@ const ShotCore = (function(){
     const flagMsg = stats.flagged? '；'+stats.flagged+' 条效果加成跨档延续、已标黄待你从游戏核对' : '';
     const corrMsg = stats.corrected? '；已套用已知修正（流水散 Q4=100/Q3=80）'+stats.corrected+' 条' : '';
     $('statusBox').textContent='🔢 已展开 Q 档库：'+stats.seeds+' 件种子 → '+newLib.length+' 条'+flagMsg+corrMsg+'。识别端现在会按底色自动选对应档位。';
+  }
+  /* 自愈：某名称在库里只剩「一条带档位的条目」，但官方逐档数据有多档 → 说明曾被名称主键压塌，
+     就地按官方逐档重新展开（幂等：展开后同名变多条，不再命中）。数量/觉醒保留在同档条目上。 */
+  async function repairCollapsedTiers(){
+    try{
+      const ok=await shotEnsureData();
+      if(!ok||!SHOT_ENRICH) return 0;
+      const byName=new Map();
+      library.forEach(t=>{ const nm=String(t.name||''); if(!byName.has(nm)) byName.set(nm,[]); byName.get(nm).push(t); });
+      const oldSel=Object.assign({},sel);
+      const out=[]; let fixed=0;
+      for(const [nm,arr] of byName){
+        const en=SHOT_ENRICH[nm]; const tiers=(en&&en.tiers)||[];
+        // 长老（Q5）在官方逐档数据里只有「一档 quality=5」，但要展开成 Q5-1/2/3 三条
+        const isElder=arr[0] && Number(arr[0].quality)===5;
+        const expandable=tiers.length>1 || (isElder && tiers.length===1);
+        const alone=(arr.length===1) && arr[0].qlevel!=null;
+        if(!(alone && expandable)){ arr.forEach(t=>out.push(t)); continue; }
+        const seed=arr[0]; const keepQ=Number(seed.quality)||0;
+        for(const tr of tiers){
+          const q=Number(tr.quality)||0;
+          const subs=(q===5)?[1,2,3]:[0];
+          for(const et of subs){
+            const ql=(q===5)?('5-'+et):q;
+            // 用户主动删掉的档位不再补回（墓碑按条目 id 记）
+            if(deletedNames.has(nm+'·Q'+ql)) continue;
+            const same=(keepQ===q) && (q!==5 || (Number(seed.elderTier)||3)===et);
+            out.push(Object.assign({},seed,{
+              id:nm+'·Q'+ql, name:nm, qlevel:ql, quality:q, elderTier:(q===5?et:0),
+              base:{hp:(tr.base&&tr.base.hp)||0,def:(tr.base&&tr.base.def)||0,atk:(tr.base&&tr.base.atk)||0,dmg:(tr.base&&tr.base.dmg)||0,shield:(tr.base&&tr.base.shield)||0},
+              reson:Number(tr.reson)||Number(seed.reson)||0,
+              count: same?(Number(seed.count)||0):0,
+              awaken: same?cloneAwaken(seed.awaken):cloneAwaken({level:0})
+            }));
+            fixed++;
+          }
+        }
+      }
+      if(!fixed) return 0;
+      library.length=0; out.forEach(t=>library.push(t));
+      Object.keys(sel).forEach(k=>delete sel[k]);
+      library.forEach(t=>{
+        const o=oldSel[t.id];
+        sel[t.id]=o?{include:!!o.include,count:Math.max(0,o.count||0),priority:!!o.priority}
+                   :{include:false,count:Number(t.count)||0,priority:false};
+      });
+      saveLibrary(); renderInventory(); if(typeof renderGroups==='function') renderGroups();
+      $('statusBox').textContent='🛠 检测到法宝库曾被压成单档（Q2–Q4 丢失），已按官方逐档数据自动补回 '+fixed+' 条（旧的数量/觉醒保留在同档条目上）。';
+      return fixed;
+    }catch(e){ return 0; }
   }
   $('expandQ').onclick=expandLibraryQLevels;
 
@@ -4696,8 +4760,9 @@ const ShotCore = (function(){
   // 默认展开 Q 档库：若库中含未展开（无 qlevel）的平坦条，静默展开并按档去重，
   // 根治"网页默认打开后数量翻倍，要点开 Q 档库才正常"的问题（含云端拉取后的去重）。
   const maybeAutoExpandQ = ()=>{ if(library.some(t=>!t.qlevel)) expandLibraryQLevels(true); };
-  if(gistPullReady()){ setCloudStatus('正在从 Gist 拉取…'); pullFromCloud().then(()=>{ renderInventory(); renderGroups(); maybeAutoExpandQ(); }); }
-  else { maybeAutoExpandQ(); }
+  const healThenAutoExpand = ()=>{ repairCollapsedTiers().then(()=>maybeAutoExpandQ()).catch(()=>maybeAutoExpandQ()); };
+  if(gistPullReady()){ setCloudStatus('正在从 Gist 拉取…'); pullFromCloud().then(()=>{ renderInventory(); renderGroups(); healThenAutoExpand(); }).catch(()=>healThenAutoExpand()); }
+  else { healThenAutoExpand(); }
 })();
 </script>
 </body>

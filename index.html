@@ -946,7 +946,8 @@
   let _refCache={key:'',val:null};
   function scoreRefs(pieces,R,C,blocked,infosOpt){
     R=R||6; C=C||7;
-    const key=(R+'x'+C)+'#'+(pieces||[]).map(p=>[p.name,p.count,p.hp,p.def,p.atk,p.starMult].join('|')).join(';');
+    const blkKey=(blocked&&blocked.length)?Array.prototype.reduce.call(blocked,(a,v,i)=>v?a+i:a,0):0;   // 挡格指纹（和即可，仅用于失效缓存）
+    const key=(R+'x'+C+'/'+blkKey)+'#'+(pieces||[]).map(p=>[p.name,p.count,p.hp,p.def,p.atk,p.starMult].join('|')).join(';');
     if(_refCache.key===key && _refCache.val) return _refCache.val;
     let hp=0,def=0,atk=0,dmg=0;
     for(const p of (pieces||[])){

@@ -4756,6 +4756,63 @@ const ShotCore = (function(){
   ['wHp','wAtk','wDef','wDmg'].forEach(id=>{ const el=$(id); if(el) el.oninput=()=>{ const s=$('wPreset'); if(s) s.value='custom'; readWeights(); }; });
 
   /* —— 方案网格渲染：沿用原小格子，仅给每件法宝加粗边缘线 + 内部左上角编号 —— */
+  /* —— 方案卡展示色：同名不同档（如 流水散·Q2/Q3/Q4）各给一色（参考竞品：分档异色）。
+        从高饱和候选色环里做「贪心最大-最小距离」选色，保证与场上其它法宝颜色都拉开明显色距；
+        单档法宝保持库原色；仅影响方案卡棋盘与图例，不改库数据。 —— */
+  function hexToRgb(hex){
+    const m=/^#?([0-9a-fA-F]{6})$/.exec(String(hex||'').trim());
+    if(!m) return null;
+    const n=parseInt(m[1],16);
+    return [n>>16&255,n>>8&255,n&255];
+  }
+  function hslToRgb(h,s,l){
+    s/=100; l/=100;
+    const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+    let r,g,b;
+    if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}
+    else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}
+    return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
+  }
+  function rgbSep(a,b){ // 通道最大差 + 总差加权，综合衡量「肉眼可辨」程度
+    const d0=Math.abs(a[0]-b[0]),d1=Math.abs(a[1]-b[1]),d2=Math.abs(a[2]-b[2]);
+    return Math.max(d0,d1,d2)+0.3*(d0+d1+d2);
+  }
+  function tierColorMap(){
+    const byName={};
+    library.forEach(t=>{ (byName[t.name]=byName[t.name]||[]).push(t); });
+    const colors={}; const multiNames={};
+    const used=[]; // 已占用颜色（rgb 数组）：单档原色 + 各同名组基色（保证任何一档不与它们撞色）
+    const qrank=t=>{ const q=parseFloat(String(t.qlevel!=null&&t.qlevel!==''?t.qlevel:t.quality)); return isNaN(q)?0:q; };
+    Object.keys(byName).forEach(nm=>{
+      const arr=byName[nm];
+      const base=hexToRgb(arr[0].color);
+      if(arr.length===1){ colors[arr[0].id]=arr[0].color; }
+      else{ multiNames[nm]=true; }
+      if(base) used.push(base);
+    });
+    // 候选色：色相环每 15° × 4 个明度层，高饱和（足以覆盖任意组合）
+    const CAND=[];
+    for(let h=0;h<360;h+=15){ [38,50,62,72].forEach(l=>CAND.push([h,l])); }
+    Object.keys(byName).forEach(nm=>{
+      const arr=byName[nm];
+      if(arr.length<2) return;
+      const sorted=arr.slice().sort((a,b)=>qrank(a)-qrank(b)||String(a.qlevel).localeCompare(String(b.qlevel)));
+      sorted.forEach(t=>{
+        let bestStr='', bestRgb=null, bestD=-1;
+        for(let ci=0;ci<CAND.length;ci++){
+          const rgb=hslToRgb(CAND[ci][0],64,CAND[ci][1]);
+          let d=Infinity;
+          for(let ui=0;ui<used.length;ui++){ const s=rgbSep(rgb,used[ui]); if(s<d)d=s; }
+          if(d>bestD){ bestD=d; bestRgb=rgb; bestStr='hsl('+CAND[ci][0]+',64%,'+CAND[ci][1]+'%)'; }
+        }
+        colors[t.id]=bestStr;
+        if(bestRgb) used.push(bestRgb);
+      });
+    });
+    return { colors:colors, multiNames:multiNames };
+  }
+  function tierSuffix(t,multiNames){ return (multiNames&&multiNames[t.name])?('·Q'+(t.qlevel!=null&&t.qlevel!==''?t.qlevel:(t.quality||''))):''; }
+
   function renderPieceGrid(plan,R,C,cellSize,colorById){
     const total=R*C;
     const cellPiece=new Int16Array(total); cellPiece.fill(-1);
@@ -4789,8 +4846,9 @@ const ShotCore = (function(){
   function renderPlans(plans,backpack,ms){
     lastPlans=plans; lastBackpack=backpack; lastMs=ms;
     const R=backpack.rows,C=backpack.cols;
+    const tcm=tierColorMap(); const tierColors=tcm.colors, tierMulti=tcm.multiNames;
     const colorById={}; const idName={}; const libMap={};
-    library.forEach(t=>{ colorById[t.id]=t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:(t.awaken||null), starMult:(t.starMult!=null?Number(t.starMult):starMultOf(t)) }; });
+    library.forEach(t=>{ colorById[t.id]=tierColors[t.id]||t.color; idName[t.id]=t.name; libMap[t.id]={ hp:t.base&&t.base.hp||0, def:t.base&&t.base.def||0, atk:t.base&&t.base.atk||0, dmg:t.base&&t.base.dmg||0, bonusRate:t.bonusRate||0, bonusType:t.bonusType||'none', bonusAttr:t.bonusAttr||'hp', group:t.group||null, type:(t.type!=null?t.type:null), awaken:(t.awaken||null), starMult:(t.starMult!=null?Number(t.starMult):starMultOf(t)) }; });
     const weights=readWeights();
     plans.forEach(p=>{ const a=computeAttributes(p,libMap,R,C); p.totals=a.totals; p.perAttrs=a.per; p.weighted=weightedScore(a.totals,weights); });
     const mode=$('sortMode')?$('sortMode').value:'attr';
@@ -4833,7 +4891,7 @@ const ShotCore = (function(){
       // 详情面板也用单方案统计
       const usedOf={}; library.forEach(t=>usedOf[t.id]=0);
       plan.placements.forEach(pl=>{ if(usedOf[pl.name]!=null) usedOf[pl.name]++; });
-      renderPlanDetail(plan,R,C,idName,usedOf,hasPrio);
+      renderPlanDetail(plan,R,C,idName,usedOf,hasPrio,tierColors,tierMulti);
     }
     view.forEach((plan,i)=>{
       // 按当前方案单独统计每件法宝的摆放实例数（不跨方案累加）
@@ -4849,7 +4907,7 @@ const ShotCore = (function(){
       const t=plan.totals||{hp:0,def:0,atk:0,dmg:0};
       const attrLine='<div class="attr-line">生命 '+fmt(t.hp)+' · 防御 '+fmt(t.def)+' · 攻击 '+fmt(t.atk)+(t.dmg?' · 伤害 '+fmt(t.dmg):'')+'</div>';
       const gridHtml=renderPieceGrid(plan,R,C,24,colorById);
-      let legHtml='<div class="legend">'; library.forEach(t2=>{ const u=usedOf[t2.id]; if(u>0){ const left=sel[t2.id].count-u; legHtml+='<div class="item"><span class="sw" style="background:'+t2.color+'"></span>'+escapeHtml(t2.name)+' <b>'+u+'/'+(sel[t2.id].count)+'</b>'+(left>0?' <span style="color:var(--warn)">(剩'+left+')</span>':'')+(sel[t2.id].priority?' <span style="color:var(--accent2)">★优先</span>':'')+'</div>'; } });
+      let legHtml='<div class="legend">'; library.forEach(t2=>{ const u=usedOf[t2.id]; if(u>0){ const left=sel[t2.id].count-u; legHtml+='<div class="item"><span class="sw" style="background:'+(tierColors[t2.id]||t2.color)+'"></span>'+escapeHtml(t2.name)+tierSuffix(t2,tierMulti)+' <b>'+u+'/'+(sel[t2.id].count)+'</b>'+(left>0?' <span style="color:var(--warn)">(剩'+left+')</span>':'')+(sel[t2.id].priority?' <span style="color:var(--accent2)">★优先</span>':'')+'</div>'; } });
       const leftTre=library.filter(t2=>sel[t2.id]&&sel[t2.id].include&&(sel[t2.id].count-(usedOf[t2.id]||0))>0);
       if(leftTre.length){ legHtml+='<div class="item" style="color:var(--warn)">未放: '+leftTre.map(t2=>escapeHtml(t2.name)+'×'+(sel[t2.id].count-usedOf[t2.id])).join('、')+'</div>'; }
       legHtml+='</div>';
@@ -4866,13 +4924,14 @@ const ShotCore = (function(){
     if(view.length) selectPlan(0);
   }
   /* ---------- 右侧详情面板：点击某方案卡后实时渲染其摆放与属性明细 ---------- */
-  function renderPlanDetail(plan,R,C,idName,usedOf,hasPrio){
+  function renderPlanDetail(plan,R,C,idName,usedOf,hasPrio,tierColors,tierMulti){
     const box=$('planDetail');
     if(!plan){ box.innerHTML='<div class="pd-empty">点击左侧任意方案，此处实时显示该方案的摆放与属性详情。</div>'; return; }
-    const colorById={}; library.forEach(t=>colorById[t.id]=t.color);
+    tierColors=tierColors||{}; tierMulti=tierMulti||{};
+    const colorById={}; library.forEach(t=>colorById[t.id]=tierColors[t.id]||t.color);
     const gridHtml=renderPieceGrid(plan,R,C,20,colorById);
     let legHtml='<div class="legend" style="margin-top:6px">';
-    library.forEach(t=>{ const u=usedOf[t.id]; if(u>0){ const left=sel[t.id].count-u; legHtml+='<div class="item"><span class="sw" style="background:'+t.color+'"></span>'+escapeHtml(t.name)+' <b>'+u+'/'+(sel[t.id].count)+'</b>'+(left>0?' <span style="color:var(--warn)">(剩'+left+')</span>':'')+(sel[t.id].priority?' <span style="color:var(--accent2)">★优先</span>':'')+'</div>'; } });
+    library.forEach(t=>{ const u=usedOf[t.id]; if(u>0){ const left=sel[t.id].count-u; legHtml+='<div class="item"><span class="sw" style="background:'+(tierColors[t.id]||t.color)+'"></span>'+escapeHtml(t.name)+tierSuffix(t,tierMulti)+' <b>'+u+'/'+(sel[t.id].count)+'</b>'+(left>0?' <span style="color:var(--warn)">(剩'+left+')</span>':'')+(sel[t.id].priority?' <span style="color:var(--accent2)">★优先</span>':'')+'</div>'; } });
     const leftTre=library.filter(t=>sel[t.id]&&sel[t.id].include&&(sel[t.id].count-(usedOf[t.id]||0))>0);
     if(leftTre.length){ legHtml+='<div class="item" style="color:var(--warn)">未放: '+leftTre.map(t=>escapeHtml(t.name)+'×'+(sel[t.id].count-usedOf[t.id])).join('、')+'</div>'; }
     legHtml+='</div>';

@@ -3740,17 +3740,35 @@ const ShotCore = (function(){
     let h='<option value="">— 请选择 —</option>';
     // 库内法宝用自己的 id；云端目录法宝的 id 形如 cat:12（ShotCore 里加的前缀）
     const val=function(t){ return String(t.id||''); };
-    const opt=function(t){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · '+qualityLabel(t)+' · 共鸣'+t.reson:'')+'</option>'; };
-    const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(opt).join('')+'</optgroup>'; };
+    const opt=function(t,extra){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · '+qualityLabel(t)+' · 共鸣'+t.reson:'')+(extra?(' '+extra):'')+'</option>'; };
+    const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(function(t){ return opt(t); }).join('')+'</optgroup>'; };
+    // 长老法宝（Q5）识别推荐只给默认档（引擎为识别把三档折叠成一条）；
+    // 这里把同名的 Q5-1/Q5-2/Q5-3 提到最顶上的一组，切换档位一键到位，不必在一堆同名里翻找。
+    let anchor = (cell.equip && Number(cell.equip.quality)===5) ? cell.equip
+               : (curId ? library.find(function(t){ return t.id===curId && Number(t.quality)===5; }) : null);
+    if(anchor){
+      const sibs=library.filter(function(t){ return t.name===anchor.name && Number(t.quality)===5; })
+        .sort(function(a,b){ return String(a.qlevel).localeCompare(String(b.qlevel)); });
+      if(sibs.length>1){
+        const recId = cell.equip ? val(cell.equip) : null;
+        h+='<optgroup label="⭐ 同法宝长老档位（Q5-1/Q5-2/Q5-3）">'
+          + sibs.map(function(t){
+              const id=val(t);
+              const extra = (id===recId) ? '（识别推荐）' : (id===curId ? '（当前选择）' : '');
+              return opt(t, extra);
+            }).join('')
+          +'</optgroup>';
+      }
+    }
     // 识别推荐（可能是库内法宝，也可能是云端目录里的新法宝）
     if(cell.equip){
       const inLib=library.some(t=>t.id===cell.equip.id);
       grp([cell.equip], inLib?'识别推荐（库内）':'识别推荐（云端目录，导入后会新建）');
     }
-    // 库内同元素
+    // 库内同元素（已在上组列出的长老三档不再重复出现）
     const sameEl=library.filter(t=>(t.element||'')===cell.element);
     const dupId=cell.equip?cell.equip.id:null;
-    grp(sameEl.filter(t=>t.id!==dupId),'库内 · 同元素');
+    grp(sameEl.filter(function(t){ return t.id!==dupId && !(anchor&&t.name===anchor.name&&Number(t.quality)===5); }),'库内 · 同元素');
     // 云端目录：同元素 + 同形状
     const sk=shotShapeOf(cell);
     const cloud=(SHOT_CATALOG||[]).filter(function(c){

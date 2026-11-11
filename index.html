@@ -169,7 +169,17 @@
   .en-badge { display:inline-block; padding:1px 7px; border-radius:8px; font-size:11px; border:1px solid var(--line); background:#f4f5f8; color:var(--muted); }
   .en-empty { color:var(--muted); font-size:12.5px; padding:6px 2px; }
   @media (max-width:1100px){ .lib-dual { flex-direction:column; } .lib-right-scroll { max-height:340px; } }
-  details.group-panel, details.cloud-panel { margin-top:10px; border:1px solid var(--line); border-radius:9px; padding:0 10px; }  details.group-panel summary, details.cloud-panel summary { cursor:pointer; padding:8px 0; font-size:13px; font-weight:600; }
+  details.group-panel, details.cloud-panel, details.elder-panel { margin-top:10px; border:1px solid var(--line); border-radius:9px; padding:0 10px; }  details.group-panel summary, details.cloud-panel summary, details.elder-panel summary { cursor:pointer; padding:8px 0; font-size:13px; font-weight:600; }
+  .elder-list { display:flex; flex-direction:column; gap:6px; padding:4px 0 10px; }
+  .er-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg-soft,#f7f8fb); }
+  .er-name { font-weight:600; min-width:120px; }
+  .er-tiers { display:flex; gap:4px; }
+  .er-tiers label { display:inline-flex; align-items:center; gap:3px; padding:3px 9px; border:1px solid var(--line); border-radius:999px; cursor:pointer; font-size:12.5px; user-select:none; }
+  .er-tiers label.on { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .er-tiers input { display:none; }
+  .er-star { color:var(--c-text-dim); font-size:12px; min-width:150px; }
+  .er-aw { display:flex; align-items:center; gap:6px; }
+  .er-aw select { width:64px; }
   .group-list { display:flex; flex-direction:column; gap:6px; padding:4px 0 10px; }
   .group-row { display:flex; gap:8px; align-items:center; }
   .group-row .gname { width:170px; }
@@ -409,6 +419,12 @@
         </div>
       </div>
       <div class="cap" id="invSummary"></div>
+      <details class="elder-panel" open>
+        <summary>长老法宝设定（阶级 / 觉醒）</summary>
+        <div class="cap" id="elderSummary" style="margin-bottom:8px"></div>
+        <div class="elder-list" id="elderList"></div>
+        <div class="hint" style="margin-top:6px">截图导入时，长老法宝只识别名称与图形；其<b>阶级（Q5-1 / Q5-2 / Q5-3，对应外部倍率 ×1.6 / ×2.0 / ×2.5）</b>与<b>觉醒等级</b>在此统一设置。切换阶级会把该法宝的数量与觉醒搬到所选档位；觉醒等级会同步写入该家族三档。若截图已自动识别到觉醒（白字数字位于共鸣值上方、红底），导入后会自动填入此处，可在此核对修正。</div>
+      </details>
       <details class="group-panel">
         <summary>组别管理</summary>
         <div class="row" style="margin-top:8px">
@@ -1340,6 +1356,104 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -1872,13 +1986,119 @@ const ShotCore = (function(){
     }
     return a + b ? 2 * both / (a + b) : 0;
   }
+  function isElderCell(bm, grid, row, col) {
+    const bg = cellBg(bm, grid, row, col);
+    if (!bg) return false;
+    const r = bg[0], g = bg[1], b = bg[2];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    if (max < 140) return false;                 // 太暗非红底
+    if (r - g < 40 || r - b < 28) return false;  // 红须明显主导
+    if ((max - min) < 48) return false;          // 需有饱和度，排除灰白
+    if (b > r * 0.92) return false;              // 排除偏蓝/品红（b 接近 r）
+    return true;
+  }
+  /* ---------- 长老法宝觉醒识别（红底 + 右下角彩色火焰角标） ----------
+     2026-11 实拍标定（8 张觉醒样例图）：长老红底格的觉醒角标是「彩色火焰 + 白字数字」，
+     火焰颜色直接编码等级：绿1 / 蓝2 / 紫3 / 黄4 / 红5。角标块在格内右下象限，
+     中心约 (fx≈0.82, fy≈0.47)，尺寸约 0.28pw × 0.34ph，平均饱和度 0.50~0.60。
+     标定还发现游戏实拍上 findResonDisk 几乎全失灵，故本通道不再依赖盘定位，
+     直接按格内位置 + 尺寸 + 饱和度找火焰块，colorFamily 即等级。 */
+  function recognizeElderAwaken(bm, grid, row, col) {
+    const result = (level, confidence, status) => ({ awakenLevel: level, awakenConfidence: confidence, awakenStatus: status });
+    const pw = grid.pw, ph = grid.ph;
+    if (pw < 24 || ph < 24) return null;
+    const left = grid.ox + col * pw, top = grid.oy + row * ph;
+    // 搜索区：格内右下象限（角标 fx≈0.68-0.97 / fy≈0.28-0.64，留余量）
+    const x0 = Math.max(0, Math.round(left + pw * 0.55));
+    const y0 = Math.max(0, Math.round(top + ph * 0.22));
+    const x1 = Math.min(bm.w, Math.round(left + pw));
+    const y1 = Math.min(bm.h, Math.round(top + ph * 0.78));
+    const W = x1 - x0, H = y1 - y0;
+    if (W < 12 || H < 12) return null;
+    // 焰内白字验证：角标数字位于焰块中下部（白/亮白低饱和），
+    // 用 AW_GLYPHS 模板比对且等级须与焰色一致——否则视为艺术误报。
+    const verifyDigit = (bx, by, bw, bh) => {
+      const cands = components(bw, bh, (px, py) => {
+        const p = bm.px(x0 + bx + px, y0 + by + py);
+        const mx = Math.max(...p), mn = Math.min(...p);
+        return mx >= 200 && (mx - mn) < 60 && mn > 110;
+      }, 1);
+      let best = null;
+      for (const cc of cands) {
+        if (cc.points.length < 8) continue;
+        if (cc.width < pw * 0.03 || cc.width > pw * 0.20) continue;
+        if (cc.height < ph * 0.05 || cc.height > ph * 0.24) continue;
+        const scores = Object.entries(CFG.AW_GLYPHS).map(([level, rows]) => ({ level: Number(level), score: glyphScore(cc, rows) }))
+          .sort((a, b) => b.score - a.score);
+        const top1 = scores[0];
+        const runner = scores[1];
+        if (!best || top1.score > best.score) best = { level: top1.level, score: top1.score, margin: top1.score - (runner ? runner.score : 0) };
+      }
+      return best;
+    };
+    let best = null;
+    for (let fam = 1; fam <= 5; fam++) {
+      // 色族差异化谓词（2026-11 实测标定）：
+      // 绿焰(1)整体偏暗（mx≈180、sat≈0.40）→ 放宽亮度与饱和度；
+      // 红焰(5)与长老暗红底同为 fam5 会连通成巨块 → 改用「亮红」谓词
+      //   （mx≥200 且 sat≥0.45，真红焰 sat≈0.56、暗红底 sat≈0.4x）把焰从底色中分离；
+      // 蓝(2)/紫(3)/黄(4) 维持原谓词（全尺寸棋盘已标定通过）。
+      const comps = components(W, H, (px, py) => {
+        const p = bm.px(x0 + px, y0 + py);
+        const mx = Math.max(...p), mn = Math.min(...p);
+        if (fam === 5) return mx >= 200 && (mx - mn) / Math.max(1, mx) >= 0.45 && colorFamily(p) === 5;
+        if (fam === 1) return mx >= 90 && (mx - mn) >= 30 && colorFamily(p) === 1;
+        return mx >= 120 && (mx - mn) >= 45 && colorFamily(p) === fam;
+      }, 1);
+      for (const cc of comps) {
+        const n = cc.points.length;
+        if (n < Math.max(30, 0.02 * pw * ph) || n > 0.20 * pw * ph) continue;
+        if (cc.width < pw * 0.14 || cc.width > pw * 0.52) continue;
+        if (cc.height < ph * 0.18 || cc.height > ph * 0.55) continue;
+        let satSum = 0;
+        for (const [px, py] of cc.points) {
+          const p = bm.px(x0 + px, y0 + py);
+          const mx = Math.max(...p), mn = Math.min(...p);
+          satSum += mx === 0 ? 0 : (mx - mn) / mx;
+        }
+        const sat = satSum / n;
+        if (sat < (fam === 1 ? 0.32 : 0.45)) continue;
+        // 黄焰(4)易与金盘/橙色艺术混淆：金盘 sat≈0.38-0.43，真黄焰 0.50-0.55，火系橙艺术 ≥0.62
+        if (fam === 4 && (cc.height > ph * 0.46 || sat < 0.48 || sat > 0.62)) continue;
+        const fx = (x0 + cc.x + cc.width / 2 - left) / pw;
+        const fy = (y0 + cc.y + cc.height / 2 - top) / ph;
+        if (fx < 0.68 || fx > 0.97 || fy < 0.28 || fy > 0.64) continue;
+        const digit = verifyDigit(cc.x, cc.y, cc.width, cc.height);
+        // recognized：焰色与数字模板双重一致；仅焰色吻合 → uncertain（宁缺毋滥，艺术块到此为止）
+        if (digit && digit.level === fam && digit.score >= 0.55 && digit.margin >= 0.04) {
+          const conf = Math.min(0.97, 0.80 + 0.10 * digit.score + 0.05 * digit.margin);
+          if (!best || conf > best.conf) best = { level: fam, conf, status: 'recognized' };
+        } else if (!best || best.status !== 'recognized') {
+          best = { level: fam, conf: 0.55, status: 'uncertain' };
+        }
+      }
+    }
+    if (best) return result(best.level, best.conf, best.status);
+    // 红底格无角标 → 未觉醒（none 让件级聚合仍可被其他格的 recognized 覆盖）
+    return result(0, 0.8, 'none');
+  }
   // 觉醒等级识别（无内置零焰样本：零级判定更保守，证据不足一律 uncertain）
   function recognizeAwaken(bm, grid, row, col) {
+    const result = (level, confidence, status) => ({ awakenLevel: level, awakenConfidence: confidence, awakenStatus: status });
     const pw = grid.pw, ph = grid.ph;
     const left = grid.ox + col * pw, top = grid.oy + row * ph;
+    // 长老彩色火焰角标通道：格内右下区「焰色块 + 白字数字」双重验证，误报率低。
+    // 不再以红底为硬门槛——实拍中长老件的底格常被白色火焰艺术盖满（bg 近中性），
+    // 红底判定会漏掉角标格。recognized/uncertain（有角标证据）直接采纳；
+    // 红底格无角标证据（none）时回落旧火焰逻辑做保守零级判定，
+    // 避免把暖色底普通格一刀切判成「需人工核对」（合成基准 S15/S16）。
+    const elder = recognizeElderAwaken(bm, grid, row, col);
+    if (elder && elder.awakenStatus === 'recognized') return elder;
+    if (isElderCell(bm, grid, row, col)) {
+      if (elder && elder.awakenStatus === 'uncertain') return elder;
+    }
     const x = Math.floor(left + 0.55 * pw + 1e-9), y = Math.floor(top + 0.12 * ph + 1e-9);
     const width = Math.ceil(0.51 * pw), height = Math.ceil(0.62 * ph);
-    const result = (level, confidence, status) => ({ awakenLevel: level, awakenConfidence: confidence, awakenStatus: status });
     if (![pw, ph, x, y, width, height].every(Number.isFinite) || pw < 24 || ph < 24
       || x < 0 || y < 0 || x + width > bm.w || y + height > bm.h) return result(null, 0, 'uncertain');
     const rgb = (cx, cy) => bm.px(x + cx, y + cy);
@@ -2074,15 +2294,23 @@ const ShotCore = (function(){
     const elKeys = [...T_ELEMENT.keys()];
     const cells = [];
     for (let r = 0; r < CFG.ROWS; r++) for (let c = 0; c < CFG.COLS; c++) {
-      if (darkRatio(bm, refined, r, c, CFG.geometry.badgeBox) <= TH.anchorCandidate) continue;
-      const el = bestOf(elKeys.map(k => ({ key: k, score: bestCorr(bm, refined, r, c, CFG.geometry.elementBox, T_ELEMENT.get(k)) })));
-      const moatWeak = el.score < TH.weakGlyphCorr && darkRatio(bm, refined, r, c, CFG.geometry.moatBox) >= TH.weakGlyphMoat;
-      const elWeak = el.score < TH.glyphCorr || el.margin < TH.glyphMargin || el.score + 2 * el.margin < TH.glyphCombined || moatWeak;
-      // 形态（该元素下库里出现过的形态才参与，由调用方通过 formPool 提供；此处先全量试）
-      const sig = cellSignature(bm, refined, r, c);
+      // 元素徽章在件左上格才有清晰字形；右下角标格（火焰）的徽章区往往是暗的，
+      // 不能因此跳过——否则觉醒识别结果进不了 detected，件级聚合永远拿不到角标。
+      // 故只对「元素徽章候选」做强校验与签名采集，觉醒识别对全部格都跑。
+      const isAnchor = darkRatio(bm, refined, r, c, CFG.geometry.badgeBox) > TH.anchorCandidate;
+      let el, elScore, elWeak, sig = null;
+      if (isAnchor) {
+        el = bestOf(elKeys.map(k => ({ key: k, score: bestCorr(bm, refined, r, c, CFG.geometry.elementBox, T_ELEMENT.get(k)) })));
+        elScore = el.score;
+        const moatWeak = el.score < TH.weakGlyphCorr && darkRatio(bm, refined, r, c, CFG.geometry.moatBox) >= TH.weakGlyphMoat;
+        elWeak = el.score < TH.glyphCorr || el.margin < TH.glyphMargin || el.score + 2 * el.margin < TH.glyphCombined || moatWeak;
+        sig = cellSignature(bm, refined, r, c);
+      } else {
+        el = { key: null, score: 0, margin: 0 }; elScore = 0; elWeak = true;
+      }
       const bg = cellBg(bm, refined, r, c);
       const aw = recognizeAwaken(bm, refined, r, c);
-      cells.push({ row: r, col: c, element: el.key, elementScore: el.score, elementWeak: elWeak,
+      cells.push({ row: r, col: c, element: el.key, elementScore: elScore, elementWeak: elWeak,
         sig, bg, awaken: aw, form: null, formScore: null });
     }
     return { grid: refined, cells };
@@ -2514,6 +2742,22 @@ const ShotCore = (function(){
       solve = { score: 0, regions: anchorIds.map(a => ({ ids: [a], shape: [[0, 0]], anchor: a })) };
     }
     // 逐块匹配身份
+    // 件级觉醒聚合：觉醒角标画在件右下格（共鸣盘所在格），不在锚点格。
+    // 引擎按元素徽章（多在件左上格）切分，多格件的右下角标格元素徽章偏弱，
+    // 切分易把件拆成 1×1 而漏掉角标格。故聚合不只扫切分得到的 rg.ids，
+    // 还把锚点所在的「4 连通占格块」整体纳入（occupancyMap 的占格判定比元素徽章稳健），
+    // 取证据最强者（recognized > uncertain > none，同级比置信度）。
+    const awRank = a => (a ? (a.awakenStatus === 'recognized' ? 2 : a.awakenStatus === 'uncertain' ? 1 : 0) : -1);
+    const pickAwaken = ids => {
+      let best = null;
+      for (const id of ids) {
+        const c = anchorById.get(id) || detected.find(x => cellId(x.row, x.col) === id);
+        const a = c && c.awaken;
+        if (!a) continue;
+        if (!best || awRank(a) > awRank(best) || (awRank(a) === awRank(best) && a.awakenConfidence > best.awakenConfidence)) best = a;
+      }
+      return best;
+    };
     const sigPick = (sig, hits) => {
       const ranked = [];
       for (const h of hits) {
@@ -2536,7 +2780,7 @@ const ShotCore = (function(){
       const st = om.stats[aid] || {};
       const sk = shapeKey(rg.shape);
       const base = { row, col, element: cell ? cell.element : null, elementScore: cell ? cell.elementScore : null,
-        form: null, signature: cell ? cell.sig : null, awaken: cell ? cell.awaken : null,
+        form: null, signature: cell ? cell.sig : null, awaken: pickAwaken(rg.ids),
         quality: st.quality || 0, qualityDistance: st.qd, candidates: [], cells: rg.ids };
       const suspect = reason => ({ ...base, status: 'suspect', equip: null, reason });
       if (!cell) { pieces.push(suspect('元素徽章置信度不足')); continue; }
@@ -2580,9 +2824,37 @@ const ShotCore = (function(){
       const st = om.stats[aid] || {};
       pieces.push({ row: Math.floor(aid / CFG.COLS), col: aid % CFG.COLS,
         element: cell ? cell.element : null, elementScore: cell ? cell.elementScore : null,
-        form: null, signature: cell ? cell.sig : null, awaken: cell ? cell.awaken : null,
+        form: null, signature: cell ? cell.sig : null, awaken: pickAwaken(ids),
         quality: st.quality || 0, qualityDistance: st.qd, candidates: [],
         cells: ids, status: 'ok', equip: p.eq, reason: null, pinned: true });
+    }
+    // 觉醒纠正：切分/弱徽章可能让角标格被漏掉或孤立。已识别(recognized)的角标格
+    // 用「一对一贪心匹配」归属到件：枚举全部 (角标格 × 件) 按质心距离升序，
+    // 近者先配、件与角标各用一次——避免多个角标全部堆到最近的一件上。
+    // 仅当比该件现有 awaken 更强才覆盖（件自含角标格时 pickAwaken 已拿到）。
+    {
+      const rec = detected.filter(c => c.awaken && c.awaken.awakenStatus === 'recognized');
+      if (rec.length) {
+        const cents = pieces.filter(p => p.cells && p.cells.length).map(p => {
+          let sr = 0, sc = 0;
+          for (const id of p.cells) { sr += Math.floor(id / CFG.COLS); sc += id % CFG.COLS; }
+          return { p, r: sr / p.cells.length, c: sc / p.cells.length };
+        });
+        const pairs = [];
+        for (const rc of rec) for (const ct of cents) {
+          const d = (ct.r - rc.row) * (ct.r - rc.row) + (ct.c - rc.col) * (ct.c - rc.col);
+          pairs.push({ rc, ct, d });
+        }
+        pairs.sort((a, b) => a.d - b.d);
+        const usedPiece = new Set(), usedBadge = new Set();
+        for (const { rc, ct, d } of pairs) {
+          if (usedPiece.has(ct.p) || usedBadge.has(rc) || d > 36) continue; // 半径 6 格内才视为同件邻域
+          usedPiece.add(ct.p); usedBadge.add(rc);
+          const a = rc.awaken;
+          if (!ct.p.awaken || awRank(a) > awRank(ct.p.awaken)
+            || (awRank(a) === awRank(ct.p.awaken) && a.awakenConfidence > ct.p.awaken.awakenConfidence)) ct.p.awaken = a;
+        }
+      }
     }
     pieces.sort((a, b) => (a.row * CFG.COLS + a.col) - (b.row * CFG.COLS + b.col));
     const stats = { anchors: fit.anchors || 0, converged: !!fit.converged,
@@ -2600,7 +2872,8 @@ const ShotCore = (function(){
     cellSignature, sigDist, placeCells, placeAt, shapeKey, normCells, colorFamily, glyphScore, seamCandidates, CFG,
     occupancyMap, cellStats, solveTiling, numberScore,
     _dbg: { gridFitOriginal, scoreGrid, countAnchors, cellBg, downsample, darkRatio, refineLatticeGlyphs,
-      findResonDisk, diskDigitMask, normDiskVector, diskVecCorr, isDiskTone, cellSignature } };
+      findResonDisk, diskDigitMask, normDiskVector, diskVecCorr, isDiskTone, cellSignature,
+      isElderCell, recognizeElderAwaken, recognizeAwaken, components, makeBitmap } };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   (typeof globalThis !== 'undefined' ? globalThis : window).ShotCore = api;
   return api;
@@ -3209,6 +3482,61 @@ const ShotCore = (function(){
   }
 
   /* ---------- 灵枢宝鉴：双栏渲染（左=法宝选择表，右=已启用法宝信息卡） ---------- */
+  /* ===== 长老法宝设定模块：统一设置阶级(Q5-1/2/3)与觉醒等级 =====
+     长老法宝在库里是三件独立条目（Q5-1/Q5-2/Q5-3，elderTier 1/2/3）。本模块按家族归组，
+     让用户在一处选「当前持有的阶级」与「觉醒等级」，避免截图导入时逐项选档/选觉醒的繁琐。 */
+  function elderFamilies(){
+    const fams={};
+    library.forEach(t=>{ if(Number(t.quality)!==5) return; (fams[t.name]=fams[t.name]||[]).push(t); });
+    return Object.keys(fams).map(name=>{
+      const items=fams[name].slice().sort((a,b)=>Number(a.elderTier)-Number(b.elderTier));
+      let active=items.find(x=>{ const s=sel[x.id]; return s&&s.include&&((s.count||0)||(x.count||0))>0; });
+      if(!active) active=items.find(x=>{ const s=sel[x.id]; return s&&s.include; })||items[items.length-1]||null;
+      return { name, items, active };
+    }).filter(f=>f.items.length>0);
+  }
+  function setActiveElderTier(name, tier){
+    const fam=elderFamilies().find(f=>f.name===name); if(!fam||!fam.active) return;
+    const next=fam.items.find(x=>Number(x.elderTier)===Number(tier)); if(!next||next===fam.active) return;
+    const n=sel[fam.active.id]?(sel[fam.active.id].count||fam.active.count||0):(fam.active.count||0);
+    const lvl=(fam.active.awaken&&fam.active.awaken.level)||0;
+    // 把数量与觉醒搬到所选档位，原档位禁用（一件实物只持有一档）
+    const ns=sel[next.id]||(sel[next.id]={include:true,count:n,priority:false}); ns.include=true; ns.count=n; next.count=n;
+    next.awaken=cloneAwaken(Object.assign({}, next.awaken, {level:lvl}));
+    const cs=sel[fam.active.id]||(sel[fam.active.id]={include:false,count:0,priority:false}); cs.include=false; cs.count=0; fam.active.count=0;
+    saveLibrary(); renderInventory(); renderElderPanel();
+  }
+  function setElderAwaken(name, level){
+    const fam=elderFamilies().find(f=>f.name===name); if(!fam) return;
+    const lv=Number(level)||0;
+    // 一件实物觉醒等级唯一：同步写入该家族三档，避免切档后丢失
+    fam.items.forEach(x=>{ x.awaken=cloneAwaken(Object.assign({}, x.awaken, {level:lv})); });
+    saveLibrary(); renderInventory(); renderElderPanel();
+  }
+  function renderElderPanel(){
+    const box=$('elderList'); if(!box) return;
+    const fams=elderFamilies();
+    const STAR={1:'长老 2 星 · 外部倍率 ×1.6',2:'长老 4 星 · 外部倍率 ×2.0',3:'长老 5 星 · 外部倍率 ×2.5'};
+    if(!fams.length){ box.innerHTML='<div class="empty-note">灵枢宝鉴中暂无长老法宝（Q5）。导入或添加长老法宝后，可在此统一设置其「阶级（Q5-1/Q5-2/Q5-3）」与「觉醒等级」。</div>'; const s=$('elderSummary'); if(s) s.textContent=''; return; }
+    const esc=escapeHtml;
+    let h='';
+    fams.forEach(f=>{
+      const at=f.active?Number(f.active.elderTier):3;
+      const aw=f.active?((f.active.awaken&&f.active.awaken.level)||0):0;
+      const tiers=[1,2,3].map(t=>'<label class="er-tier'+(t===at?' on':'')+'"><input type="radio" name="ert_'+esc(f.name)+'" value="'+t+'"'+(t===at?' checked':'')+'>Q5-'+t+'</label>').join('');
+      const aopts=[0,1,2,3,4,5].map(v=>'<option value="'+v+'"'+(Number(aw)===v?' selected':'')+'>'+v+'</option>').join('');
+      h+='<div class="er-row">'+
+        '<div class="er-name">'+esc(f.name)+'</div>'+
+        '<div class="er-tiers" data-name="'+esc(f.name)+'">'+tiers+'</div>'+
+        '<div class="er-star">'+STAR[at]+'</div>'+
+        '<div class="er-aw"><label>觉醒</label><select class="er-aw-sel" data-name="'+esc(f.name)+'">'+aopts+'</select></div>'+
+      '</div>';
+    });
+    box.innerHTML=h;
+    box.querySelectorAll('.er-tiers input').forEach(r=>r.onchange=e=>{ if(e.target.checked) setActiveElderTier(e.target.closest('.er-tiers').dataset.name, e.target.value); });
+    box.querySelectorAll('.er-aw-sel').forEach(s=>s.onchange=e=>setElderAwaken(e.target.dataset.name, e.target.value));
+    const s=$('elderSummary'); if(s) s.textContent='共 '+fams.length+' 个长老法宝家族 · 阶级与觉醒在此统一设置（截图导入不再逐项选档/选觉醒）';
+  }
   function renderInventory(){
     $('libCount').textContent = library.length;
     const body=$('invBody'); body.innerHTML='';
@@ -3309,6 +3637,7 @@ const ShotCore = (function(){
         '<div class="en-attrs">'+attrs.join('')+'</div>'+
       '</div>';
     }).join('');
+    renderElderPanel();
   }
   function updateSummary(){
     let included=0, cells=0;
@@ -3742,33 +4071,17 @@ const ShotCore = (function(){
     const val=function(t){ return String(t.id||''); };
     const opt=function(t,extra){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · '+qualityLabel(t)+' · 共鸣'+t.reson:'')+(extra?(' '+extra):'')+'</option>'; };
     const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(function(t){ return opt(t); }).join('')+'</optgroup>'; };
-    // 长老法宝（Q5）识别推荐只给默认档（引擎为识别把三档折叠成一条）；
-    // 这里把同名的 Q5-1/Q5-2/Q5-3 提到最顶上的一组，切换档位一键到位，不必在一堆同名里翻找。
-    let anchor = (cell.equip && Number(cell.equip.quality)===5) ? cell.equip
-               : (curId ? library.find(function(t){ return t.id===curId && Number(t.quality)===5; }) : null);
-    if(anchor){
-      const sibs=library.filter(function(t){ return t.name===anchor.name && Number(t.quality)===5; })
-        .sort(function(a,b){ return String(a.qlevel).localeCompare(String(b.qlevel)); });
-      if(sibs.length>1){
-        const recId = cell.equip ? val(cell.equip) : null;
-        h+='<optgroup label="⭐ 同法宝长老档位（Q5-1/Q5-2/Q5-3）">'
-          + sibs.map(function(t){
-              const id=val(t);
-              const extra = (id===recId) ? '（识别推荐）' : (id===curId ? '（当前选择）' : '');
-              return opt(t, extra);
-            }).join('')
-          +'</optgroup>';
-      }
-    }
-    // 识别推荐（可能是库内法宝，也可能是云端目录里的新法宝）
+    // 长老法宝（Q5）仅做名称+图形识别，档位（Q5-1/2/3）与觉醒等级统一在「长老法宝设定」模块设置，
+    // 故此处不再提供长老档位下拉（识别引擎已把三档折叠成默认档，识别推荐直接给默认档）。
+    // 识别推荐（可能是库内法宝，也可以是云端目录里的新法宝）
     if(cell.equip){
       const inLib=library.some(t=>t.id===cell.equip.id);
       grp([cell.equip], inLib?'识别推荐（库内）':'识别推荐（云端目录，导入后会新建）');
     }
-    // 库内同元素（已在上组列出的长老三档不再重复出现）
+    // 库内同元素（识别推荐已在上组出现的不重复）
     const sameEl=library.filter(t=>(t.element||'')===cell.element);
     const dupId=cell.equip?cell.equip.id:null;
-    grp(sameEl.filter(function(t){ return t.id!==dupId && !(anchor&&t.name===anchor.name&&Number(t.quality)===5); }),'库内 · 同元素');
+    grp(sameEl.filter(function(t){ return t.id!==dupId; }),'库内 · 同元素');
     // 云端目录：同元素 + 同形状
     const sk=shotShapeOf(cell);
     const cloud=(SHOT_CATALOG||[]).filter(function(c){
@@ -3781,12 +4094,6 @@ const ShotCore = (function(){
     return h;
   }
   function shapeKey(cells){ return (cells||[]).map(c=>c[0]+','+c[1]).sort().join(' '); }
-  // 觉醒默认值：当前版本仅 Q5 法宝可觉醒——匹配到非 Q5 直接默认 0；
-  // Q5 的火焰自动识别不可靠，留「?」由人工选；未匹配到法宝的行也留「?」
-  function shotAwDefault(p){
-    if(p.equip) return Number(p.equip.quality)===5 ? '' : '0';
-    return '';
-  }
   // 重建行数据；按锚点 (row,col) 保留用户已做的选择（圈选修正重渲染时不丢）
   function shotRebuildRows(){
     const old={};
@@ -3795,7 +4102,7 @@ const ShotCore = (function(){
       const o=old[p.row+','+p.col];
       if(o){ o.piece=p; return o; }
       return { piece:p, pick:p.status==='ok'&&p.equip?p.equip.id:'',
-        aw:shotAwDefault(p), learn:true, newName:'' };
+        learn:true, newName:'' };
     });
   }
   function shotRenderResult(result, ms){
@@ -3824,7 +4131,7 @@ const ShotCore = (function(){
       '<br><i style="background:#22c55e"></i>已匹配　<i style="background:#f59e0b"></i>多候选　<i style="background:#ef4444"></i>待确认　<i style="background:#000"></i>空格/锁定'+
       '</div></div>'+
       '<div class="shot-right"><div class="table-scroll"><table class="inv-table"><thead><tr>'+
-      '<th style="text-align:center">#</th><th>识别信息</th><th>匹配法宝</th><th style="text-align:center">觉醒</th><th style="text-align:center">学签名</th><th>状态</th>'+
+      '<th style="text-align:center">#</th><th>识别信息</th><th>匹配法宝</th><th style="text-align:center">学签名</th><th>状态</th>'+
       '</tr></thead><tbody>';
     rows.forEach((p,i)=>{
       const r=shotState.rows[i];
@@ -3837,14 +4144,10 @@ const ShotCore = (function(){
       if(p.status==='ok'){ status='已匹配'; cls='ok'; }
       else if(p.status==='ambiguous'){ status='多候选：'+(p.candidates||[]).map(c=>escapeHtml(c.name)).join(' / '); cls='warn'; }
       else { status=escapeHtml(p.reason||'待确认'); cls='bad'; }
-      const awOpts=[0,1,2,3,4,5].map(v=>'<option value="'+v+'"'+(String(r.aw)===String(v)?' selected':'')+'>'+v+'</option>').join('');
-      const awUncertain=p.awaken&&p.awaken.awakenStatus!=='recognized'&&p.awaken.awakenStatus!=='none';
       h+='<tr class="shot-tr" data-i="'+i+'"><td style="text-align:center"><span class="shot-tag">'+(i+1)+'</span></td>'+
         '<td>'+info+'</td>'+
         '<td><select class="shot-pick" data-i="'+i+'" style="width:100%">'+shotLibOptions(p, r.pick)+'</select>'+
         (r.pick==='__new__'?'<input type="text" class="shot-newname" data-i="'+i+'" placeholder="新法宝名称" value="'+escapeHtml(r.newName)+'" style="width:100%;margin-top:3px">':'')+'</td>'+
-        '<td style="text-align:center"><select class="shot-aw" data-i="'+i+'" title="仅 Q5 法宝可觉醒：非 Q5 默认 0；Q5 自动识别不可靠请按游戏内实际等级选择">'+
-        '<option value=""'+(r.aw===''?' selected':'')+'>?</option>'+awOpts+'</select></td>'+
         '<td style="text-align:center"><input type="checkbox" class="shot-learn" data-i="'+i+'"'+(r.learn?' checked':'')+' title="把当格签名写入该法宝，之后同款法宝可自动识别"></td>'+
         '<td class="'+cls+'">'+status+'</td></tr>';
     });
@@ -4040,28 +4343,12 @@ const ShotCore = (function(){
   function shotBindRows(){
     $('shotBody').querySelectorAll('.shot-pick').forEach(el=>el.onchange=e=>{
       const i=+e.target.dataset.i; const row=shotState.rows[i]; row.pick=e.target.value;
-      // 换选法宝后按其品质重置觉醒默认（仅 Q5 可觉醒：非 Q5 → 0，Q5 → 手选）
-      let eq=(row.piece&&row.piece.equip&&row.piece.equip.id===e.target.value)?row.piece.equip:null;
-      if(!eq) eq=library.find(t=>t.id===e.target.value)||null;
-      if(!eq&&String(e.target.value).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(x=>String(x.id)===String(e.target.value))||null;
-      if(eq||e.target.value==='__new__'){
-        row.aw=(eq&&Number(eq.quality)===5)?'':'0';
-        const tr=e.target.closest('tr'), sel=tr&&tr.querySelector('.shot-aw');
-        if(sel) sel.value=row.aw;
-      }
+      // 长老法宝的阶级(Q5-1/2/3)与觉醒等级统一在「长老法宝设定」模块设置，此处不再逐项选
       if(e.target.value==='__new__'){ shotRenderResult(shotState.result, 0); }
       else shotRefreshImportBtn();
     });
-    $('shotBody').querySelectorAll('.shot-aw').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; shotState.rows[i].aw=e.target.value; });
     $('shotBody').querySelectorAll('.shot-learn').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; shotState.rows[i].learn=e.target.checked; });
     $('shotBody').querySelectorAll('.shot-newname').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; shotState.rows[i].newName=e.target.value; shotRefreshImportBtn(); });
-  }
-  // 仅 Q5 法宝强制要求选觉醒等级（非 Q5 留空即视为 0 级，不阻拦）
-  function shotPickIsQ5(r){
-    if(!r.pick||r.pick==='__skip__'||r.pick==='__new__') return false;
-    let eq=library.find(t=>t.id===r.pick);
-    if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
-    return !!(eq && Number(eq.quality)===5);
   }
   function shotRefreshImportBtn(){
     if(typeof document!=='undefined') document.querySelectorAll('.shot-err').forEach(el=>el.classList.remove('shot-err'));
@@ -4069,32 +4356,26 @@ const ShotCore = (function(){
     const rows=shotState.rows;
     const pending=rows.filter(r=>!r.pick).length;
     const newNoName=rows.filter(r=>r.pick==='__new__'&&!(r.newName||'').trim()).length;
-    const needAw=rows.filter(r=>r.aw===''&&shotPickIsQ5(r)).length;
     if(m) m.textContent = pending>0 ? ('还有 '+pending+' 件待确认（选择法宝或忽略）')
       : (newNoName>0 ? ('还有 '+newNoName+' 件新法宝未填名称')
-      : (needAw>0 ? ('还有 '+needAw+' 件（Q5）法宝未选觉醒等级')
-      : ('可以导入了 · '+rows.filter(r=>r.pick&&r.pick!=='__skip__').length+' 件')));
+      : ('可以导入了 · '+rows.filter(r=>r.pick&&r.pick!=='__skip__').length+' 件（长老法宝的阶级/觉醒请在「长老法宝设定」模块统一设置）'));
   }
   $('shotDo').onclick=()=>{
     const rows=shotState.rows;
-    // —— 导入前置校验：未选匹配 / 未选觉醒（Q5）/ 新法宝未命名 一律拦截，提示原因 + 红框标记 ——
-    const badPick=[], badAw=[], badName=[];
+    // —— 导入前置校验：未选匹配 / 新法宝未命名 一律拦截，提示原因 + 红框标记 ——
+    // （长老法宝的觉醒等级不再在此逐项必填，识别到的觉醒会随识别结果自动写入库；
+    //   其阶级 Q5-1/2/3 与觉醒等级统一在「长老法宝设定」模块设置。）
+    const badPick=[], badName=[];
     rows.forEach((r,i)=>{
       if(!r.pick){ badPick.push(i); return; }
       if(r.pick==='__new__' && !(r.newName||'').trim()){ badName.push(i); return; }
-      if(r.pick!=='__skip__' && r.pick!=='__new__' && r.aw===''){
-        let eq=library.find(t=>t.id===r.pick);
-        if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
-        if(eq && Number(eq.quality)===5) badAw.push(i);
-      }
     });
-    if(badPick.length||badAw.length||badName.length){
+    if(badPick.length||badName.length){
       const doc=(typeof document!=='undefined')?document:null;
       const mark=(sel,arr)=>{ if(!doc) return; arr.forEach(i=>{ const el=doc.querySelector(sel+'[data-i="'+i+'"]'); if(el) el.classList.add('shot-err'); }); };
-      mark('.shot-pick',badPick); mark('.shot-aw',badAw); mark('.shot-newname',badName);
+      mark('.shot-pick',badPick); mark('.shot-newname',badName);
       const reasons=[];
       if(badPick.length) reasons.push(badPick.length+' 件法宝未选择匹配（请选法宝或「忽略此件」）');
-      if(badAw.length) reasons.push(badAw.length+' 件法宝（Q5）未选择觉醒等级');
       if(badName.length) reasons.push(badName.length+' 件新法宝未填写名称');
       const m=$('shotMsg');
       if(m){ m.innerHTML='<span class="shot-err-msg">⚠️ 无法导入：'+reasons.join('；')+'。已用红框标出待处理项。</span>'; if(m.classList&&m.classList.add) m.classList.add('on-err'); }
@@ -4103,30 +4384,7 @@ const ShotCore = (function(){
     // 校验通过：清掉可能的红框残留
     if(typeof document!=='undefined') document.querySelectorAll('.shot-err').forEach(el=>el.classList.remove('shot-err'));
     { const m=$('shotMsg'); if(m&&m.classList&&m.classList.remove) m.classList.remove('on-err'); }
-    // —— 长老法宝等级二次确认：Q5-1 外部倍率 ×1.6 / Q5-2 ×2.5，选错会直接算错评分 ——
-    {
-      const q5=[];
-      rows.forEach(r=>{
-        if(!r.pick||r.pick==='__skip__') return;
-        let eq=library.find(t=>t.id===r.pick);
-        if(!eq && String(r.pick).indexOf('cat:')===0) eq=(SHOT_CATALOG||[]).find(c=>String(c.id)===String(r.pick));
-        if(eq && Number(eq.quality)===5){ q5.push({ name:eq.name+'（'+qualityLabel(eq)+'）', tier:elderTierOf(eq) }); return; }
-        if(r.pick==='__new__' && Number(r.piece&&r.piece.quality)===5){ q5.push({ name:(r.newName||'（新法宝）')+'（'+qualityLabel(r.piece.equip||{quality:5})+'）', tier:(r.piece.equip?elderTierOf(r.piece.equip):3) }); }
-      });
-      if(q5.length){
-        const g1=q5.filter(x=>x.tier===1), g2=q5.filter(x=>x.tier===2), g3=q5.filter(x=>x.tier===3||x.tier>3||x.tier<1);
-        const lines=['⚠️ 请确认长老法宝（Q5）等级',''];
-        if(g1.length) lines.push('Q5-1（长老 2 星 · ×1.6）'+g1.length+' 件：'+g1.map(x=>x.name).join('、'));
-        if(g2.length) lines.push('Q5-2（长老 4 星 · ×2.0）'+g2.length+' 件：'+g2.map(x=>x.name).join('、'));
-        if(g3.length) lines.push('Q5-3（长老 5 星 · ×2.5）'+g3.length+' 件：'+g3.map(x=>x.name).join('、'));
-        lines.push('','长老档位直接决定评分用的外部倍率，等级选错会让结果失真。');
-        lines.push('要换档：直接在「匹配法宝」下拉里改选同名的 Q5-1 / Q5-2 / Q5-3 另两条（库里它们是三件独立法宝）。');
-        lines.push('已确认无误 → 点「确定」导入；需修改 → 点「取消」后重选。');
-        let ok=true;
-        try{ if(typeof confirm==='function'){ const rr=confirm(lines.join('\n')); if(rr===false) ok=false; } }catch(e){}
-        if(!ok){ const m=$('shotMsg'); if(m) m.textContent='已取消导入：请先在灵枢宝鉴中核对长老法宝等级（Q5-1 / Q5-2 / Q5-3 对应外部倍率 ×1.6 / ×2.0 / ×2.5）。'; return; }
-      }
-    }
+    // 长老法宝的阶级(Q5-1/2/3)与觉醒等级统一在「长老法宝设定」模块设置，此处不再逐项确认。
     // 若导入前已存在启用的法宝，先清空法宝队列（重置全部启用与数量、取消组别启用），
     // 再导入则只保留本次截图识别到的法宝数据（替换而非追加）
     const hadEnabled=library.some(t=>{ const s=sel[t.id]; return s&&s.include; });
@@ -4186,9 +4444,9 @@ const ShotCore = (function(){
       const rs=o.rows; if(!rs.length) return;
       rowCount+=rs.length;
       if(o.isNew){
-        const awRow=rs.find(r=>r.aw!=='');
+        const awRow=rs.find(r=> r.piece && r.piece.awaken && r.piece.awaken.awakenStatus==='recognized' && r.piece.awaken.awakenLevel>0 && r.piece.awaken.awakenLevel<=5);
         addToLibrary(o.name, o.cells, rs.length, Object.assign({}, o.opts, {
-          awaken:{level:awRow?(parseInt(awRow.aw)||0):0},
+          awaken:{level:awRow?(awRow.piece.awaken.awakenLevel||0):0},
         }));
         o.t=(Number(o.opts.quality)===5)
           ? (library.find(x=>x.name===o.name && Number(x.quality)===5 && Number(x.elderTier)===Number(o.opts.elderTier)) || library[library.length-1])
@@ -4201,7 +4459,10 @@ const ShotCore = (function(){
       if(Number(t.quality)===5 && !(Number(t.elderTier)>=1&&Number(t.elderTier)<=3)) t.elderTier=elderTierOf({quality:5,name:t.name});
       rs.forEach(r=>{
         const p=r.piece;
-        if(r.aw!=='') t.awaken=cloneAwaken(Object.assign({}, t.awaken, {level:parseInt(r.aw)||0}));
+        // 觉醒等级改在「长老法宝设定」模块设置；若截图 OCR 已可靠识别到觉醒，则自动写入库（仅长老 Q5 生效）
+        if(p && p.awaken && p.awaken.awakenStatus==='recognized' && p.awaken.awakenLevel>0 && p.awaken.awakenLevel<=5){
+          t.awaken=cloneAwaken(Object.assign({}, t.awaken, {level:p.awaken.awakenLevel}));
+        }
         if(r.learn&&p&&p.signature){
           const sig=p.signature.map(Number);
           const dup=(t.sig||[]).some(s=>ShotCore.sigDist(s,sig)<2);

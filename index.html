@@ -416,7 +416,7 @@
         <summary>长老法宝设定（阶级 / 觉醒）</summary>
         <div class="cap" id="elderSummary" style="margin-bottom:8px"></div>
         <div class="elder-list" id="elderList"></div>
-        <div class="hint" style="margin-top:6px">截图导入时，长老法宝只识别名称与图形；其<b>阶级（Q5-1 / Q5-2 / Q5-3，对应外部倍率 ×1.6 / ×2.0 / ×2.5）</b>与<b>觉醒等级</b>在此统一设置。切换阶级会把该法宝的数量与觉醒搬到所选档位；觉醒等级会同步写入该家族三档。若截图已自动识别到觉醒（白字数字位于共鸣值上方、红底），导入后会自动填入此处，可在此核对修正。</div>
+        <div class="hint" style="margin-top:6px">这里只列出<b>本次已启用</b>的长老法宝（灵枢宝鉴勾选启用且数量 &gt; 0），未启用的不会出现。截图导入时长老法宝只识别名称与图形；其<b>阶级（Q5-1 / Q5-2 / Q5-3，对应外部倍率 ×1.6 / ×2.0 / ×2.5）</b>与<b>觉醒等级</b>在此统一设置。切换阶级会把该法宝的数量与觉醒搬到所选档位；觉醒等级会同步写入该家族三档。若截图已自动识别到觉醒（角标位于共鸣值上方、焰色绿1/蓝2/紫3/黄4/红5），导入后会自动填入此处，可在此核对修正。</div>
       </details>
       <details class="group-panel">
         <summary>组别管理</summary>
@@ -3478,15 +3478,31 @@ const ShotCore = (function(){
   /* ===== 长老法宝设定模块：统一设置阶级(Q5-1/2/3)与觉醒等级 =====
      长老法宝在库里是三件独立条目（Q5-1/Q5-2/Q5-3，elderTier 1/2/3）。本模块按家族归组，
      让用户在一处选「当前持有的阶级」与「觉醒等级」，避免截图导入时逐项选档/选觉醒的繁琐。 */
+  // 某一长老档位「本次是否启用」：灵枢宝鉴里勾选启用 且 数量>0（与「已启用法宝」列表同口径）
+  function elderTierActive(x){
+    const s=x?sel[x.id]:null;
+    return !!(s && s.include && (Number(s.count)||0)>0);
+  }
+  // 截图导入用的「长老共用条目」：一个家族只出一条，指向本次启用的档位；
+  // 没有启用档位时退回官方星表默认档。档位/觉醒都在「长老法宝设定」里调，导入端不展示 Q5-x。
+  function shotElderShare(name, fallback){
+    const fam=library.filter(x=>Number(x.quality)===5 && x.name===name);
+    if(!fam.length) return fallback;
+    const on=fam.find(elderTierActive);
+    if(on) return on;
+    const defT=elderTierOf({quality:5,name:name})||3;
+    return fam.find(x=>Number(x.elderTier)===defT) || fam[0];
+  }
   function elderFamilies(){
     const fams={};
     library.forEach(t=>{ if(Number(t.quality)!==5) return; (fams[t.name]=fams[t.name]||[]).push(t); });
     return Object.keys(fams).map(name=>{
       const items=fams[name].slice().sort((a,b)=>Number(a.elderTier)-Number(b.elderTier));
-      let active=items.find(x=>{ const s=sel[x.id]; return s&&s.include&&((s.count||0)||(x.count||0))>0; });
+      const on=items.find(elderTierActive);
+      let active=on;
       if(!active) active=items.find(x=>{ const s=sel[x.id]; return s&&s.include; })||items[items.length-1]||null;
-      return { name, items, active };
-    }).filter(f=>f.items.length>0);
+      return { name, items, active, enabled:!!on };
+    }).filter(f=>f.items.length>0 && f.enabled);   // 只列「本次已启用」的长老法宝
   }
   function setActiveElderTier(name, tier){
     const fam=elderFamilies().find(f=>f.name===name); if(!fam||!fam.active) return;
@@ -3510,7 +3526,7 @@ const ShotCore = (function(){
     const box=$('elderList'); if(!box) return;
     const fams=elderFamilies();
     const STAR={1:'长老 2 星 · 外部倍率 ×1.6',2:'长老 4 星 · 外部倍率 ×2.0',3:'长老 5 星 · 外部倍率 ×2.5'};
-    if(!fams.length){ box.innerHTML='<div class="empty-note">灵枢宝鉴中暂无长老法宝（Q5）。导入或添加长老法宝后，可在此统一设置其「阶级（Q5-1/Q5-2/Q5-3）」与「觉醒等级」。</div>'; const s=$('elderSummary'); if(s) s.textContent=''; return; }
+    if(!fams.length){ box.innerHTML='<div class="empty-note">本次启用的法宝中暂无长老法宝（Q5）。在左侧灵枢宝鉴勾选启用长老法宝（数量>0）后，这里会自动出现对应的家族行，可设置其「阶级（Q5-1/Q5-2/Q5-3）」与「觉醒等级」。</div>'; const s=$('elderSummary'); if(s) s.textContent=''; return; }
     const esc=escapeHtml;
     let h='';
     fams.forEach(f=>{
@@ -3528,7 +3544,7 @@ const ShotCore = (function(){
     box.innerHTML=h;
     box.querySelectorAll('.er-tiers input').forEach(r=>r.onchange=e=>{ if(e.target.checked) setActiveElderTier(e.target.closest('.er-tiers').dataset.name, e.target.value); });
     box.querySelectorAll('.er-aw-sel').forEach(s=>s.onchange=e=>setElderAwaken(e.target.dataset.name, e.target.value));
-    const s=$('elderSummary'); if(s) s.textContent='共 '+fams.length+' 个长老法宝家族 · 阶级与觉醒在此统一设置（截图导入不再逐项选档/选觉醒）';
+    const s=$('elderSummary'); if(s) s.textContent='本次启用的长老法宝共 '+fams.length+' 个 · 阶级与觉醒在此统一设置（截图导入不再逐项选档/选觉醒）';
   }
   function renderInventory(){
     $('libCount').textContent = library.length;
@@ -3579,12 +3595,12 @@ const ShotCore = (function(){
         '<td style="white-space:nowrap"><button class="dt" data-i="'+i+'" title="查看全部信息：元素 / 类型 / 属性 / 加成 / 形状 / 觉醒 / 优先">详情</button> <button class="del" data-i="'+i+'">删除</button></td>';
       body.appendChild(tr);
     });
-    body.querySelectorAll('.ck').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const t=library[i]; if(t.group){ const g=groups.find(x=>x.id===t.group); if(g && !g.enabled){ e.target.checked=false; sel[t.id].include=false; alert('无法启用「'+t.name+'」：其组别「'+g.name+'」尚未启用。请先在「组别管理」中勾选启用该组别。'); updateSummary(); return; } } sel[t.id].include=e.target.checked; updateSummary(); });
+    body.querySelectorAll('.ck').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const t=library[i]; if(t.group){ const g=groups.find(x=>x.id===t.group); if(g && !g.enabled){ e.target.checked=false; sel[t.id].include=false; alert('无法启用「'+t.name+'」：其组别「'+g.name+'」尚未启用。请先在「组别管理」中勾选启用该组别。'); updateSummary(); renderElderPanel(); return; } } sel[t.id].include=e.target.checked; updateSummary(); renderElderPanel(); });
     body.querySelectorAll('.nm').forEach(el=>{ const i=+el.dataset.i; el.dataset.orig=library[i].name;
       el.oninput=e=>{ library[i].name=e.target.value; updateSummary(); saveLibrary(); };
       el.onchange=e=>{ const v=(e.target.value||'').trim(); if(v && library.some((t,idx)=>idx!==i && t.name===v && String(t.qlevel||'')===String(library[i].qlevel||''))){ alert('法宝名称「'+v+'」（同一品质档）已存在，名称必须唯一，已还原。'); library[i].name=el.dataset.orig; e.target.value=el.dataset.orig; } else { library[i].name=v||el.dataset.orig; el.dataset.orig=library[i].name; } updateSummary(); saveLibrary(); };
     });
-    body.querySelectorAll('.cnum').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; const v=Math.max(0,parseInt(e.target.value)||0); library[i].count=v; sel[library[i].id].count=v; updateSummary(); saveLibrary(); });
+    body.querySelectorAll('.cnum').forEach(el=>el.oninput=e=>{ const i=+e.target.dataset.i; const v=Math.max(0,parseInt(e.target.value)||0); library[i].count=v; sel[library[i].id].count=v; updateSummary(); saveLibrary(); renderElderPanel(); });
     body.querySelectorAll('.keystar').forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; const t=library[i]; t.key=!t.key; saveLibrary(); renderInventory(); });
     body.querySelectorAll('.grp').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.i; const newG=e.target.value||null; library[i].group=newG; const g=newG?groups.find(x=>x.id===newG):null; if(g && !g.enabled) sel[library[i].id].include=false; renderInventory(); saveLibrary(); });
     body.querySelectorAll('.dt').forEach(el=>el.onclick=()=>openDetail(+el.dataset.i));
@@ -4056,7 +4072,8 @@ const ShotCore = (function(){
       if(done.has(t.name)) return; done.add(t.name);
       const arr=byName.get(t.name)||[t];
       const defT=(elderTierOf({quality:5,name:t.name})||3);
-      out.push(arr.find(x=>Number(x.elderTier)===defT) || arr[0] || t);
+      // 优先用「本次启用的档位」，这样导入时数量/觉醒会落到用户真正持有的那一档
+      out.push(shotElderShare(t.name, arr.find(x=>Number(x.elderTier)===defT) || arr[0] || t));
     });
     return out;
   }
@@ -4064,7 +4081,14 @@ const ShotCore = (function(){
     let h='<option value="">— 请选择 —</option>';
     // 库内法宝用自己的 id；云端目录法宝的 id 形如 cat:12（ShotCore 里加的前缀）
     const val=function(t){ return String(t.id||''); };
-    const opt=function(t,extra){ return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+(t.quality?' · '+qualityLabel(t)+' · 共鸣'+t.reson:'')+(extra?(' '+extra):'')+'</option>'; };
+    const opt=function(t,extra){
+      // 长老法宝（Q5）在下拉里只用共用名称：不显示 Q5-x 档位（档位在「长老法宝设定」模块里调）
+      const isElder=Number(t.quality)===5;
+      const tail=isElder
+        ? (t.reson?(' · 共鸣'+t.reson):'')
+        : (t.quality?(' · '+qualityLabel(t)+(t.reson?' · 共鸣'+t.reson:'')):'');
+      return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+tail+(extra?(' '+extra):'')+'</option>';
+    };
     const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(function(t){ return opt(t); }).join('')+'</optgroup>'; };
     // 长老法宝（Q5）仅做名称+图形识别，档位（Q5-1/2/3）与觉醒等级统一在「长老法宝设定」模块设置，
     // 故此处不再提供长老档位下拉（识别引擎已把三档折叠成默认档，识别推荐直接给默认档）。
@@ -4073,14 +4097,30 @@ const ShotCore = (function(){
       const inLib=library.some(t=>t.id===cell.equip.id);
       grp([cell.equip], inLib?'识别推荐（库内）':'识别推荐（云端目录，导入后会新建）');
     }
-    // 库内同元素（识别推荐已在上组出现的不重复）
-    const sameEl=library.filter(t=>(t.element||'')===cell.element);
+    // 库内同元素（识别推荐已在上组出现的不重复）。长老法宝按家族折叠成一条共用条目
+    const sameElRaw=library.filter(t=>(t.element||'')===cell.element);
     const dupId=cell.equip?cell.equip.id:null;
-    grp(sameEl.filter(function(t){ return t.id!==dupId; }),'库内 · 同元素');
+    const dupName=cell.equip?cell.equip.name:null;
+    const seenElder={}, sameEl=[];
+    sameElRaw.forEach(function(t){
+      if(t.id===dupId) return;
+      if(Number(t.quality)===5){
+        if(seenElder[t.name]||t.name===dupName) return;   // 一个家族只出一条
+        seenElder[t.name]=1;
+        sameEl.push(shotElderShare(t.name, t));
+        return;
+      }
+      sameEl.push(t);
+    });
+    grp(sameEl,'库内 · 同元素');
     // 云端目录：同元素 + 同形状
     const sk=shotShapeOf(cell);
     const cloud=(SHOT_CATALOG||[]).filter(function(c){
-      return c.element===cell.element && ShotCore.shapeKey(c.cells)===sk && (!cell.equip || c.name!==cell.equip.name);
+      if(c.element!==cell.element || ShotCore.shapeKey(c.cells)!==sk) return false;
+      if(cell.equip && c.name===cell.equip.name) return false;
+      // 长老法宝在库内已按家族出了一条共用条目，云端目录不再重复列同名长老
+      if(Number(c.quality)===5 && (seenElder[c.name] || library.some(t=>Number(t.quality)===5 && t.name===c.name))) return false;
+      return true;
     }).slice(0,24);
     grp(cloud,'云端目录 · 同元素同形状');
     if(!sameEl.length && !cloud.length) grp(library.slice(0,0),'');
@@ -4134,7 +4174,7 @@ const ShotCore = (function(){
       const info='<b>'+escapeHtml(el)+'</b>系'+(p.form?' · '+escapeHtml(p.form):'')+
         ' · '+shotShapeOf(p).split(' ').length+'格 @('+p.row+','+p.col+')'+
         (p.quality?' · 底色Q'+p.quality:'')+
-        (p.equip?' · 共鸣'+p.equip.reson+' · '+qualityLabel(p.equip):'');
+        (p.equip?' · 共鸣'+p.equip.reson+(Number(p.equip.quality)===5?' · 长老':(p.equip.quality?' · '+qualityLabel(p.equip):'')):'');
       let status, cls;
       if(p.status==='ok'){ status='已匹配'; cls='ok'; }
       else if(p.status==='ambiguous'){ status='多候选：'+(p.candidates||[]).map(c=>escapeHtml(c.name)).join(' / '); cls='warn'; }
@@ -4229,10 +4269,18 @@ const ShotCore = (function(){
     const sk=ShotCore.shapeKey(marks.map(id=>[Math.floor(id/C),id%C]));
     // 候选池：库内（缺元素用补全数据垫） + 云端目录（库里没有同名时）
     const enrich=SHOT_ENRICH||{};
-    const pool=[];
+    const pool=[]; const seenElder={};
     library.forEach(t=>{
       let el=t.element||'';
       if(!el){ const e=enrich[String(t.name||'').trim()]; if(e) el=e.element||''; }
+      // 长老法宝按家族折叠成一条（用本次启用档位），避免同一条同名候选出现三次
+      if(Number(t.quality)===5){
+        if(seenElder[t.name]) return;
+        seenElder[t.name]=1;
+        const sh=shotElderShare(t.name,t);
+        pool.push({ t:sh, el:sh.element||el, src:'lib' });
+        return;
+      }
       pool.push({ t, el, src:'lib' });
     });
     (SHOT_CATALOG||[]).forEach(c=>{
@@ -4266,7 +4314,7 @@ const ShotCore = (function(){
       if(fc.list.length){
         h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">'+
           '<select id="shotFixPick" style="max-width:360px">'+fc.list.map((x,i)=>
-            '<option value="'+i+'">'+(x.src==='cat'?'[云端] ':'')+escapeHtml(x.t.name)+' · '+qualityLabel(x.t)+' · 共鸣'+(x.t.reson||0)+'</option>').join('')+'</select>'+
+            '<option value="'+i+'">'+(x.src==='cat'?'[云端] ':'')+escapeHtml(x.t.name)+(Number(x.t.quality)===5?'':' · '+qualityLabel(x.t))+' · 共鸣'+(x.t.reson||0)+'</option>').join('')+'</select>'+
           '<button type="button" class="primary" id="shotFixApply" style="padding:4px 12px">✓ 应用修正</button>'+
           '<button type="button" class="ghost" id="shotFixClear" style="padding:4px 12px">清除选区</button></div>';
       } else {
@@ -4456,7 +4504,10 @@ const ShotCore = (function(){
         const p=r.piece;
         // 觉醒等级改在「长老法宝设定」模块设置；若截图 OCR 已可靠识别到觉醒，则自动写入库（仅长老 Q5 生效）
         if(p && p.awaken && p.awaken.awakenStatus==='recognized' && p.awaken.awakenLevel>0 && p.awaken.awakenLevel<=5){
-          t.awaken=cloneAwaken(Object.assign({}, t.awaken, {level:p.awaken.awakenLevel}));
+          const lv=p.awaken.awakenLevel;
+          t.awaken=cloneAwaken(Object.assign({}, t.awaken, {level:lv}));
+          // 一件实物只有一个觉醒等级：同步到同家族另两档，切档后不丢
+          if(Number(t.quality)===5) library.forEach(x=>{ if(x!==t && Number(x.quality)===5 && x.name===t.name) x.awaken=cloneAwaken(Object.assign({}, x.awaken, {level:lv})); });
         }
         if(r.learn&&p&&p.signature){
           const sig=p.signature.map(Number);

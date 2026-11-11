@@ -120,13 +120,6 @@
   .plan-detail .pd-table thead th { color:var(--muted); font-weight:600; background:#f8f9fb; }
   .plan-detail .pd-table .pd-total { font-weight:700; background:#f3f0ff; }
   .plan-detail .pd-copy { margin-top:8px; }
-  /* 历史求解 */
-  .history-panel { margin-top:14px; border:1px solid var(--line); border-radius:9px; padding:0 10px; }
-  .history-panel summary { cursor:pointer; padding:8px 0; font-size:13px; font-weight:600; }
-  .history-list { display:flex; flex-direction:column; gap:6px; padding:4px 0 10px; }
-  .hist-row { display:flex; gap:8px; align-items:center; justify-content:space-between; border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
-  .hist-info { font-size:12.5px; }
-  .hist-time { color:var(--muted); font-size:11px; margin-left:6px; }
   /* 分段开关 */
   .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
   .seg button { border:none; background:#fff; padding:6px 11px; font-size:12px; border-radius:0; }
@@ -3800,7 +3793,9 @@ const ShotCore = (function(){
             bonusRate:seed.bonusRate||0, bonusType:seed.bonusType||'none', bonusAttr:seed.bonusAttr||'hp',
             count:sameTier?(seed.count||0):0,
             group:seed.group||en.element||'', type:seed.type||en.type||'', element:seed.element||en.element||'',
-            reson:t.reson||0, quality:q, elderTier:(q===5?et:0), awaken:cloneAwaken(seed.awaken), sig:seed.sig||null,
+            reson:t.reson||0, quality:q, elderTier:(q===5?et:0),
+            awaken:cloneAwaken(Object.assign({}, (en.awaken||{}), (seed.awaken||{}))),  // L1-L5 明细从 enrich-map 预置（78 件有全量觉醒数据），种子已设的 level 等字段优先
+            sig:seed.sig||null,
             key:seed.key||false, skill:seed.skill||null
           };
           const effKnown=!!(seed.bonusType&&seed.bonusType!=='none');
@@ -3864,7 +3859,7 @@ const ShotCore = (function(){
               base:{hp:(tr.base&&tr.base.hp)||0,def:(tr.base&&tr.base.def)||0,atk:(tr.base&&tr.base.atk)||0,dmg:(tr.base&&tr.base.dmg)||0,shield:(tr.base&&tr.base.shield)||0},
               reson:Number(tr.reson)||Number(seed.reson)||0,
               count: same?(Number(seed.count)||0):0,
-              awaken: same?cloneAwaken(seed.awaken):cloneAwaken({level:0})
+              awaken: cloneAwaken(Object.assign({}, (en&&en.awaken)||{}, (same?seed.awaken:null)||{level:0}))
             }));
             fixed++;
           }

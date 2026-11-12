@@ -1447,6 +1447,27 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -1483,7 +1504,7 @@ const ShotCore = (function(){
       glyphCorr: 0.36, glyphMargin: 0.02, glyphCombined: 0.58,
       weakGlyphCorr: 0.5, weakGlyphMoat: 0.45,
       formCorr: 0.45, formMargin: 0.05,
-      numberDisk: 0.7, numberAccept: 0.65, numberMargin: 0.1,
+      numberDisk: 0.7, numberAccept: 0.65, numberMargin: 0.05,
       bgMaxDistance: 20, fitFalloff: 60, fitConverged: 33,
       occupiedSd: 24, occupiedBgGap: 20, discGoldRatio: 0.045, tileNodeLimit: 1500000,
       signatureMaxDistance: 10, signatureMinMargin: 4,
@@ -2318,6 +2339,26 @@ const ShotCore = (function(){
     cache.set(key, s);
     return s;
   }
+  // 读一格里的共鸣数字：对全部数字模板算相关，取最高分且领先次名足够多者。
+  // 实拍标定（2026-11-12）：真共鸣盘 0.748~0.819，非盘格最高 0.545，间隔 >0.2；
+  // 次名差最小 0.096（64 vs 56），故 margin 取 0.05 而非 0.1。
+  // 用途：① 一件法宝右下角有且仅有一个数字盘 → 约束切分；② 库内同名多档（Q1..Q4）
+  // 全靠这个数字定档，底色品质在实拍里会误判（Q4 格常被判成 Q5）。
+  function readNumber(bm, grid, row, col, cache) {
+    const key = 'read|' + row + ',' + col;
+    if (cache.has(key)) return cache.get(key);
+    let best = null, second = -Infinity;
+    for (const n of T_NUMBER.keys()) {
+      const s = numberScore(bm, grid, row, col, n, cache);
+      if (s === null) continue;
+      if (!best || s > best.s) { second = best ? best.s : -Infinity; best = { n: Number(n), s }; }
+      else if (s > second) second = s;
+    }
+    const out = best && best.s >= TH.numberAccept && (best.s - second) >= TH.numberMargin
+      ? { reson: best.n, score: best.s, margin: best.s - second } : null;
+    cache.set(key, out);
+    return out;
+  }
   function formScore(bm, grid, row, col, form) {
     const tpl = T_FORM.get(form);
     if (!tpl) return null;
@@ -2560,15 +2601,20 @@ const ShotCore = (function(){
     const pinnedIds = new Set();
     for (const p of pinned) for (const id of p.ids) pinnedIds.add(id);
     const anchorIds = [...anchorById.keys()].filter(id => !pinnedIds.has(id));
-    // 金圆共鸣盘格（形状右下角）——实拍标定不可靠（高光/艺术误检多），仅记录不参与切分
-    const discIds = [];
-    if (anchorIds.length) {
-      const cand = [];
-      for (let i = 0; i < N; i++) if (om.occ[i]) cand.push(i);
-      cand.sort((a, b) => (om.stats[b].gold - om.stats[a].gold));
-      for (let i = 0; i < anchorIds.length; i++)
-        if (cand[i] !== undefined && om.stats[cand[i]].gold >= TH.discGoldRatio) discIds.push(cand[i]);
+    // 共鸣数字盘（2026-11-12 定案）：旧的「金圆盘 gold 比例」实拍误检多，已弃用；
+    // 改用右下 numberBox 的数字模板读数——真盘 0.75~0.82、非盘 ≤0.55，可干净分离。
+    // 一件法宝右下角有且仅有一个盘 → 传入 solveTiling 的 dSet 约束切分
+    // （错切成 4 格 L 会把三个盘吞进一块；正确切成三块 2 格横则每块恰好一个盘且在末格）。
+    // 读数同时用于逐块选档，见下方 base.reson / resonHit。
+    const numCache = new Map();
+    const diskCells = new Map();
+    for (let r = 0; r < CFG.ROWS; r++) for (let c = 0; c < CFG.COLS; c++) {
+      const cid = cellId(r, c);
+      if (!om.occ[cid]) continue;
+      const rd = readNumber(bm, grid, r, c, numCache);
+      if (rd) diskCells.set(cid, rd);
     }
+    const discIds = [...diskCells.keys()];
     // 候选池：库内法宝（优先） + 云端目录（库里没有同名的）
     // 库内法宝常缺 element/type/reson/quality —— 用补全数据（byName）按名字补上，否则没法按元素匹配
     const enrichByName = opts.enrich || {};
@@ -2621,7 +2667,6 @@ const ShotCore = (function(){
     // 不作硬门槛（金圆盘/数字可能被美术遮挡或误检），匹配则加分——专治
     // 「切分分+身份分完全打平，只有数字能区分」型错误（如 2格+3格腰带 被
     // 切成 S形4格+1格：前者 24/32 数字全对，后者 16/40 全错）。
-    const numCache = new Map();
     const identityScoreN = (rg, cell, st) => {
       const sk = shapeKey(rg.shape), el = cell && cell.element;
       if (!el || !sk) return 0;
@@ -2652,6 +2697,18 @@ const ShotCore = (function(){
       numCache.set(key, bestS);
       return bestS;
     };
+    // 共鸣盘约束：一件法宝 = 一个数字盘，且盘在该块行优先的「右下末格」。
+    // 错误切法（三件 2 格法宝被并成一件 4 格 L）会让一块里塞进 3 个盘、
+    // 另两块一个盘都没有；正确切法每块恰好一个盘且在末格。这个差距足以压过
+    // 底色/面积的微弱偏好，是「258 三件玄阴旗被合成剖心夺爱」的根治点。
+    const diskTerm = rg => {
+      if (!diskCells.size) return 0;
+      let n = 0, atLast = false;
+      for (const id of rg.ids) if (diskCells.has(id)) { n++; if (id === rg.ids[rg.ids.length - 1]) atLast = true; }
+      if (n === 1) return atLast ? 4 : 2;
+      if (n > 1) return -3 * (n - 1);
+      return -1.2;
+    };
     // 单块联合分 = 切分分（锚点首格 + 面积 + 底色一致） + 身份分（形状+元素+品质+共鸣数字 ↔ 候选池）
     const regionJoint = rg => {
       const st = om.stats[rg.anchor] || {};
@@ -2667,6 +2724,7 @@ const ShotCore = (function(){
       const cell = anchorById.get(rg.anchor);
       // 元素徽章永远在法宝的左上格（首格）：锚点不在首格的块视为可疑，身份分大幅打折
       if (cell) s += identityScoreN(rg, cell, st) * (rg.anchor === rg.ids[0] ? 1 : 0.3);
+      s += diskTerm(rg);
       return s;
     };
     const jointOf = regions => regions.reduce((acc, rg) => acc + regionJoint(rg), 0);
@@ -2790,24 +2848,55 @@ const ShotCore = (function(){
       }
       if (!cands.length) cands = pool.filter(x => (x.eq.element || '') === cell.element);
       if (!cands.length) { pieces.push(suspect('库与云端目录中都没有「' + cell.element + '」系法宝')); continue; }
-      // 排序：品质底色吻合 > 库内优先 > 共鸣档位大者
+      // 该块右下数字格 = 共鸣盘所在格（rg.ids 行优先升序，末格即右下）。
+      // 画面读到的共鸣数字是「档位」硬信号：库内同名多档（玄阴旗·Q1..Q4 = 3/6/12/24）
+      // 底色品质在实拍里会误判（Q4 格判成 Q5），只有数字能稳定定档。
+      const seen = diskCells.get(rg.ids[rg.ids.length - 1]) || null;
+      const seenReson = seen ? seen.reson : null;
+      base.reson = seenReson;
+      base.resonScore = seen ? +seen.score.toFixed(3) : null;
+      // 上面按底色品质收窄的 cands 可能把数字指向的正确档位过滤掉 → 数字对不上时逐级放宽
+      const hasReson = arr => arr.some(x => Number(x.eq.reson) === seenReson);
+      if (seenReson !== null && !hasReson(cands)) {
+        if (hasReson(byShape)) cands = byShape;
+        else {
+          const byEl = pool.filter(x => (x.eq.element || '') === cell.element && Number(x.eq.reson) === seenReson);
+          if (byEl.length) cands = byEl;
+        }
+      }
+      // 排序：共鸣数字吻合 > 品质底色吻合 > 库内优先 > 底色距离
       const scored = cands.map(x => {
         let s = 0;
+        if (seenReson !== null) s += (Number(x.eq.reson) === seenReson ? 8 : -2);
         if (st.quality && x.eq.quality === st.quality) s += 4;
         if (st.bg && x.eq.quality) s += Math.max(0, 2 - colorDist(st.bg, CFG.palette['q' + x.eq.quality]) / 20);
         if (x.src === 'lib') s += 0.6;
         return { x, s };
       }).sort((a, b) => b.s - a.s);
-      const uniq = [...new Map(scored.map(o => [o.x.eq.id || o.x.eq.name, o.x])).values()];
-      if (uniq.length === 1) { pieces.push({ ...base, status: 'ok', equip: uniq[0].eq, reason: null }); continue; }
-      // 多候选：先让已学签名裁决，再按品质底色裁决，都不行才算 ambiguous
+      const ranked = [...new Map(scored.map(o => [o.x.eq.id || o.x.eq.name, o])).values()];
+      if (ranked.length === 1) { pieces.push({ ...base, status: 'ok', equip: ranked[0].x.eq, reason: null }); continue; }
+      // 共鸣数字唯一命中 → 直接定档（同形状同元素的 Q1..Q4 全靠这一步区分）
+      const resonHit = seenReson === null ? [] : ranked.filter(o => Number(o.x.eq.reson) === seenReson);
+      if (resonHit.length === 1) { pieces.push({ ...base, status: 'ok', equip: resonHit[0].x.eq, reason: null }); continue; }
+      const uniq = ranked.map(o => o.x);
+      // 多候选：先让已学签名裁决，再按品质底色裁决，都不行才算 ambiguous。
+      // 注意：共鸣数字有「多个同数字候选」时不能强行选第一件（两件同元素同共鸣同品质
+      // 只能靠签名/人工区分），否则会把本该 ambiguous 的情况误判成 ok。
       const pick = sigPick(cell.sig, uniq);
       if (pick) { pieces.push({ ...base, status: 'ok', equip: pick.eq, reason: null }); continue; }
       const q = st.quality;
       const sameQ = q ? uniq.filter(x => (x.eq.quality || 0) === q) : [];
       if (sameQ.length === 1) { pieces.push({ ...base, status: 'ok', equip: sameQ[0].eq, reason: null }); continue; }
-      pieces.push({ ...base, status: 'ambiguous', equip: null,
-        candidates: (sameQ.length ? sameQ : uniq).slice(0, 8).map(x => x.eq), reason: null });
+      // 读到可信数字但候选池里没有该档 → 不硬猜，标多候选；同元素里共鸣吻合的候选排最前，
+      // 避免候选首项永远是 Q1·共鸣3（用户反馈的「推荐档位错」）
+      let candEq = (sameQ.length ? sameQ : uniq).slice(0, 8).map(x => x.eq);
+      if (seenReson !== null) {
+        const extra = pool.filter(x => (x.eq.element || '') === cell.element && Number(x.eq.reson) === seenReson)
+          .slice(0, 4).map(x => x.eq);
+        const keys = new Set(candEq.map(e => e.id || e.name));
+        candEq = [...extra.filter(e => !keys.has(e.id || e.name)), ...candEq].slice(0, 8);
+      }
+      pieces.push({ ...base, status: 'ambiguous', equip: null, candidates: candEq, reason: null });
     }
     // 钉住件：人工身份直接采用；与求解件按锚点位置统一排序（编号稳定）
     for (const p of pinned) {
@@ -2863,7 +2952,7 @@ const ShotCore = (function(){
 
   const api = { recognize, fitLattice, recognizeCells, recognizeAwaken, bestCorr, decodeTemplate,
     cellSignature, sigDist, placeCells, placeAt, shapeKey, normCells, colorFamily, glyphScore, seamCandidates, CFG,
-    occupancyMap, cellStats, solveTiling, numberScore,
+    occupancyMap, cellStats, solveTiling, numberScore, readNumber,
     _dbg: { gridFitOriginal, scoreGrid, countAnchors, cellBg, downsample, darkRatio, refineLatticeGlyphs,
       findResonDisk, diskDigitMask, normDiskVector, diskVecCorr, isDiskTone, cellSignature,
       isElderCell, recognizeElderAwaken, recognizeAwaken, components, makeBitmap } };
@@ -3078,6 +3167,7 @@ const ShotCore = (function(){
     });
     // 长老档位回填：Q5 但缺 elderTier 的老数据 → 按官方长老星表反查（Q5-1 / Q5-2）
     library.forEach(t=>{ if(Number(t.quality)===5 && !(Number(t.elderTier)>=1&&Number(t.elderTier)<=3)) t.elderTier=elderTierOf({quality:5,name:t.name}); });
+    ensureGroupsFromLibrary();   // 云端合并/历史墓碑把组弄丢、但库里还有该组法宝时自动补回
   }
   /* 导入/恢复工作簿中的 7 组基础法宝库（按 组别+名称 去重，不覆盖用户自定义法宝） */
   function importBaseLibrary(){
@@ -3119,6 +3209,42 @@ const ShotCore = (function(){
   function loadDeletedGroups(){ try{ const a=JSON.parse(localStorage.getItem(DELETED_GRP_KEY)||'[]'); return new Set(Array.isArray(a)?a:[]); }catch(e){ return new Set(); } }
   function saveDeletedGroups(s){ try{ localStorage.setItem(DELETED_GRP_KEY, JSON.stringify([...s])); }catch(e){} }
   let deletedGroupNames = loadDeletedGroups();
+  // 「已复活组别」：用户在本机重新新建过的组名。云端 Gist 里可能残留很早以前写下的
+  // deletedGroups 墓碑，pull 时若照单全收会把刚新建的组又吃掉（2026-11-12「邪」组反复被重置）。
+  // 复活名单只代表本机明确意图，删除组时会同步移除，因此不影响跨设备的删除同步。
+  const REVIVED_GRP_KEY='treasurePackGistRevivedGroups';
+  function loadRevivedGroups(){ try{ const a=JSON.parse(localStorage.getItem(REVIVED_GRP_KEY)||'[]'); return new Set(Array.isArray(a)?a:[]); }catch(e){ return new Set(); } }
+  function saveRevivedGroups(s){ try{ localStorage.setItem(REVIVED_GRP_KEY, JSON.stringify([...s])); }catch(e){} }
+  let revivedGroupNames = loadRevivedGroups();
+  // 合并删除墓碑时的「现存优先」规则：本地当前仍存在、且本机没有主动删过的组，
+  // 说明用户已重新创建/保留它 → 该名字必须从（可能来自云端的旧）墓碑里撤销。
+  // 复活名单随 Gist 一起同步，别处重新建过的组也不会再被旧墓碑吃掉。
+  function groupTombstones(cloudDeleted, cloudRevived){
+    const rev=new Set([...(cloudRevived||[]), ...revivedGroupNames].map(String));
+    const alive=new Set(); groups.forEach(g=>{ alive.add(String(g.id||g.name)); alive.add(String(g.name||g.id)); });
+    const raw=new Set([...(cloudDeleted||[]), ...deletedGroupNames].map(String));
+    const del=new Set([...raw].filter(n=>!rev.has(n) && !(alive.has(n) && !deletedGroupNames.has(n))));
+    revivedGroupNames=new Set(rev); saveRevivedGroups(revivedGroupNames);
+    return { del, rev };
+  }
+  // 库里还有归属某组的法宝、但组本身不见了 → 自动补建（enabled=false，不擅自启用）。
+  // 删除组时 removeGroup 会把组内法宝 group 置 null，所以这里不会复活用户主动删掉的组。
+  // 历史上把「组别8」改名成「邪」后组被删、库里 36 件邪系法宝的 group 却还指向旧 id，
+  // 这里顺手按元素归一到「邪」，避免重新长出一个没人要的「组别8」。
+  function ensureGroupsFromLibrary(){
+    const ELS=['金','木','水','火','土','雷','邪','体'];
+    const known=new Set(); groups.forEach(g=>{ known.add(String(g.id||g.name)); known.add(String(g.name||g.id)); });
+    library.forEach(t=>{
+      if(!t.group) return;
+      let g=String(t.group);
+      if(known.has(g)) return;
+      if(/^组别\d+$/.test(g)){
+        const el=String(t.element||'');
+        if(el && ELS.indexOf(el)>=0){ t.group=el; g=el; if(known.has(g)) return; }
+      }
+      groups.push({id:g,name:g,enabled:false}); known.add(g); gidCounter++;
+    });
+  }
   async function gistApi(path, method, body){
     const c=cloudCfg(); if(!c||!c.token) throw new Error('未配置 GitHub Token');
     const res=await fetch('https://api.github.com'+path,{
@@ -3153,7 +3279,7 @@ const ShotCore = (function(){
     return [...map.values()];
   }
   function gistPayload(){
-    return { version:2, library:library.map(serializeLibItem), groups:groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), deleted:[...deletedNames], deletedGroups:[...deletedGroupNames] };
+    return { version:2, library:library.map(serializeLibItem), groups:groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), deleted:[...deletedNames], deletedGroups:[...deletedGroupNames], revivedGroups:[...revivedGroupNames] };
   }
   // 用合并后的「存储态」重建本地 library/groups，并尽量保留本地已有的勾选(sel)状态
   function rebuildFromMerged(libStored, grpStored){
@@ -3173,6 +3299,8 @@ const ShotCore = (function(){
     });
     tid=library.length; gidCounter=groups.length;
     expandElderTiers();   // 云端合并后同样保证长老法宝按三档各存一条
+    ensureGroupsFromLibrary();
+    gidCounter=groups.length;
   }
   async function pushToCloud(){
     if(!cloudReady()){ setCloudStatus('请先填写 GitHub Token 并勾选启用'); return; }
@@ -3184,17 +3312,18 @@ const ShotCore = (function(){
         try{
           const g=await gistApi('/gists/'+encodeURIComponent(c.gistId),'GET');
           const f=g.files && g.files[GIST_FILE];
-          if(f&&f.content){ const d=JSON.parse(f.content); if(Array.isArray(d.library)) base={ version:2, library:d.library, groups:d.groups||[], deleted:d.deleted||[], deletedGroups:d.deletedGroups||[] }; }
+          if(f&&f.content){ const d=JSON.parse(f.content); if(Array.isArray(d.library)) base={ version:2, library:d.library, groups:d.groups||[], deleted:d.deleted||[], deletedGroups:d.deletedGroups||[], revivedGroups:d.revivedGroups||[] }; }
         }catch(e){ /* 读不到旧数据则当作空 */ }
       }
       // 合并删除墓碑：本地 + 云端 已删除名称的并集（法宝 + 组别）
       const del=new Set([...(base.deleted||[]), ...deletedNames]);
-      const delG=new Set([...(base.deletedGroups||[]), ...deletedGroupNames]);
+      // 组别墓碑要过「现存优先」：用户刚重新建过的组不能被云端旧墓碑吃掉
+      const gTomb=groupTombstones(base.deletedGroups, base.revivedGroups), delG=gTomb.del;
       // 合并法宝：本地覆盖 Gist 中同名项（不会丢失对方已上传的法宝），再剔除墓碑项
       const mergedLib=dropFlatTierDuplicates(mergeItems(base.library, local.library)).filter(t=>!del.has(String(t.id||t.name)));
-      const mergedGrp=mergeGroups(base.groups, local.groups).filter(g=>!delG.has(String(g.id||g.name)));
+      const mergedGrp=mergeGroups(base.groups, local.groups).filter(g=>!delG.has(String(g.id||g.name)) && !delG.has(String(g.name||g.id)));
       deletedNames=del; saveDeleted(del); deletedGroupNames=delG; saveDeletedGroups(delG);
-      const content=JSON.stringify({ version:2, library:mergedLib, groups:mergedGrp, deleted:[...del], deletedGroups:[...delG] }, null, 2);
+      const content=JSON.stringify({ version:2, library:mergedLib, groups:mergedGrp, deleted:[...del], deletedGroups:[...delG], revivedGroups:[...gTomb.rev] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -3218,11 +3347,11 @@ const ShotCore = (function(){
       const data=JSON.parse(f.content);
       // 合并删除墓碑：本地 + 云端 已删除名称的并集（法宝 + 组别）
       const del=new Set([...(data.deleted||[]), ...deletedNames]);
-      const delG=new Set([...(data.deletedGroups||[]), ...deletedGroupNames]);
+      const gTomb=groupTombstones(data.deletedGroups, data.revivedGroups), delG=gTomb.del;
       deletedNames=del; saveDeleted(del); deletedGroupNames=delG; saveDeletedGroups(delG);
       // 合并：Gist 覆盖本地同名项，其余并集，再剔除墓碑项（法宝 + 组别）
       const mergedLib=dropFlatTierDuplicates(mergeItems(library.map(serializeLibItem), data.library||[])).filter(t=>!del.has(String(t.id||t.name)));
-      const mergedGrp=mergeGroups(groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), data.groups||[]).filter(g=>!delG.has(String(g.id||g.name)));
+      const mergedGrp=mergeGroups(groups.map(g=>({id:g.id,name:g.name,enabled:!!g.enabled})), data.groups||[]).filter(g=>!delG.has(String(g.id||g.name)) && !delG.has(String(g.name||g.id)));
       if(mergedLib.length===0 && mergedGrp.length===0){ setCloudStatus('Gist 为空（或所法宝均已被删除）'); renderInventory(); renderGroups(); renderQuickShapes(); return; }
       rebuildFromMerged(mergedLib, mergedGrp);
       saveLocalOnly(); renderInventory(); renderGroups(); renderQuickShapes();
@@ -3234,7 +3363,7 @@ const ShotCore = (function(){
     const c=cloudCfg();
     try{
       const local=gistPayload();
-      const content=JSON.stringify({ version:2, library:dropFlatTierDuplicates(local.library), groups:local.groups, deleted:[], deletedGroups:[] }, null, 2);
+      const content=JSON.stringify({ version:2, library:dropFlatTierDuplicates(local.library), groups:local.groups, deleted:[], deletedGroups:[], revivedGroups:[...revivedGroupNames] }, null, 2);
       const body={ files:{ [GIST_FILE]:{ content } } };
       if(c.gistId){
         await gistApi('/gists/'+encodeURIComponent(c.gistId),'PATCH',body);
@@ -3243,6 +3372,7 @@ const ShotCore = (function(){
         c.gistId=g.id; localStorage.setItem(CLOUD_KEY, JSON.stringify(c));
       }
       deletedNames=new Set(); saveDeleted(deletedNames);
+      deletedGroupNames=new Set(); saveDeletedGroups(deletedGroupNames);
       setCloudStatus('☁ 已强制覆盖 Gist（'+local.library.length+' 件法宝 / '+local.groups.length+' 组，删除标记已清空）');
     }catch(e){ setCloudStatus('覆盖失败：'+(e&&e.message||e)); }
   }
@@ -4081,15 +4211,23 @@ const ShotCore = (function(){
     let h='<option value="">— 请选择 —</option>';
     // 库内法宝用自己的 id；云端目录法宝的 id 形如 cat:12（ShotCore 里加的前缀）
     const val=function(t){ return String(t.id||''); };
+    // 画面读到的共鸣数字：同名多档（Q1..Q4）按它把正确档位排到最前并打 ✓
+    const wantR=(cell&&cell.reson!==null&&cell.reson!==undefined)?Number(cell.reson):null;
     const opt=function(t,extra){
       // 长老法宝（Q5）在下拉里只用共用名称：不显示 Q5-x 档位（档位在「长老法宝设定」模块里调）
       const isElder=Number(t.quality)===5;
       const tail=isElder
         ? (t.reson?(' · 共鸣'+t.reson):'')
         : (t.quality?(' · '+qualityLabel(t)+(t.reson?' · 共鸣'+t.reson:'')):'');
-      return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+tail+(extra?(' '+extra):'')+'</option>';
+      const hit=(wantR!==null&&Number(t.reson)===wantR)?' ✓':'';
+      return '<option value="'+escapeHtml(val(t))+'"'+(val(t)===curId?' selected':'')+'>'+escapeHtml(t.name)+tail+hit+(extra?(' '+extra):'')+'</option>';
     };
-    const grp=function(arr,label){ if(!arr.length) return; h+='<optgroup label="'+label+'">'+arr.map(function(t){ return opt(t); }).join('')+'</optgroup>'; };
+    const grp=function(arr,label){
+      if(!arr.length) return;
+      const sorted=(wantR!==null)?arr.slice().sort((a,b)=>
+        ((Number(b.reson)===wantR)?1:0)-((Number(a.reson)===wantR)?1:0)):arr;
+      h+='<optgroup label="'+label+'">'+sorted.map(function(t){ return opt(t); }).join('')+'</optgroup>';
+    };
     // 长老法宝（Q5）仅做名称+图形识别，档位（Q5-1/2/3）与觉醒等级统一在「长老法宝设定」模块设置，
     // 故此处不再提供长老档位下拉（识别引擎已把三档折叠成默认档，识别推荐直接给默认档）。
     // 识别推荐（可能是库内法宝，也可以是云端目录里的新法宝）
@@ -4174,7 +4312,8 @@ const ShotCore = (function(){
       const info='<b>'+escapeHtml(el)+'</b>系'+(p.form?' · '+escapeHtml(p.form):'')+
         ' · '+shotShapeOf(p).split(' ').length+'格 @('+p.row+','+p.col+')'+
         (p.quality?' · 底色Q'+p.quality:'')+
-        (p.equip?' · 共鸣'+p.equip.reson+(Number(p.equip.quality)===5?' · 长老':(p.equip.quality?' · '+qualityLabel(p.equip):'')):'');
+        (p.reson!==null&&p.reson!==undefined?' · 画面共鸣'+p.reson:'')+
+        (p.equip?' · 匹配'+p.equip.reson+(Number(p.equip.quality)===5?' · 长老':(p.equip.quality?' · '+qualityLabel(p.equip):'')):'');
       let status, cls;
       if(p.status==='ok'){ status='已匹配'; cls='ok'; }
       else if(p.status==='ambiguous'){ status='多候选：'+(p.candidates||[]).map(c=>escapeHtml(c.name)).join(' / '); cls='warn'; }
@@ -4253,6 +4392,16 @@ const ShotCore = (function(){
       return best;
     }catch(e){ return null; }
   }
+  // 读选区右下格的共鸣数字（直接复用引擎同源实现，阈值/模板不漂移）：圈选修正时用来定档，
+  // 否则同名多档会把 Q1·共鸣3 排在最前，用户得自己翻到 Q4·共鸣24。
+  function shotReadResonAt(res,row,col){
+    try{
+      const id=shotState.imageData; if(!id) return null;
+      const bm=ShotCore._dbg.makeBitmap(id);
+      const rd=ShotCore.readNumber(bm,res.grid,row,col,new Map());
+      return rd?rd.reson:null;
+    }catch(e){ return null; }
+  }
   function shotFixCandidates(){
     const res=shotState.result; if(!res) return null;
     const marks=[...shotState.marks].sort((a,b)=>a-b);
@@ -4267,6 +4416,9 @@ const ShotCore = (function(){
     const stt=(res.cellStats||[])[aid]||{};
     const q=stt.quality||0;
     const sk=ShotCore.shapeKey(marks.map(id=>[Math.floor(id/C),id%C]));
+    // 右下格共鸣数字 = 档位硬信号（marks 行优先升序，末格即右下）
+    const numId=marks[marks.length-1];
+    const wantReson=shotReadResonAt(res,Math.floor(numId/C),numId%C);
     // 候选池：库内（缺元素用补全数据垫） + 云端目录（库里没有同名时）
     const enrich=SHOT_ENRICH||{};
     const pool=[]; const seenElder={};
@@ -4293,14 +4445,17 @@ const ShotCore = (function(){
     if(sameShape.length){ list=sameShape; note=null; }
     else if(sameEl.length){ list=sameEl; note='没有同形状的「'+element+'」系法宝，下面列出同元素候选'; }
     else { list=pool.filter(x=>ShotCore.shapeKey(x.t.cells)===sk); note='没有「'+(element||'?')+'」系候选，下面列出同形状候选'; }
-    // 排序：品质底色吻合 > 库内 > 格数多
+    // 排序：画面共鸣数字吻合 > 品质底色吻合 > 库内 > 格数多
     list=list.slice().sort((a,b)=>{
+      const ra=(wantReson!==null&&Number(a.t.reson)===wantReson)?1:0;
+      const rb=(wantReson!==null&&Number(b.t.reson)===wantReson)?1:0;
+      if(ra!==rb) return rb-ra;
       const qa=(a.t.quality||0)===q?1:0, qb=(b.t.quality||0)===q?1:0;
       if(qa!==qb) return qb-qa;
       if(a.src!==b.src) return a.src==='lib'?-1:1;
       return (b.t.cells||[]).length-(a.t.cells||[]).length;
     }).slice(0,40);
-    return { ar, ac, element, elScore, elWeak, q, shapeN:marks.length, list, note,
+    return { ar, ac, element, elScore, elWeak, q, shapeN:marks.length, list, note, wantReson,
       sig:cell?cell.sig:null, awaken:cell?cell.awaken:null };
   }
   function shotRenderFixPanel(){
@@ -4309,7 +4464,8 @@ const ShotCore = (function(){
     let h='<div class="cap" style="margin-top:8px;line-height:1.7">✏️ 圈选模式：在图上<b>按住鼠标涂抹 / 再涂擦除绿格</b>，圈出识别错误的法宝实际占格——程序按「元素徽章 + 区域形状 + 品质底色」从库与云端目录重判。</div>';
     const fc=shotFixCandidates();
     if(fc){
-      h+='<div class="en-sec" style="margin-top:6px">选区 <b>'+fc.shapeN+'</b> 格 @('+fc.ar+','+fc.ac+') · 元素 <b>'+escapeHtml(fc.element||'?')+'</b>'+(fc.elWeak?'（低置信）':'')+' · 底色Q'+fc.q+'</div>';
+      h+='<div class="en-sec" style="margin-top:6px">选区 <b>'+fc.shapeN+'</b> 格 @('+fc.ar+','+fc.ac+') · 元素 <b>'+escapeHtml(fc.element||'?')+'</b>'+(fc.elWeak?'（低置信）':'')+' · 底色Q'+fc.q+
+        (fc.wantReson!==null?' · 画面共鸣 <b>'+fc.wantReson+'</b>（已优先匹配该档）':'（未读到共鸣数字，按底色推荐）')+'</div>';
       if(fc.note) h+='<div class="en-sec warn">'+escapeHtml(fc.note)+'</div>';
       if(fc.list.length){
         h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">'+
@@ -4562,7 +4718,7 @@ const ShotCore = (function(){
   $('groupFilter').onchange=()=>{ groupFilter=$('groupFilter').value; renderInventory(); };
   $('invSort').onchange=()=>renderInventory();
   $('libSearch').oninput=()=>{ searchTerm=($('libSearch').value||'').trim().toLowerCase(); renderInventory(); };
-  $('newGroup').onclick=()=>{ let nm=$('newGroupName').value.trim()||('组别'+(groups.length+1)); let base=nm,k=2; while(groups.some(g=>g.name===nm)){ nm=base+' #'+k; k++; } groups.push({id:nm,name:nm,enabled:false}); if(deletedGroupNames.delete(nm)) saveDeletedGroups(deletedGroupNames); $('newGroupName').value=''; saveLibrary(); renderGroups(); renderInventory(); };
+  $('newGroup').onclick=()=>{ let nm=$('newGroupName').value.trim()||('组别'+(groups.length+1)); let base=nm,k=2; while(groups.some(g=>g.name===nm)){ nm=base+' #'+k; k++; } groups.push({id:nm,name:nm,enabled:false}); if(deletedGroupNames.delete(nm)) saveDeletedGroups(deletedGroupNames); revivedGroupNames.add(nm); saveRevivedGroups(revivedGroupNames); $('newGroupName').value=''; saveLibrary(); renderGroups(); renderInventory(); };
   function renderGroups(){
     const box=$('groupList'); box.innerHTML='';
     if(groups.length===0){ box.innerHTML='<div class="empty-note">暂无组别。新建组别后，在法宝表格的「组别」列把法宝归入；启用组别会默认勾选该组全部法宝（数量 0，需自行填写）。</div>'; }
@@ -4596,6 +4752,7 @@ const ShotCore = (function(){
     library.forEach(t=>{ if(t.group===id) t.group=null; });
     // 组别墓碑：记录组名，防止云端并集合并把已删组别复活（同名组全部移除）
     deletedGroupNames.add(g.name); saveDeletedGroups(deletedGroupNames);
+    revivedGroupNames.delete(g.name); saveRevivedGroups(revivedGroupNames);
     for(let i=groups.length-1;i>=0;i--){ if(groups[i].name===g.name){ if(groupFilter===groups[i].id) groupFilter='all'; groups.splice(i,1); } }
     saveLibrary(); renderGroups(); renderInventory();
   }

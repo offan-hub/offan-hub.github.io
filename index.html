@@ -1468,6 +1468,13 @@
    并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
    签名库裁决；图片仅在本机处理，不上传。
    ============================================================ */
+/* ============================================================
+   ShotCore —— 背包截图识别（本地库匹配版）
+   算法参考 hekunwang/laozu-solver（开源）：网格检测 / 元素·形态·共鸣
+   数字模板匹配 / 觉醒火焰四层识别 / 外观签名比对，均按其公开源码移植，
+   并按「用户自管库」定位改造：候选集为本地 library，身份解析以自学习
+   签名库裁决；图片仅在本机处理，不上传。
+   ============================================================ */
 const ShotCore = (function(){
   'use strict';
 
@@ -1502,6 +1509,8 @@ const ShotCore = (function(){
     thresholds: {
       anchorCandidate: 0.27, strictBadge: 0.4, strictMoat: 0.3, strictGap: 0.25,
       glyphCorr: 0.36, glyphMargin: 0.02, glyphCombined: 0.58,
+      // 火/土字形孪生裁决（徽章区相对色 r-2g+b）：火≈38~43 / 土≈-2~7，中值20。
+      fireToneMid: 20, fireEarthMinScore: 0.45, fireEarthGrayGap: 0.15,
       weakGlyphCorr: 0.5, weakGlyphMoat: 0.45,
       formCorr: 0.45, formMargin: 0.05,
       numberDisk: 0.7, numberAccept: 0.65, numberMargin: 0.05,
@@ -1606,6 +1615,21 @@ const ShotCore = (function(){
       if (inBounds(bm, rightEdge, y)) { const o = (y * bm.w + rightEdge) * stride; _mr[count]=buf[o]; _mg[count]=buf[o+1]; _mb[count]=buf[o+2]; count++; }
     }
     return count ? [selectMedian(_mr, count), selectMedian(_mg, count), selectMedian(_mb, count)] : null;
+  }
+  // 徽章区相对色 r-2g+b：火徽章偏红（实拍 tone≈38~43），土徽章偏黄褐（tone≈-2~7）。
+  // 火/土字形都是二值灰度模板且结构相近（十字 vs 火焰），火焰发光特效会冲淡火字边缘，
+  // 使灰度相关度掉到与土相当（火0.58 vs 土0.66）而误判。颜色是独立且强分离的判别信号。
+  function badgeTone(bm, grid, row, col) {
+    const box = CFG.geometry.elementBox;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let fy = box[1]; fy < box[3]; fy += 0.02)
+      for (let fx = box[0]; fx < box[2]; fx += 0.02) {
+        const x = Math.round(grid.ox + col * grid.pw + fx * grid.pw);
+        const y = Math.round(grid.oy + row * grid.ph + fy * grid.ph);
+        if (!inBounds(bm, x, y)) continue;
+        const p = bm.px(x, y); r += p[0]; g += p[1]; b += p[2]; n++;
+      }
+    return n ? (r - 2 * g + b) / n : null;
   }
   // 区域暗部比例（判定「有徽章」）
   function darkRatio(bm, grid, row, col, box) {
@@ -2314,10 +2338,31 @@ const ShotCore = (function(){
       const isAnchor = darkRatio(bm, refined, r, c, CFG.geometry.badgeBox) > TH.anchorCandidate;
       let el, elScore, elWeak, sig = null;
       if (isAnchor) {
-        el = bestOf(elKeys.map(k => ({ key: k, score: bestCorr(bm, refined, r, c, CFG.geometry.elementBox, T_ELEMENT.get(k)) })));
+        const scores = elKeys.map(k => ({ key: k, score: bestCorr(bm, refined, r, c, CFG.geometry.elementBox, T_ELEMENT.get(k)) }));
+        el = bestOf(scores);
+        // 火/土字形灰度相近，火焰发光会冲淡火字 → 灰度常把火误判为土。
+        // 当灰度 top2 恰好是火+土这对、灰度分差很小（灰度已不可靠）、且两者分数都不低时，
+        // 用徽章区相对色裁决：tone>中值 偏红→火，否则偏黄褐→土。
+        // 实拍标定：火 tone≈38~43，土 tone≈-2~7，中值20 有巨大安全间隔。
+        let toneDecided = false;
+        const rank = scores.slice().sort((a, b) => b.score - a.score);
+        const fireEarthPair = rank.length > 1 &&
+          ((rank[0].key === '火' && rank[1].key === '土') || (rank[0].key === '土' && rank[1].key === '火'));
+        if (fireEarthPair && rank[1].score >= TH.fireEarthMinScore && rank[0].score - rank[1].score < TH.fireEarthGrayGap) {
+          const tone = badgeTone(bm, refined, r, c);
+          if (tone !== null) {
+            const want = tone > TH.fireToneMid ? '火' : '土';
+            if (want !== rank[0].key) {
+              el = { key: want, score: rank[1].score, margin: 2 * (rank[0].score - rank[1].score) + 0.02 };
+              toneDecided = true;
+            }
+          }
+        }
         elScore = el.score;
         const moatWeak = el.score < TH.weakGlyphCorr && darkRatio(bm, refined, r, c, CFG.geometry.moatBox) >= TH.weakGlyphMoat;
-        elWeak = el.score < TH.glyphCorr || el.margin < TH.glyphMargin || el.score + 2 * el.margin < TH.glyphCombined || moatWeak;
+        // 颜色裁决是强信号：该车决格直接视为可靠锚点，不受灰度 margin 门槛回退。
+        elWeak = toneDecided ? false
+          : (el.score < TH.glyphCorr || el.margin < TH.glyphMargin || el.score + 2 * el.margin < TH.glyphCombined || moatWeak);
         sig = cellSignature(bm, refined, r, c);
       } else {
         el = { key: null, score: 0, margin: 0 }; elScore = 0; elWeak = true;
@@ -2954,7 +2999,7 @@ const ShotCore = (function(){
     cellSignature, sigDist, placeCells, placeAt, shapeKey, normCells, colorFamily, glyphScore, seamCandidates, CFG,
     occupancyMap, cellStats, solveTiling, numberScore, readNumber,
     _dbg: { gridFitOriginal, scoreGrid, countAnchors, cellBg, downsample, darkRatio, refineLatticeGlyphs,
-      findResonDisk, diskDigitMask, normDiskVector, diskVecCorr, isDiskTone, cellSignature,
+      findResonDisk, diskDigitMask, normDiskVector, diskVecCorr, isDiskTone, cellSignature, badgeTone,
       isElderCell, recognizeElderAwaken, recognizeAwaken, components, makeBitmap } };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   (typeof globalThis !== 'undefined' ? globalThis : window).ShotCore = api;
